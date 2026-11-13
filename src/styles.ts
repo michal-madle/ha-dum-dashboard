@@ -327,21 +327,40 @@ export const styles = css`
     cursor: pointer;
     white-space: nowrap;
   }
-  /* Sent and on its way (spec kitu, Odezva): the button or the link pulses until Home Assistant reports the result. */
-  .button.pending,
-  .link.pending {
-    animation: dd-pending 1.3s ease-in-out infinite alternate;
+  /* Sent and on its way (spec kitu, Odezva): like a tile, the fill (button) or the colour (link) goes between its
+     own and the accent until Home Assistant reports the result; with reduced motion a dashed accent outline. */
+  .button.pending {
+    animation: dd-pending-fill 1.3s ease-in-out infinite alternate;
   }
-  @keyframes dd-pending {
+  .button.primary.pending {
+    animation-name: dd-pending-primary;
+  }
+  .link.pending {
+    animation: dd-pending-text 1.3s ease-in-out infinite alternate;
+  }
+  @keyframes dd-pending-fill {
     to {
-      opacity: 0.45;
+      background: var(--dd-accent);
+      color: #fff;
+    }
+  }
+  @keyframes dd-pending-primary {
+    to {
+      background: var(--dd-button);
+      color: var(--dd-text);
+    }
+  }
+  @keyframes dd-pending-text {
+    to {
+      color: var(--dd-secondary);
     }
   }
   @media (prefers-reduced-motion: reduce) {
     .button.pending,
     .link.pending {
       animation: none;
-      opacity: 0.6;
+      outline: 1.5px dashed var(--dd-accent);
+      outline-offset: 2px;
     }
   }
   .button.primary {

@@ -239,6 +239,16 @@ export class HaDumDashboard extends LitElement {
     return i18n.t.who[last.kdo] ?? last.kdo;
   }
 
+  /** „Sušička - konec cyklu“ under „Sušička · Doběhla“ says the name twice: the reason without it („Konec cyklu“). */
+  private withoutName(reason: string, row: LogRow, config: Settings): string {
+    const entity = row.entries[0].entity_id;
+    const item = [...config.running, ...config.laundry].find((other) => other.entity === entity);
+    const name = item ? this.name(item.name) : this.logName(row.entries[0]);
+    if (!reason.toLocaleLowerCase().startsWith(name.toLocaleLowerCase())) return reason;
+    const rest = reason.slice(name.length).replace(/^[\s\-–—·:]+/, "");
+    return rest ? rest.charAt(0).toLocaleUpperCase() + rest.slice(1) : reason;
+  }
+
   private logName(entry: LogEntry): string {
     const entity = entityState(this.hass, entry.entity_id);
     return entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
@@ -293,7 +303,7 @@ export class HaDumDashboard extends LitElement {
     const kinds: Record<string, string> = { covers: t.covers, ventilation: t.ventilation, heating: t.heating, cooling: t.cooling };
     const rows = (list: LogRow[]) =>
       list.map((row) => {
-        const reason = this.coverReason(config, row, i18n);
+        const reason = this.withoutName(this.coverReason(config, row, i18n), row, config);
         const group = row.entries.length > 1;
         const title = group ? `${kinds[row.kind] ?? ""} · ${this.logState(row.entries[0], row.state)}` : this.logTitle(config, row.entries[0], row.state, i18n);
         return html`<div class="log-row"><span class="log-time">${i18n.time(row.time)}</span><span class="main"
@@ -339,7 +349,10 @@ export class HaDumDashboard extends LitElement {
     const count = failed.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
       ...failed.map((item, index) => {
-        const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
+        // The whole name of Home Assistant („Žaluzie Maxík“); without it the name from the detail of the blinds, never the ID.
+        const configured = config.covers.names[item.entita];
+        const ha = entityState(this.hass, item.entita)?.attributes.friendly_name;
+        const friendly = typeof ha === "string" ? ha : configured !== undefined ? this.name(configured) : undefined;
         const time = item.cas ? Date.parse(item.cas) : NaN;
         // The reason and the time; without a reason the action that failed.
         // The reason comes from Home Assistant in lower case; it starts the line like every other detail.
@@ -613,6 +626,7 @@ export class HaDumDashboard extends LitElement {
 
   private setCovers(config: Settings, preset: Preset, key: string): void {
     const script = config.covers.script.split(".")[1];
+    if (this.pending.has(key)) return;
     this.pending.start(key, this.hass, { entities: config.covers.entities, done: () => config.covers.entities.every((id) => this.coverDone(config, id, preset)) });
     for (const entity of config.covers.entities) {
       this.call("script", script, { entity, pos: preset.position, tilt: preset.tilt }, key);
@@ -817,6 +831,8 @@ export class HaDumDashboard extends LitElement {
 
   /** Sends and pulses the control `key` until `command` is done (or nothing changes for a while, or the call fails). */
   private send(key: string, command: PendingCommand, domain: string, service: string, data: Record<string, unknown>): void {
+    // A second press while it is on its way sends nothing again.
+    if (this.pending.has(key)) return;
     this.pending.start(key, this.hass, command);
     this.call(domain, service, data, key);
   }

@@ -187,6 +187,7 @@ test.describe("Co se stalo", () => {
     await expect(sheet.locator(".log-row")).toHaveCount(4);
     // Spotřebič slovy, ne pomocník; žaluzie bez důvodu v deníku vezme důvod z poslední akce.
     await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" })).toContainText("Sušička · Doběhla");
+    await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" }).locator("small")).toHaveText("Konec cyklu");
     await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Večerní fáze");
     // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
     await expect(sheet.locator(".log-row").first().locator(".main")).toContainText("Žaluzie · Zavřeno");
