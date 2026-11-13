@@ -1759,15 +1759,16 @@ ee.styles = [Te, j`
       gap: 8px;
       margin-bottom: 12px;
     }
+    /* The type scale of DASHBOARD_UX_SYSTEM.md (Písmo): Title 2 22/28 and Subhead 15/20 (uživatel 13. 11. 2026: „Q209 ano“). */
     h2 {
       margin: 0;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 600;
-      line-height: 26px;
+      line-height: 28px;
     }
     .sub {
       color: var(--hdk-secondary, #9a9aa0);
-      font-size: 14px;
+      font-size: 15px;
       line-height: 20px;
     }
     .close {
@@ -3715,4 +3716,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Oe(Gi()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.7.4 · 2026-11-13 17:52 UTC · po 161a86a ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.7.5 · 2026-11-13 18:21 UTC · po e84ad42 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
