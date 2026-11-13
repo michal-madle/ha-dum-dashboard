@@ -73,6 +73,8 @@ export interface Settings {
   ventilation: { mode?: string; fans: Named[] };
   heating: { resume?: string; rooms: Named[] };
   cooling: { rooms: Named[] };
+  /** Further sections of tiles (Světla, Zásuvky, Vysavače …), each with its own heading, in this order. */
+  devices: { name: LocalizedText; entities: Named[] }[];
   guard: { holdMs: number; doubleTapMs: number; hintSeconds: number };
   /** The popup Topení / Klimatizace sends a change this long after the last one (or when it closes). */
   sendDelaySeconds: number;

@@ -62,6 +62,7 @@ export const en: typeof cs = {
   },
   who: { morning: "Morning phase", noon: "Noon phase", evening: "Evening phase", night: "Night phase", vetrani: "Airing mode", aplikace: "App", automatika: "Automation", rucne: "By hand" },
   notArrived: (time) => `Did not arrive ${time}`,
+  notArrivedTo: (preset) => `Did not reach ${preset}`,
   ventilation: "Ventilation",
   ventilationMode: "Airing mode",
   heating: "Heating",

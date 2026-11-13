@@ -183,6 +183,32 @@ cooling:
       entity: climate.mikulas_ac_mikulas
     - name: Pracovna
       entity: climate.pracovna_ac_pracovna
+devices:                            # další oddíly dlaždic, každý druh vlastní (světlo, vypínač, větrák: dvojklep nebo podržení přepne; vysavač otevře detail)
+  - name:
+      cs: Světla
+      en: Lights
+      sv: Lampor
+    entities:
+      - name: Kuchyně
+        entity: switch.kuchyne_osvetleni_kuchyne
+      - name: Lampa pracovna
+        entity: light.yeelink_bslamp2_cd35_light
+  - name:
+      cs: Zásuvky
+      en: Sockets
+      sv: Uttag
+    entities:
+      - name: Zásuvka IKEA
+        entity: switch.pracovna_zasuvka_ikea
+  - name:
+      cs: Vysavače
+      en: Vacuums
+      sv: Dammsugare
+    entities:
+      - name: Patro
+        entity: vacuum.roborock_s5_ea9e_robot_cleaner
+      - name: Přízemí
+        entity: vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner
 send_delay_seconds: 2                # popup Topení / Klimatizace odešle změnu tolik sekund po poslední (nebo při zavření)
 guard:
   hold_ms: 550                      # podržení chráněného prvku

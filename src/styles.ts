@@ -363,6 +363,12 @@ export const styles = css`
       outline-offset: 2px;
     }
   }
+  /* The quiet button of a row (Zkusit znovu, „Q219 A“): grey and 15 px, still 44 px high. */
+  .button.small {
+    padding: 0 12px;
+    font-size: 15px;
+    line-height: 20px;
+  }
   .button.primary {
     background: #0a6ed1;
     color: #ffffff;

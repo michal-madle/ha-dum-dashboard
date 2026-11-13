@@ -40,6 +40,9 @@ for (const fan of config.ventilation.fans) states[fan.entity] = entity("off");
 const targets = [21, 19, 20, 20, 22.5, 8];
 config.heating.rooms.forEach((room, index) => (states[room.entity] = tado("auto", { temperature: targets[index] })));
 for (const room of config.cooling.rooms) states[room.entity] = ac("off", { temperature: 22 });
+for (const group of config.devices ?? []) for (const item of group.entities) states[item.entity] = entity(item.entity.startsWith("vacuum.") ? "docked" : "off");
+states["switch.kuchyne_osvetleni_kuchyne"] = entity("on");
+states["vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner"] = entity("cleaning", {}, 12);
 states[config.failed_actions] = entity("0", { polozky: [] });
 states[config.snoozed] = entity("0", { polozky: [] });
 
@@ -97,6 +100,8 @@ const logbook = [
   { entity_id: "input_boolean.technicka_mistnost_susicka_bezi", state: "off", name: "Sušička běží", when: nowSec - 3000, context_name: "Sušička - konec cyklu" },
   { entity_id: "climate.obyvak_ac_obyvak", state: "unavailable", name: "Klimatizace Obývák", when: nowSec - 7300 },
 ];
+// The recorder: both blinds of the evening phase stopped in Tma (position and tilt 0).
+for (const id of ["cover.loznice_zaluzie_loznice", "cover.pracovna_zaluzie_pracovna"]) history[id] ??= [{ s: "closed", a: { current_position: 0, current_tilt_position: 0 }, lu: nowSec - 600 }];
 const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0, logbook, logQueries: [] });
 const card = document.createElement("ha-dum-dashboard");
 card.setConfig(config);
@@ -112,7 +117,7 @@ let current = {
   // &tado=1: Home Assistant offers the timer action of Tado CE (Boost, Ručně platí).
   services: params.get("tado") ? { tado_ce: { set_climate_timer: {} } } : {},
   // The words of Home Assistant for a state (the real frontend translates every state).
-  formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto" })[state ?? stateObj.state] ?? state ?? stateObj.state,
+  formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto", docked: "V doku", cleaning: "Uklízí" })[state ?? stateObj.state] ?? state ?? stateObj.state,
   callWS: async (message) => {
     if (message.type === "logbook/get_events") {
       test.logQueries.push(message);

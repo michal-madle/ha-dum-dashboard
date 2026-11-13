@@ -16,7 +16,7 @@ import { cardLanguage, getI18n } from "./i18n";
 import type { I18n } from "./i18n";
 import { styles } from "./styles";
 import type { HomeAssistant, Named, Preset, Settings } from "./types";
-import { logRows, shortNames } from "./log";
+import { logRows, logTime, shortNames } from "./log";
 import type { LogEntry, LogRow } from "./log";
 
 const SEEN_KEY = "dum-dashboard.log-seen";
@@ -72,6 +72,8 @@ export class HaDumDashboard extends LitElement {
   @state() private _detail?: "covers" | "heating" | "cooling" | "log";
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
   @state() private _log?: LogEntry[];
+  /** Position and tilt of each blind through today (recorder), to say the preset of a row of the journal. */
+  private coverHistory: Record<string, { time: number; position: number; tilt: number }[]> = {};
   /** When the person last saw „Co se stalo“ (this device); entries after it are new. */
   @state() private _seen = readSeen();
   private logTimer?: number;
@@ -169,7 +171,7 @@ export class HaDumDashboard extends LitElement {
     const climate = summer ? [this.renderCooling(config, i18n), this.renderHeating(config, i18n)] : [this.renderHeating(config, i18n), this.renderCooling(config, i18n)];
     return html`<ha-card>
       ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
-      ${this.renderVentilation(config, i18n)} ${climate} ${this.renderLogRow(config, i18n)}
+      ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
     ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)}`;
@@ -200,10 +202,53 @@ export class HaDumDashboard extends LitElement {
     midnight.setHours(0, 0, 0, 0);
     try {
       const rows = await hass.callWS<LogEntry[]>({ type: "logbook/get_events", start_time: midnight.toISOString(), entity_ids: entities });
+      await this.loadCoverHistory(config, midnight);
       this._log = Array.isArray(rows) ? rows : [];
     } catch {
       // A failed refresh keeps what was loaded; only a journal that never loaded says so.
     }
+  }
+
+  private async loadCoverHistory(config: Settings, midnight: Date): Promise<void> {
+    if (!config.covers.entities.length || !this.hass) return;
+    try {
+      type Row = { s?: string; a?: Record<string, unknown>; lu?: number; lc?: number };
+      const answer = await this.hass.callWS<Record<string, Row[]>>({
+        type: "history/history_during_period",
+        start_time: midnight.toISOString(),
+        entity_ids: config.covers.entities,
+        include_start_time_state: true,
+        significant_changes_only: false,
+        minimal_response: false,
+        no_attributes: false,
+      });
+      const history: typeof this.coverHistory = {};
+      for (const [id, rows] of Object.entries(answer ?? {})) {
+        let last: { position: number; tilt: number } | undefined;
+        history[id] = (Array.isArray(rows) ? rows : []).flatMap((row) => {
+          // A row without attributes repeats the last ones (compressed history).
+          const position = Number(row.a?.current_position ?? last?.position);
+          const tilt = Number(row.a?.current_tilt_position ?? last?.tilt);
+          const time = Number(row.lu ?? row.lc) * 1000;
+          if (!Number.isFinite(position) || !Number.isFinite(tilt) || !Number.isFinite(time)) return [];
+          last = { position, tilt };
+          return [{ time, position, tilt }];
+        });
+      }
+      this.coverHistory = history;
+    } catch {
+      // Without the recorder the journal says the state („Zavřeno“).
+    }
+  }
+
+  /** The preset a blind was in at `time` (from the recorder), or undefined. */
+  private presetAt(config: Settings, id: string, time: number): Preset | undefined {
+    const rows = this.coverHistory[id] ?? [];
+    let at: { position: number; tilt: number } | undefined;
+    // Its position a moment after the entry: the end position and the tilt come in the same second or just after.
+    for (const row of rows) if (row.time <= time + 5000) at = row;
+    if (!at) return undefined;
+    return config.covers.presets.find((preset) => Math.abs(at!.position - preset.position) <= config.covers.tolerance && Math.abs(at!.tilt - preset.tilt) <= config.covers.tolerance);
   }
 
   /** Which entities are one kind: one action on several of them is one row. */
@@ -255,13 +300,21 @@ export class HaDumDashboard extends LitElement {
   }
 
   private logState(entry: LogEntry, state: string): string {
+    const preset = state.startsWith("preset:") ? this._config?.covers.presets[Number(state.slice(7))] : undefined;
+    if (preset) return this.name(preset.name);
     const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown, state?: string) => string }) | undefined;
     const entity = entityState(this.hass, entry.entity_id);
     return entity && hass?.formatEntityState ? hass.formatEntityState(entity, state) : state;
   }
 
+  /** A blind in the journal says its preset („Žaluzie · Tma“, uživatel 13. 11. 2026: „Q220 zatím A“), else its state. */
   private logRows(config: Settings): LogRow[] {
-    return logRows(this._log ?? [], this.logKind(config));
+    const entries = (this._log ?? []).map((entry) => {
+      if (!config.covers.entities.includes(entry.entity_id) || ["opening", "closing"].includes(String(entry.state))) return entry;
+      const preset = this.presetAt(config, entry.entity_id, logTime(entry));
+      return preset ? { ...entry, state: `preset:${config.covers.presets.indexOf(preset)}` } : entry;
+    });
+    return logRows(entries, this.logKind(config));
   }
 
   private renderLogRow(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -348,7 +401,7 @@ export class HaDumDashboard extends LitElement {
     });
     const count = failed.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
-      ...failed.map((item, index) => {
+      ...failed.map((item) => {
         // The whole name of Home Assistant („Žaluzie Maxík“); without it the name from the detail of the blinds, never the ID.
         const configured = config.covers.names[item.entita];
         const ha = entityState(this.hass, item.entita)?.attributes.friendly_name;
@@ -356,14 +409,17 @@ export class HaDumDashboard extends LitElement {
         const time = item.cas ? Date.parse(item.cas) : NaN;
         // The reason and the time; without a reason the action that failed.
         // The reason comes from Home Assistant in lower case; it starts the line like every other detail.
-        const reason = item.duvod || item.akce;
+        // A blind that did not arrive says where it should have gone („Nedojela do Tma“, „Q219 A“); numbers only
+        // when the target is no preset.
+        const goal = this.failedGoal(config, item);
+        const reason = goal ? t.notArrivedTo(this.name(goal.name)) : item.duvod || item.akce;
         const detail = joined([reason ? reason.charAt(0).toLocaleUpperCase(i18n.language) + reason.slice(1) : undefined, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean));
         const retry = this.retryOf(config, item);
         return html`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
           <span class="main">${typeof friendly === "string" ? friendly : item.entita}<small>${detail}</small></span>
           ${retry
-            ? html`<button class="button ${index === 0 ? "primary" : ""} ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
+            ? html`<button class="button small ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
             : config.clearFailed
               ? html`<button class="button" type="button" @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
               : nothing}
@@ -468,6 +524,13 @@ export class HaDumDashboard extends LitElement {
     </span>`;
   }
 
+  /** The preset a blind did not arrive at (its target matches one), when it moved but stopped elsewhere. */
+  private failedGoal(config: Settings, item: Failed): Preset | undefined {
+    const target = item.cil as { pos?: unknown; tilt?: unknown } | undefined;
+    if (!item.entita.startsWith("cover.") || !/^nedojela/i.test(item.duvod ?? "")) return undefined;
+    return config.covers.presets.find((preset) => Math.abs(Number(target?.pos) - preset.position) <= config.covers.tolerance && Math.abs(Number(target?.tilt) - preset.tilt) <= config.covers.tolerance);
+  }
+
   /** A failed command of a blind can be sent again when the sensor kept its target. */
   private retryOf(config: Settings, item: Failed): (() => void) | undefined {
     const target = item.cil as { pos?: unknown; tilt?: unknown } | undefined;
@@ -497,7 +560,9 @@ export class HaDumDashboard extends LitElement {
 
   private renderRunning(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!config.running.length) return nothing;
-    const active = config.running.filter((item) => ["on", "cleaning", "returning"].includes(readText(this.hass, item.entity) ?? ""));
+    // Only what has no tile of its own (spec: „Teď běží ukazuje jen to, co nemá vlastní dlaždici“).
+    const tiled = new Set(config.devices.flatMap((group) => group.entities.map((item) => item.entity)));
+    const active = config.running.filter((item) => !tiled.has(item.entity) && ["on", "cleaning", "returning"].includes(readText(this.hass, item.entity) ?? ""));
     const parts = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity, i18n)}`.trim());
     return html`<h2><span>${i18n.t.running}</span></h2>
       <div class="group" data-part="running"><div class="row now ${active.length ? "" : "none"}"><span class="main" style="font-size:inherit;line-height:inherit">${parts.length ? joined(parts) : i18n.t.nothingRuns}</span></div></div>`;
@@ -573,6 +638,8 @@ export class HaDumDashboard extends LitElement {
     const failed = this.failed(config).find((item) => item.entita === id);
     if (failed) {
       const time = failed.cas ? Date.parse(failed.cas) : NaN;
+      const goal = this.failedGoal(config, failed);
+      if (goal) return { text: [t.notArrivedTo(this.name(goal.name)), Number.isFinite(time) ? this.when(time, i18n) : ""].filter(Boolean).join("\u00a0"), warn: true };
       return { text: [Number.isFinite(time) ? t.notArrived(this.when(time, i18n)) : t.notArrived("").trim(), failed.duvod].filter(Boolean).join(" · "), warn: true };
     }
     const items = entityState(this.hass, config.covers.lastAction)?.attributes.polozky as Record<string, { kdo?: unknown; cas?: unknown }> | undefined;
@@ -672,6 +739,64 @@ export class HaDumDashboard extends LitElement {
           ></dd-tile>`;
         })}
       </div>`;
+  }
+
+  /* ---------- Další zařízení (Světla, Zásuvky, Vysavače …) ---------- */
+
+  /**
+   * One section per kind from the configuration („Q218 zatím A“). A light, a switch or a fan is a guarded toggle like
+   * a fan of Větrání; a vacuum opens its details in Home Assistant (one tap changes nothing).
+   */
+  private renderDevices(config: Settings, i18n: I18n): TemplateResult[] {
+    const t = i18n.t;
+    return config.devices
+      .filter((group) => group.entities.length)
+      .map(
+        (group, at) => html`<h2><span>${this.name(group.name)}</span></h2>
+          <div class="tiles" data-part=${`devices-${at}`}>
+            ${group.entities.map((item, index) => {
+              const entity = entityState(this.hass, item.entity);
+              const missing = !entity || isNoValue(entity.state);
+              if (item.entity.startsWith("vacuum.")) {
+                const cleaning = entity?.state === "cleaning";
+                const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
+                const words = entity && hass?.formatEntityState ? hass.formatEntityState(entity) : (entity?.state ?? "");
+                const text = missing ? t.unavailable : cleaning ? [words, this.duration(item.entity, i18n)].filter(Boolean).join(" · ") : words;
+                return html`<dd-tile
+                  kind="open"
+                  data-entity=${item.entity}
+                  .name=${this.name(item.name)}
+                  .text=${text}
+                  .state=${(cleaning ? "on" : missing ? "off" : "idle") as TileState}
+                  .disabled=${missing}
+                  @hdk-open=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: item.entity } }))}
+                ></dd-tile>`;
+              }
+              const on = entity?.state === "on";
+              return html`<dd-tile
+                kind="toggle"
+                guarded
+                data-entity=${item.entity}
+                .name=${this.name(item.name)}
+                .text=${missing ? t.unavailable : on ? t.on : t.off}
+                .state=${(on ? "on" : "off") as TileState}
+                .disabled=${missing}
+                .hint=${t.hint}
+                .hintAlign=${this.align(index)}
+                .holdMs=${config.guard.holdMs}
+                .doubleTapMs=${config.guard.doubleTapMs}
+                .hintSeconds=${config.guard.hintSeconds}
+                .pending=${this.pending.has(`toggle:${item.entity}`)}
+                @hdk-toggle=${(event: CustomEvent<{ checked: boolean }>) => {
+                  const want = event.detail.checked ? "on" : "off";
+                  this.send(`toggle:${item.entity}`, { entities: [item.entity], done: () => readText(this.hass, item.entity) === want }, "homeassistant", event.detail.checked ? "turn_on" : "turn_off", {
+                    entity_id: item.entity,
+                  });
+                }}
+              ></dd-tile>`;
+            })}
+          </div>`,
+      );
   }
 
   /* ---------- Topení a Klimatizace ---------- */

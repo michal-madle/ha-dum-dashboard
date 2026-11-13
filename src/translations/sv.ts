@@ -62,6 +62,7 @@ export const sv: typeof cs = {
   },
   who: { morning: "Morgonfas", noon: "Middagsfas", evening: "Kvällsfas", night: "Nattfas", vetrani: "Vädringsläge", aplikace: "Appen", automatika: "Automatik", rucne: "För hand" },
   notArrived: (time) => `Kom inte fram ${time}`,
+  notArrivedTo: (preset) => `Nådde inte ${preset}`,
   ventilation: "Ventilation",
   ventilationMode: "Vädringsläge",
   heating: "Värme",

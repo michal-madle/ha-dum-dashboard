@@ -60,6 +60,7 @@ export const cs = {
   },
   who: { morning: "Ranní fáze", noon: "Polední fáze", evening: "Večerní fáze", night: "Noční fáze", vetrani: "Větrací režim", aplikace: "Aplikace", automatika: "Automatika", rucne: "Ručně" } as Record<string, string>,
   notArrived: (time: string) => `Nedojela ${time}`,
+  notArrivedTo: (preset: string) => `Nedojela do ${preset}`,
   ventilation: "Větrání",
   ventilationMode: "Větrací režim",
   heating: "Topení",

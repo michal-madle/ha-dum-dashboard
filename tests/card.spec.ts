@@ -32,6 +32,10 @@ test.describe("fronta a co běží", () => {
     await expect(rows.nth(0)).toContainText("Žaluzie nedostupná");
     await expect(rows.nth(1)).toContainText("Okno Ložnice");
     await expect(rows.nth(1)).toContainText("Baterie 8 % · CR2032");
+    // Žaluzie, která se pohnula a nedojela: kam měla dojet, ne čísla („Q219 A“).
+    await update(page, { "sensor.dum_nesplnene_akce": { attributes: { polozky: [{ entita: "cover.maxik_zaluzie_maxik", akce: "poloha 0 %, lamely 0 %", duvod: "nedojela: poloha 40 %, lamely 30 %", cas: new Date().toISOString(), cil: { pos: "0", tilt: "0" } }] } } });
+    await expect(rows.nth(0)).toContainText("Nedojela do Tma");
+    await expect(rows.nth(0)).not.toContainText("40 %");
     await rows.nth(0).getByRole("button", { name: "Zkusit znovu" }).click();
     expect(await calls(page)).toEqual([{ domain: "script", service: "zaluzie_posun", data: { entity: "cover.maxik_zaluzie_maxik", pos: 0, tilt: 0 } }]);
   });
@@ -189,8 +193,10 @@ test.describe("Co se stalo", () => {
     await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" })).toContainText("Sušička · Doběhla");
     await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" }).locator("small")).toHaveText("Konec cyklu");
     await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Večerní fáze");
+    // Bez záznamu polohy stav slovem.
+    await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Žaluzie Maxík · Zavřeno");
     // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
-    await expect(sheet.locator(".log-row").first().locator(".main")).toContainText("Žaluzie · Zavřeno");
+    await expect(sheet.locator(".log-row").first().locator(".main")).toContainText("Žaluzie · Tma");
     await expect(sheet.locator(".log-row").first().locator(".log-members")).toHaveText("Ložnice, Pracovna");
     await expect(sheet.locator(".log-row").first()).toContainText("Večerní fáze");
     await expect(sheet.locator(".log-row").filter({ hasText: "Klimatizace" })).toContainText("Aplikace");
@@ -226,9 +232,9 @@ test.describe("Co se stalo", () => {
 test.describe("ovládání", () => {
   test("pořadí oddílů: Žaluzie, Větrání a potom Topení a Klimatizace podle režimu domu", async ({ page }) => {
     await open(page);
-    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Topení", "Klimatizace"]);
+    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Topení", "Klimatizace", "Světla", "Zásuvky", "Vysavače"]);
     await open(page, "summer");
-    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Klimatizace", "Topení"]);
+    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Klimatizace", "Topení", "Světla", "Zásuvky", "Vysavače"]);
   });
 
   test("žaluzie: předvolba všech svítí, smíšený stav má počet, nedostupná žaluzie se nepočítá do žádné", async ({ page }) => {
@@ -436,6 +442,25 @@ test.describe("ovládání", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
       expect(await axeViolations(page, ["page-has-heading-one"]), theme).toEqual([]);
     }
+  });
+
+  test("další zařízení: každý druh vlastní oddíl za klimatizací; světlo přepne dvojklep a bliká do potvrzení; vysavač otevře detail s dobou úklidu", async ({ page }) => {
+    await open(page);
+    const names = await headings(page);
+    expect(names.slice(names.indexOf("Klimatizace") + 1)).toEqual(["Světla", "Zásuvky", "Vysavače"]);
+    expect((await tiles(page, "devices-0")).map((item) => [item.name, item.text, item.state])).toEqual([
+      ["Kuchyně", "Zapnuto", "on"],
+      ["Lampa pracovna", "Vypnuto", "off"],
+    ]);
+    const lamp = tile(page, "devices-0", "Lampa pracovna");
+    await lamp.dblclick();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "homeassistant", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light" } });
+    await expect(lamp).toHaveAttribute("pending", "");
+    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on" } });
+    await expect(lamp).not.toHaveAttribute("pending", "");
+    expect((await tiles(page, "devices-2")).map((item) => item.text)).toEqual(["V doku", "Uklízí · 12 min"]);
+    await tile(page, "devices-2", "Patro").click();
+    expect((await calls(page)).at(-1)).toEqual({ moreInfo: "vacuum.roborock_s5_ea9e_robot_cleaner" });
   });
 
   test("chyba volání Home Assistantu je vidět v kartě", async ({ page }) => {

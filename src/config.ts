@@ -110,6 +110,17 @@ function normalize(raw: unknown): Settings {
     };
   });
 
+  // Světla, zásuvky, vysavače … (uživatel 13. 11. 2026: „Q218 zatím A“: každý druh vlastní oddíl).
+  const devices = list(raw.devices, "devices").map((item, index) => {
+    const at = `devices[${index}]`;
+    if (!isRecord(item)) fail(`${at} must be a mapping with name and entities.`);
+    checkKeys(item, ["name", "entities"], at);
+    return {
+      name: localizedText(item.name, `${at}.name`) ?? fail(`${at}.name is missing.`),
+      entities: named(item.entities, `${at}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"]),
+    };
+  });
+
   return {
     language: languageSetting(raw.language),
     houseMode: entityId(raw.house_mode_entity, "house_mode_entity", { domain: "input_select" }),
@@ -140,6 +151,7 @@ function normalize(raw: unknown): Settings {
       rooms: named(heating.rooms, "heating.rooms", ["climate"]),
     },
     cooling: { rooms: named(cooling.rooms, "cooling.rooms", ["climate"]) },
+    devices,
     sendDelaySeconds: number(raw.send_delay_seconds, "send_delay_seconds", 2, 0, 30),
     guard: {
       holdMs: number(guard.hold_ms, "guard.hold_ms", 550, 200, 3000),
