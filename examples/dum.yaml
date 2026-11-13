@@ -6,6 +6,8 @@ house_modes:
   summer: Léto                      # hodnota režimu domu, při které je Klimatizace nad Topením
 failed_actions: sensor.dum_nesplnene_akce
 clear_failed_script: script.dum_nesplnene_smazat
+snoozed: sensor.dum_odlozeno          # seznam odložených věcí (yaml/packages/fronta.yaml)
+snooze_script: script.dum_odlozit    # volá se s klic a do (RRRR-MM-DD)
 batteries:
   - name: Okno Ložnice
     low: binary_sensor.loznice_okno_loznice_battery

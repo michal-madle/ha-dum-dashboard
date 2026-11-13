@@ -25,6 +25,7 @@ const targets = [21, 19, 20, 20, 22.5, 8];
 config.heating.rooms.forEach((room, index) => (states[room.entity] = entity("auto", { temperature: targets[index] })));
 for (const room of config.cooling.rooms) states[room.entity] = entity("off", { temperature: 22, preset_mode: "none" });
 states[config.failed_actions] = entity("0", { polozky: [] });
+states[config.snoozed] = entity("0", { polozky: [] });
 
 if (scenario === "evening") {
   // 18:42 in winter: one blind did not arrive, one battery is low, the washing machine and the dishwasher run.

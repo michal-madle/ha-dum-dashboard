@@ -11,6 +11,7 @@ export const styles = css`
     --dd-secondary: #98989f;
     --dd-sep: rgb(84 84 88 / 65%);
     --dd-button: rgb(118 118 128 / 24%);
+    --dd-menu: #2c2c2e;
     --dd-accent: #0a84ff;
     --dd-warning: #ff9230;
     --dd-warning-bg: rgb(255 146 48 / 16%);
@@ -40,6 +41,7 @@ export const styles = css`
     --dd-secondary: #5f5f66;
     --dd-sep: rgb(60 60 67 / 29%);
     --dd-button: rgb(118 118 128 / 16%);
+    --dd-menu: #ffffff;
     --dd-accent: #0a6ed1;
     --dd-warning: #8f4a12;
     --dd-warning-bg: rgb(168 82 0 / 12%);
@@ -166,6 +168,48 @@ export const styles = css`
   .button:focus-visible {
     outline: 2px solid var(--dd-accent);
     outline-offset: 2px;
+  }
+  .snooze {
+    position: relative;
+    flex: none;
+  }
+  .menu {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 230px;
+    border-radius: 14px;
+    background: var(--dd-menu);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 45%);
+    overflow: hidden;
+  }
+  .menu button {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 11px 16px;
+    border: 0;
+    border-top: 0.5px solid var(--dd-sep);
+    background: none;
+    color: var(--dd-text);
+    font: inherit;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: start;
+    cursor: pointer;
+  }
+  .menu button:first-child {
+    border-top: 0;
+  }
+  .menu .until {
+    color: var(--dd-secondary);
+  }
+  .menu button:focus-visible {
+    outline: 2px solid var(--dd-accent);
+    outline-offset: -2px;
   }
   .now {
     min-height: 52px;

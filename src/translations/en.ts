@@ -6,6 +6,8 @@ export const en: typeof cs = {
   needsYou: "Needs you",
   nothingWaits: "Nothing is waiting for you",
   retry: "Try again",
+  snooze: "Later",
+  snoozeFor: { day: "A day", weekend: "To the weekend", week: "A week", month: "A month" },
   done: "Done",
   battery: (level) => (level ? `Battery ${level}` : "Low battery"),
   running: "Running now",

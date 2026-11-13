@@ -37,6 +37,8 @@ export class HaDumDashboard extends LitElement {
   @state() private _error = "";
   @state() private _hint?: string;
   @state() private _now = Date.now();
+  /** The row whose menu "Odložit" is open. */
+  @state() private _menu?: string;
 
   private timer?: number;
   private hintTimer?: number;
@@ -57,12 +59,24 @@ export class HaDumDashboard extends LitElement {
     super.connectedCallback();
     // The durations ("Pračka 42 min") move without any change of an entity.
     this.timer = window.setInterval(() => (this._now = Date.now()), 30000);
+    window.addEventListener("pointerdown", this.closeMenu);
+    window.addEventListener("keydown", this.closeMenu);
   }
+
+  /** A tap outside the open menu "Odložit", or Escape, closes it. */
+  private closeMenu = (event: Event): void => {
+    if (!this._menu) return;
+    if (event instanceof KeyboardEvent ? event.key === "Escape" : !event.composedPath().some((node) => node instanceof Element && node.classList.contains("snooze"))) {
+      this._menu = undefined;
+    }
+  };
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.clearInterval(this.timer);
     window.clearTimeout(this.hintTimer);
+    window.removeEventListener("pointerdown", this.closeMenu);
+    window.removeEventListener("keydown", this.closeMenu);
     this.gesture.dispose();
   }
 
@@ -105,7 +119,8 @@ export class HaDumDashboard extends LitElement {
     if (!config.failedActions && !config.batteries.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
-    const low = config.batteries.filter((battery) => readText(this.hass, battery.low) === "on");
+    const snoozed = this.snoozed(config);
+    const low = config.batteries.filter((battery) => readText(this.hass, battery.low) === "on" && !snoozed.has(`battery:${battery.low}`));
     const count = failed.length + low.length;
     const rows = [
       ...failed.map((item, index) => {
@@ -131,6 +146,7 @@ export class HaDumDashboard extends LitElement {
         return html`<div class="row" data-row="battery">
           <span class="mark">${ICON_BATTERY}</span>
           <span class="main">${this.name(battery.name)}<small>${detail}</small></span>
+          ${this.snoozeButton(config, `battery:${battery.low}`, i18n)}
         </div>`;
       }),
     ];
@@ -138,6 +154,49 @@ export class HaDumDashboard extends LitElement {
       <div class="group" data-part="queue">
         ${rows.length ? rows : html`<div class="row"><span class="main">${t.nothingWaits}</span></div>`}
       </div>`;
+  }
+
+  /* ---------- Odložit ---------- */
+
+  private day(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  /** The keys of the items postponed to a later day than today. */
+  private snoozed(config: Settings): Set<string> {
+    const items = entityState(this.hass, config.snoozed)?.attributes.polozky;
+    const today = this.day(new Date(this._now));
+    const keys = new Set<string>();
+    if (Array.isArray(items)) {
+      for (const item of items as Array<{ klic?: unknown; do?: unknown }>) {
+        if (typeof item?.klic === "string" && typeof item.do === "string" && item.do > today) keys.add(item.klic);
+      }
+    }
+    return keys;
+  }
+
+  /** "Odložit" with its menu (a day, to the weekend, a week, a month; without a time, it is no alarm). The menu only covers what is under it. */
+  private snoozeButton(config: Settings, key: string, i18n: I18n): TemplateResult | typeof nothing {
+    if (!config.snoozed || !config.snoozeScript) return nothing;
+    const t = i18n.t;
+    const now = new Date(this._now);
+    const plus = (days: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+    const toSaturday = (6 - now.getDay() + 7) % 7 || 7;
+    const month = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    const choices: Array<[string, Date]> = [[t.snoozeFor.day, plus(1)], [t.snoozeFor.weekend, plus(toSaturday)], [t.snoozeFor.week, plus(7)], [t.snoozeFor.month, month]];
+    const open = this._menu === key;
+    const choose = (until: Date) => {
+      this._menu = undefined;
+      this.call("script", config.snoozeScript!.split(".")[1], { klic: key, do: this.day(until) });
+    };
+    return html`<span class="snooze">
+      <button class="button" type="button" aria-haspopup="menu" aria-expanded=${open ? "true" : "false"} @click=${() => (this._menu = open ? undefined : key)}>${t.snooze}</button>
+      ${open
+        ? html`<div class="menu" role="menu">
+            ${choices.map(([label, until]) => html`<button type="button" role="menuitem" @click=${() => choose(until)}><span>${label}</span><span class="until">${i18n.day(until.getTime())}</span></button>`)}
+          </div>`
+        : nothing}
+    </span>`;
   }
 
   /** A failed command of a blind can be sent again when the sensor kept its target. */

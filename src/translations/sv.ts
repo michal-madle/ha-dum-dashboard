@@ -6,6 +6,8 @@ export const sv: typeof cs = {
   needsYou: "Behöver dig",
   nothingWaits: "Inget väntar på dig",
   retry: "Försök igen",
+  snooze: "Senare",
+  snoozeFor: { day: "En dag", weekend: "Till helgen", week: "En vecka", month: "En månad" },
   done: "Klart",
   battery: (level) => (level ? `Batteri ${level}` : "Svagt batteri"),
   running: "Körs nu",

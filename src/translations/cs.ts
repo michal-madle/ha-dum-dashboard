@@ -4,6 +4,8 @@ export const cs = {
   needsYou: "Potřebuje tebe",
   nothingWaits: "Nic na tebe nečeká",
   retry: "Zkusit znovu",
+  snooze: "Odložit",
+  snoozeFor: { day: "O den", weekend: "Na víkend", week: "O týden", month: "O měsíc" },
   done: "Hotovo",
   battery: (level: string | undefined) => (level ? `Baterie ${level}` : "Slabá baterie"),
   running: "Teď běží",

@@ -45,6 +45,37 @@ test.describe("fronta a co běží", () => {
     expect(await calls(page)).toEqual([{ domain: "script", service: "dum_nesplnene_smazat", data: { entita: "switch.technicka_mistnost_ventil_c1" } }]);
   });
 
+  test("Odložit: nabídka o den, na víkend, o týden, o měsíc jen překryje obsah; volba zavolá skript s dnem a odložená věc z fronty zmizí", async ({ page }) => {
+    await open(page);
+    const before = await page.locator("ha-card").boundingBox();
+    const row = page.locator('[data-row="battery"]');
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await expect(row.getByRole("menuitem")).toHaveText([/^O den/, /^Na víkend/, /^O týden/, /^O měsíc/]);
+    expect(await page.locator("ha-card").boundingBox()).toEqual(before);
+    // Klepnutí vedle nebo Escape nabídku zavře a nic neodešle.
+    await page.locator('[data-part="running"]').click({ position: { x: 20, y: 20 } });
+    await expect(row.getByRole("menuitem")).toHaveCount(0);
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await page.keyboard.press("Escape");
+    await expect(row.getByRole("menuitem")).toHaveCount(0);
+    expect(await calls(page)).toEqual([]);
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await row.getByRole("menuitem", { name: /O týden/ }).click();
+    await expect(row.getByRole("menuitem")).toHaveCount(0);
+    const day = (offset: number) => {
+      const now = new Date();
+      const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    };
+    expect(await calls(page)).toEqual([{ domain: "script", service: "dum_odlozit", data: { klic: "battery:binary_sensor.loznice_okno_loznice_battery", do: day(7) } }]);
+    await update(page, { "sensor.dum_odlozeno": { state: "1", attributes: { polozky: [{ klic: "battery:binary_sensor.loznice_okno_loznice_battery", do: day(7) }] } } });
+    await expect(page.locator('[data-row="battery"]')).toHaveCount(0);
+    expect((await headings(page))[0]).toBe("Potřebuje tebe · 1");
+    // Den návratu je dnes: věc je ve frontě zpátky.
+    await update(page, { "sensor.dum_odlozeno": { state: "1", attributes: { polozky: [{ klic: "battery:binary_sensor.loznice_okno_loznice_battery", do: day(0) }] } } });
+    await expect(page.locator('[data-row="battery"]')).toHaveCount(1);
+  });
+
   test("Teď běží: spotřebiče s dobou běhu a jednotkou, jinak „Nic neběží“", async ({ page }) => {
     await open(page);
     await expect(page.locator('[data-part="running"]')).toHaveText("Pračka 42 min · Myčka 1 h 5 min");

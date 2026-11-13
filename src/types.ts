@@ -31,6 +31,9 @@ export interface Settings {
   summer: string;
   failedActions?: string;
   clearFailed?: string;
+  /** The sensor with the postponed items and the script that postpones one. */
+  snoozed?: string;
+  snoozeScript?: string;
   batteries: Battery[];
   running: Named[];
   covers: { script: string; entities: string[]; presets: Preset[]; tolerance: number };

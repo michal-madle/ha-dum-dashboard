@@ -82,6 +82,8 @@ function normalize(raw: unknown): Settings {
     summer: text(modes.summer, "house_modes.summer") ?? "Léto",
     failedActions: entityId(raw.failed_actions, "failed_actions", { domain: "sensor" }),
     clearFailed: entityId(raw.clear_failed_script, "clear_failed_script", { domain: "script" }),
+    snoozed: entityId(raw.snoozed, "snoozed", { domain: "sensor" }),
+    snoozeScript: entityId(raw.snooze_script, "snooze_script", { domain: "script" }),
     batteries,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {

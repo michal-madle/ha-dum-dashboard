@@ -21,6 +21,7 @@ Karta je třetí vedle `ha-klima-dashboard` a `ha-energie-dashboard`; společné
 | Oddíl | Co nastavuje |
 |---|---|
 | `failed_actions`, `clear_failed_script` | senzor nesplněných akcí automatiky a skript, který jednu položku smaže |
+| `snoozed`, `snooze_script` | senzor odložených věcí a skript „odložit“ (klíč a den návratu); bez nich tlačítko „Odložit“ není |
 | `batteries` | čidla s baterií: `low` (binary_sensor, `on` = slabá), volitelně `level` a `type` |
 | `running` | spotřebiče, které se ukážou v „Teď běží“ s dobou běhu |
 | `covers` | žaluzie, skript posunu (`entity`, `pos`, `tilt`) a předvolby |
