@@ -54,11 +54,20 @@ filters:                            # filtr klimatizace: hodiny od čištění p
     hours: input_number.pracovna_ac_pracovna_filtr_hodiny
     threshold: select.pracovna_ac_pracovna_dust_filter_alarm_threshold
 running:
-  - name: {cs: Pračka, en: Washing machine, sv: Tvättmaskin}
+  - name:
+      cs: Pračka
+      en: Washing machine
+      sv: Tvättmaskin
     entity: input_boolean.technicka_mistnost_pracka_bezi
-  - name: {cs: Sušička, en: Dryer, sv: Torktumlare}
+  - name:
+      cs: Sušička
+      en: Dryer
+      sv: Torktumlare
     entity: input_boolean.technicka_mistnost_susicka_bezi
-  - name: {cs: Myčka, en: Dishwasher, sv: Diskmaskin}
+  - name:
+      cs: Myčka
+      en: Dishwasher
+      sv: Diskmaskin
     entity: input_boolean.kuchyne_mycka_bezi
 covers:
   script: script.zaluzie_posun      # volá se s entity, pos, tilt pro každou žaluzii
@@ -69,13 +78,22 @@ covers:
     - cover.mikulas_zaluzie_mikulas
     - cover.pracovna_zaluzie_pracovna
   presets:
-    - name: {cs: Den, en: Day, sv: Dag}
+    - name:
+        cs: Den
+        en: Day
+        sv: Dag
       position: 100
       tilt: 100
-    - name: {cs: Stín, en: Shade, sv: Skugga}
+    - name:
+        cs: Stín
+        en: Shade
+        sv: Skugga
       position: 0
       tilt: 100
-    - name: {cs: Tma, en: Dark, sv: Mörker}
+    - name:
+        cs: Tma
+        en: Dark
+        sv: Mörker
       position: 0
       tilt: 0
 ventilation:
