@@ -3082,6 +3082,7 @@ const as = j`
     --hdk-tile: var(--dd-el);
   }
   :host([data-light]) dd-sheet {
+    --hdk-sheet-button: rgb(118 118 128 / 12%);
     --hdk-sheet-backdrop: 35%;
     --hdk-sheet-border: rgb(0 0 0 / 8%);
     --hdk-sheet-grabber: rgb(60 60 67 / 30%);
@@ -3714,4 +3715,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Oe(Gi()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.7.3 · 2026-11-13 17:25 UTC · po d28418a ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.7.4 · 2026-11-13 17:52 UTC · po 161a86a ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

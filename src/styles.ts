@@ -112,6 +112,7 @@ export const styles = css`
     --hdk-tile: var(--dd-el);
   }
   :host([data-light]) dd-sheet {
+    --hdk-sheet-button: rgb(118 118 128 / 12%);
     --hdk-sheet-backdrop: 35%;
     --hdk-sheet-border: rgb(0 0 0 / 8%);
     --hdk-sheet-grabber: rgb(60 60 67 / 30%);
