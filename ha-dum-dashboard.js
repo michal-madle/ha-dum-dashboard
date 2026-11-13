@@ -2350,6 +2350,9 @@ oe.styles = [
         :host([pending]) button {
           animation: none;
           background: var(--hdk-tile-mixed, #17395d);
+          /* Not by colour alone: a dashed accent outline marks the command on its way. */
+          outline: 1.5px dashed var(--hdk-tile-on, #0a6ed1);
+          outline-offset: -1.5px;
         }
       }
       .name {
@@ -3263,6 +3266,7 @@ const us = F`
     display: block;
     font-size: 15px;
     line-height: 20px;
+    color: var(--dd-secondary);
   }
   .log-row small {
     display: block;
@@ -4123,4 +4127,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Fe(ts()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.10.0 · 2026-11-13 21:33 UTC · po 22d6d0c ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.10.1 · 2026-11-13 21:33 UTC · po 2d406c3 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

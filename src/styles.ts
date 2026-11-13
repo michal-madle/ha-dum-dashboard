@@ -171,6 +171,7 @@ export const styles = css`
     display: block;
     font-size: 15px;
     line-height: 20px;
+    color: var(--dd-secondary);
   }
   .log-row small {
     display: block;
