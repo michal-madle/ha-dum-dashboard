@@ -488,7 +488,7 @@ test.describe("ovládání", () => {
     await page.locator("dd-sheet .close").last().click();
     // Odpojené čidlo a vadný disk jdou nahoru.
     await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" } });
-    await expect(health.locator('[data-row="attention"]')).toContainText("Tado Maxík · Odpojeno");
+    await expect(health.locator('[data-row="attention"]')).toContainText("Tado Maxík odpojeno");
     await expect(health.locator('[data-row="attention"]')).toContainText("NAS disk 2 sektory");
     await expect(health.locator('[data-health="connections"]')).toContainText("1 odpojeno");
     await health.locator('[data-health="updates"]').click();

@@ -78,10 +78,12 @@ export function logRows(entries: LogEntry[], kindOf: (entity: string) => string)
     items.push({ entry, time: logTime(entry), state, reason, kind: kindOf(entry.entity_id) });
   }
   // Moments: a change within a minute of the previous one belongs to it.
+  // What a person did in the app is always a cause of its own row, never merged under another one.
   const moments: LogItem[][] = [];
   for (const item of items) {
     const last = moments.at(-1);
-    if (last && item.time - last[last.length - 1].time <= MOMENT_MS) last.push(item);
+    const person = item.reason === "app" && last?.some((other) => other.reason === "app");
+    if (last && !person && item.time - last[last.length - 1].time <= MOMENT_MS) last.push(item);
     else moments.push([item]);
   }
   return moments
@@ -103,7 +105,8 @@ export function logRows(entries: LogEntry[], kindOf: (entity: string) => string)
         if (group) group.items.push(item);
         else groups.push({ kind: item.kind, state: item.state, items: [item] });
       }
-      return { time: moment[moment.length - 1].time, head, groups };
+      // The time of the cause.
+      return { time: head.time, head, groups };
     })
     .sort((a, b) => b.time - a.time);
 }

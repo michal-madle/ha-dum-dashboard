@@ -194,7 +194,9 @@ export class HaDumDashboard extends LitElement {
       const binary = item.entity.startsWith("binary_sensor.");
       const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
       const value = !entity || isNoValue(entity.state) ? t.unavailable : binary ? (entity.state === "on" ? t.healthProblem : t.healthOk) : hass?.formatEntityState ? hass.formatEntityState(entity) : entity.state;
-      return { item, value, problem: binary && entity?.state === "on" };
+      // A binary sensor is a problem when on; a status (a NAS volume: normal, degraded, crashed …) when not normal.
+      const status = !binary && item.entity.endsWith("_status") && entity !== undefined && !isNoValue(entity.state) && entity.state !== "normal";
+      return { item, value, problem: (binary && entity?.state === "on") || status };
     });
     const updates = h.updates
       ? Object.entries(this.hass?.states ?? {})
@@ -204,7 +206,7 @@ export class HaDumDashboard extends LitElement {
       : [];
     const attention = [
       ...batteries.filter(({ level }) => level !== undefined && level < h.batteryLow).map(({ item, level }) => `${this.name(item.name)} ${i18n.percent(Math.round(level!))}`),
-      ...connections.filter(({ state }) => state !== "on").map(({ item }) => `${this.name(item.name)} · ${t.healthOffline}`),
+      ...connections.filter(({ state }) => state !== "on").map(({ item }) => `${this.name(item.name)} ${t.healthOffline.toLocaleLowerCase(i18n.language)}`),
       ...system.filter(({ problem }) => problem).map(({ item }) => this.name(item.name)),
     ];
     return { batteries, connections, system, updates, attention };
@@ -227,7 +229,11 @@ export class HaDumDashboard extends LitElement {
         ${state.attention.length
           ? html`<div class="row" data-row="attention"><span class="mark warn" aria-hidden="true">!</span><span class="main">${t.healthAttention}<small class="warn">${joined(state.attention)}</small></span></div>`
           : nothing}
-        ${h.batteries.length && lowest ? row("batteries", t.healthBatteries, t.healthLowest(`${this.name(lowest.item.name)} ${i18n.percent(Math.round(lowest.level!))}`), lowest.level! < h.batteryLow) : nothing}
+        ${h.batteries.length
+          ? lowest
+            ? row("batteries", t.healthBatteries, t.healthLowest(`${this.name(lowest.item.name)} ${i18n.percent(Math.round(lowest.level!))}`), lowest.level! < h.batteryLow)
+            : row("batteries", t.healthBatteries, t.unavailable, true)
+          : nothing}
         ${h.connections.length ? row("connections", t.healthConnections, offline ? t.healthOfflineCount(offline) : t.healthAllOnline, offline > 0) : nothing}
         ${h.system.length ? row("system", t.healthSystem, problems ? t.healthProblem : t.healthOk, problems > 0) : nothing}
         ${h.updates ? row("updates", t.healthUpdates, state.updates.length ? t.healthUpdatesCount(state.updates.length) : t.healthUpToDate) : nothing}

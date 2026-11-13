@@ -244,7 +244,7 @@ health:                             # Zdraví: baterie čidel (%), připojení (
   system:
     - name: NAS svazek
       entity: sensor.madlovi_volume_1_status
-    - name: NAS místo
+    - name: NAS obsazeno
       entity: sensor.madlovi_volume_1_volume_used
     - name: NAS teplota
       entity: sensor.madlovi_temperature
