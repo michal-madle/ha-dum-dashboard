@@ -313,7 +313,7 @@ test.describe("ovládání", () => {
     await open(page, "summer");
     await tile(page, "cooling", "Obývák").click();
     await expect(page.locator("dd-climate h3")).toHaveText(["Režim", "Síla větru", "Směr proudění", "Vypnout za"]);
-    await page.locator("dd-climate dd-segmented").nth(0).getByRole("radio", { name: "Silně" }).click();
+    await page.locator("dd-climate dd-segmented").nth(0).getByRole("radio", { name: "Vysoká" }).click();
     await page.getByRole("button", { name: "Detail a historie" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(await calls(page)).toEqual([

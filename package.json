@@ -1,6 +1,6 @@
 {
   "name": "ha-dum-dashboard",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "npm run build && playwright test"
   },
   "dependencies": {
-    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#38677fe824d2aec8212c429e5eec25cdd6542d5d",
+    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#ad245964a8af61bdea471a24bf06e00bff9c466b",
     "lit": "^3.3.1"
   },
   "devDependencies": {

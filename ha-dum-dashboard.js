@@ -247,7 +247,7 @@ let et = class extends HTMLElement {
   }
 };
 et.elementStyles = [], et.shadowRootOptions = { mode: "open" }, et[ft("elementProperties")] = /* @__PURE__ */ new Map(), et[ft("finalized")] = /* @__PURE__ */ new Map(), He?.({ ReactiveElement: et }), (Tt.reactiveElementVersions ??= []).push("2.1.2");
-const It = globalThis, ue = (s) => s, Mt = It.trustedTypes, pe = Mt ? Mt.createPolicy("lit-html", { createHTML: (s) => s }) : void 0, _e = "$lit$", V = `lit$${Math.random().toFixed(9).slice(2)}$`, Ae = "?" + V, Ye = `<${Ae}>`, X = document, gt = () => X.createComment(""), bt = (s) => s === null || typeof s != "object" && typeof s != "function", Ht = Array.isArray, Ve = (s) => Ht(s) || typeof s?.[Symbol.iterator] == "function", Dt = `[ 	
+const It = globalThis, ue = (s) => s, Mt = It.trustedTypes, pe = Mt ? Mt.createPolicy("lit-html", { createHTML: (s) => s }) : void 0, _e = "$lit$", Y = `lit$${Math.random().toFixed(9).slice(2)}$`, Ae = "?" + Y, Ve = `<${Ae}>`, X = document, gt = () => X.createComment(""), bt = (s) => s === null || typeof s != "object" && typeof s != "function", Ht = Array.isArray, Ye = (s) => Ht(s) || typeof s?.[Symbol.iterator] == "function", Dt = `[ 	
 \f\r]`, ht = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, fe = /-->/g, me = />/g, K = RegExp(`>|${Dt}(?:([^\\s"'>=/]+)(${Dt}*=${Dt}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), ge = /'/g, be = /"/g, Se = /^(?:script|style|textarea|title)$/i, qe = (s) => (t, ...e) => ({ _$litType$: s, strings: t, values: e }), c = qe(1), st = /* @__PURE__ */ Symbol.for("lit-noChange"), f = /* @__PURE__ */ Symbol.for("lit-nothing"), ve = /* @__PURE__ */ new WeakMap(), Z = X.createTreeWalker(X, 129);
 function Me(s, t) {
@@ -262,7 +262,7 @@ const We = (s, t) => {
     let h, m, d = -1, p = 0;
     for (; p < l.length && (r.lastIndex = p, m = r.exec(l), m !== null); ) p = r.lastIndex, r === ht ? m[1] === "!--" ? r = fe : m[1] !== void 0 ? r = me : m[2] !== void 0 ? (Se.test(m[2]) && (n = RegExp("</" + m[2], "g")), r = K) : m[3] !== void 0 && (r = K) : r === K ? m[0] === ">" ? (r = n ?? ht, d = -1) : m[1] === void 0 ? d = -2 : (d = r.lastIndex - m[2].length, h = m[1], r = m[3] === void 0 ? K : m[3] === '"' ? be : ge) : r === be || r === ge ? r = K : r === fe || r === me ? r = ht : (r = K, n = void 0);
     const v = r === K && s[a + 1].startsWith("/>") ? " " : "";
-    o += r === ht ? l + Ye : d >= 0 ? (i.push(h), l.slice(0, d) + _e + l.slice(d) + V + v) : l + V + (d === -2 ? a : v);
+    o += r === ht ? l + Ve : d >= 0 ? (i.push(h), l.slice(0, d) + _e + l.slice(d) + Y + v) : l + Y + (d === -2 ? a : v);
   }
   return [Me(s, o + (s[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), i];
 };
@@ -279,11 +279,11 @@ class vt {
     for (; (n = Z.nextNode()) !== null && l.length < a; ) {
       if (n.nodeType === 1) {
         if (n.hasAttributes()) for (const d of n.getAttributeNames()) if (d.endsWith(_e)) {
-          const p = m[r++], v = n.getAttribute(d).split(V), g = /([.?@])?(.*)/.exec(p);
+          const p = m[r++], v = n.getAttribute(d).split(Y), g = /([.?@])?(.*)/.exec(p);
           l.push({ type: 1, index: o, name: g[2], strings: v, ctor: g[1] === "." ? Ge : g[1] === "?" ? Ze : g[1] === "@" ? Xe : zt }), n.removeAttribute(d);
-        } else d.startsWith(V) && (l.push({ type: 6, index: o }), n.removeAttribute(d));
+        } else d.startsWith(Y) && (l.push({ type: 6, index: o }), n.removeAttribute(d));
         if (Se.test(n.tagName)) {
-          const d = n.textContent.split(V), p = d.length - 1;
+          const d = n.textContent.split(Y), p = d.length - 1;
           if (p > 0) {
             n.textContent = Mt ? Mt.emptyScript : "";
             for (let v = 0; v < p; v++) n.append(d[v], gt()), Z.nextNode(), l.push({ type: 2, index: ++o });
@@ -293,7 +293,7 @@ class vt {
       } else if (n.nodeType === 8) if (n.data === Ae) l.push({ type: 2, index: o });
       else {
         let d = -1;
-        for (; (d = n.data.indexOf(V, d + 1)) !== -1; ) l.push({ type: 7, index: o }), d += V.length - 1;
+        for (; (d = n.data.indexOf(Y, d + 1)) !== -1; ) l.push({ type: 7, index: o }), d += Y.length - 1;
       }
       o++;
     }
@@ -356,7 +356,7 @@ class $t {
     return this._$AB;
   }
   _$AI(t, e = this) {
-    t = nt(this, t, e), bt(t) ? t === f || t == null || t === "" ? (this._$AH !== f && this._$AR(), this._$AH = f) : t !== this._$AH && t !== st && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : Ve(t) ? this.k(t) : this._(t);
+    t = nt(this, t, e), bt(t) ? t === f || t == null || t === "" ? (this._$AH !== f && this._$AR(), this._$AH = f) : t !== this._$AH && t !== st && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : Ye(t) ? this.k(t) : this._(t);
   }
   O(t) {
     return this._$AA.parentNode.insertBefore(t, this._$AB);
@@ -472,7 +472,7 @@ const ti = (s, t, e) => {
   }
   return n._$AI(s), n;
 };
-const Yt = globalThis;
+const Vt = globalThis;
 class N extends et {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
@@ -495,13 +495,13 @@ class N extends et {
     return st;
   }
 }
-N._$litElement$ = !0, N.finalized = !0, Yt.litElementHydrateSupport?.({ LitElement: N });
-const ei = Yt.litElementPolyfillSupport;
+N._$litElement$ = !0, N.finalized = !0, Vt.litElementHydrateSupport?.({ LitElement: N });
+const ei = Vt.litElementPolyfillSupport;
 ei?.({ LitElement: N });
-(Yt.litElementVersions ??= []).push("4.2.2");
+(Vt.litElementVersions ??= []).push("4.2.2");
 const Ce = /* @__PURE__ */ Symbol.for(""), ii = (s) => {
   if (s?.r === Ce) return s?._$litStatic$;
-}, Vt = (s) => ({ _$litStatic$: s, r: Ce }), $e = /* @__PURE__ */ new Map(), si = (s) => (t, ...e) => {
+}, Yt = (s) => ({ _$litStatic$: s, r: Ce }), $e = /* @__PURE__ */ new Map(), si = (s) => (t, ...e) => {
   const i = e.length;
   let n, o;
   const r = [], a = [];
@@ -727,36 +727,37 @@ const yi = ["next", "30", "60", "180", "forever"], xi = [0, 60, 180, 480], Jt = 
     super.disconnectedCallback(), this.flush();
   }
   willUpdate(t) {
-    (t.has("system") && t.get("system") !== void 0 || t.has("rooms") && t.get("rooms") !== void 0) && this.flush(t.get("selected") ?? this.selected);
+    (t.has("system") && t.get("system") !== void 0 || t.has("rooms") && t.get("rooms") !== void 0) && this.flush(t.get("selected") ?? this.selected, t.get("system") ?? this.system);
   }
   /** Sends what waits at once (the sheet closes). */
-  async flush(t = this.selected) {
+  async flush(t = this.selected, e = this.system) {
     window.clearTimeout(this.timer), this.timer = void 0;
-    const e = this.draft;
-    Object.keys(e).length && (this.draft = {}, await this.send(e, t));
+    const i = this.draft;
+    Object.keys(i).length && (this.draft = {}, await this.send(i, t, e));
   }
   change(t) {
     this.draft = { ...this.draft, ...t }, this.error = "", this.busy = !0, window.clearTimeout(this.timer), this.timer = window.setTimeout(() => {
       this.flush();
     }, this.delayMs);
   }
-  async send(t, e) {
-    const i = this.hass;
-    if (!i) return;
+  /** Sends a draft to the rooms it was made for, with the system it was made in (the popup may have switched since). */
+  async send(t, e, i) {
+    const n = this.hass;
+    if (!n) return;
     this.busy = !0;
-    const n = Ot(i);
+    const o = Ot(n);
     try {
-      for (const o of e) {
-        const r = i.states[o];
-        if (!r || it(this.system, r) === void 0) continue;
-        const a = this.system === "heating" ? mi(o, r, t, n) : gi(o, r, t);
-        for (const m of a) await i.callService(m.domain, m.service, m.data);
-        const l = t.offAfter ?? 0, h = this.system === "cooling" ? bi(r, t) : void 0;
-        l > 0 && h !== void 0 && h !== "off" && await i.callWS(vi(o, l, h));
+      for (const r of e) {
+        const a = n.states[r];
+        if (!a || it(i, a) === void 0) continue;
+        const l = i === "heating" ? mi(r, a, t, o) : gi(r, a, t);
+        for (const d of l) await n.callService(d.domain, d.service, d.data);
+        const h = t.offAfter ?? 0, m = i === "cooling" ? bi(a, t) : void 0;
+        h > 0 && m !== void 0 && m !== "off" && await n.callWS(vi(r, h, m));
       }
       this.dispatchEvent(new CustomEvent("hdk-sent", { bubbles: !0, composed: !0 }));
-    } catch (o) {
-      this.error = `${this.texts?.failed ?? "Failed"}: ${o instanceof Error ? o.message : String(o)}`, this.dispatchEvent(new CustomEvent("hdk-error", { detail: { message: this.error }, bubbles: !0, composed: !0 }));
+    } catch (r) {
+      this.error = `${this.texts?.failed ?? "Failed"}: ${r instanceof Error ? r.message : String(r)}`, this.dispatchEvent(new CustomEvent("hdk-error", { detail: { message: this.error }, bubbles: !0, composed: !0 }));
     } finally {
       this.busy = this.timer !== void 0;
     }
@@ -1037,7 +1038,7 @@ j([
   A()
 ], M.prototype, "error");
 function ye(s, t) {
-  const e = Vt(`${s}-tile`);
+  const e = Yt(`${s}-tile`);
   return qt`<${e}
     kind="action"
     ?centered=${t.centered ?? !1}
@@ -1053,7 +1054,7 @@ function ye(s, t) {
   ></${e}>`;
 }
 function kt(s, t) {
-  const e = Vt(`${s}-segmented`);
+  const e = Yt(`${s}-segmented`);
   return qt`<${e}
     .label=${t.label}
     .options=${t.options}
@@ -1066,7 +1067,7 @@ function kt(s, t) {
   ></${e}>`;
 }
 function wi(s, t) {
-  const e = Vt(`${s}-slider`);
+  const e = Yt(`${s}-slider`);
   return qt`<${e}
     .min=${t.min}
     .max=${t.max}
@@ -1458,8 +1459,8 @@ te.styles = [
       }
       .track.wrap button {
         padding: 0 4px;
-        font-size: 15px;
-        line-height: 20px;
+        font-size: 13px;
+        line-height: 17px;
         text-align: center;
       }
       /* A control that cannot be used now does not look chosen: the thumb fades with the labels. */
@@ -2607,7 +2608,7 @@ function ct(s, t, e) {
     return e.includes(a.split(".")[0]) || $(`${o}.entity must be one of ${e.join(", ")}, not ${a}.`), { name: r, entity: a };
   });
 }
-function Yi(s) {
+function Vi(s) {
   q(s) || $("the configuration must be a mapping of keys.");
   const t = tt(s.covers, "covers");
   O(t, ["script", "entities", "last_action", "presets", "tolerance"], "covers");
@@ -2687,8 +2688,8 @@ function Yi(s) {
     }
   };
 }
-function Vi(s) {
-  return Oi("Dům Dashboard", () => Yi(s));
+function Yi(s) {
+  return Oi("Dům Dashboard", () => Vi(s));
 }
 function Ne(s) {
   return (s?.locale?.language || s?.language || "").trim();
@@ -2798,8 +2799,8 @@ const es = {
     offAt: (s) => `Běží do ${s}, potom se vypne.`,
     fan: "Síla větru",
     swing: "Směr proudění",
-    fanModes: { auto: "Auto", low: "Slabě", medium: "Středně", high: "Silně", turbo: "Turbo", quiet: "Tiše" },
-    swingModes: { off: "Pevně", both: "Všude", vertical: "Nahoru a dolů", horizontal: "Do stran" },
+    fanModes: { auto: "Auto", low: "Nízká", medium: "Střední", high: "Vysoká", turbo: "Turbo", quiet: "Tichá" },
+    swingModes: { off: "Pevně", vertical: "Svisle", horizontal: "Vodorovně", both: "Vše" },
     detail: "Detail a historie",
     sending: "Odesílá se",
     failed: "Nepodařilo se"
@@ -2864,8 +2865,8 @@ const es = {
     fan: "Fan speed",
     swing: "Air direction",
     fanModes: { auto: "Auto", low: "Low", medium: "Medium", high: "High", turbo: "Turbo", quiet: "Quiet" },
-    swingModes: { off: "Fixed", both: "All ways", vertical: "Up and down", horizontal: "Side to side" },
-    detail: "Detail and history",
+    swingModes: { off: "Fixed", vertical: "Vertical", horizontal: "Horizontal", both: "Both" },
+    detail: "Details and history",
     sending: "Sending",
     failed: "It did not work"
   },
@@ -2929,8 +2930,8 @@ const es = {
     fan: "Fläkthastighet",
     swing: "Luftriktning",
     fanModes: { auto: "Auto", low: "Låg", medium: "Medel", high: "Hög", turbo: "Turbo", quiet: "Tyst" },
-    swingModes: { off: "Fast", both: "Alla håll", vertical: "Upp och ner", horizontal: "Åt sidorna" },
-    detail: "Detalj och historik",
+    swingModes: { off: "Fast", vertical: "Vertikalt", horizontal: "Horisontellt", both: "Båda" },
+    detail: "Detaljer och historik",
     sending: "Skickar",
     failed: "Det gick inte"
   },
@@ -3286,7 +3287,7 @@ const os = R`
     line-height: 18px;
   }
 `;
-var rs = Object.defineProperty, Y = (s, t, e, i) => {
+var rs = Object.defineProperty, V = (s, t, e, i) => {
   for (var n = void 0, o = s.length - 1, r; o >= 0; o--)
     (r = s[o]) && (n = r(t, e, n) || n);
   return n && rs(t, e, n), n;
@@ -3301,7 +3302,7 @@ const as = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     };
   }
   setConfig(t) {
-    this._config = Vi(t);
+    this._config = Yi(t);
   }
   getCardSize() {
     return 12;
@@ -3665,31 +3666,31 @@ const as = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 };
 oe.styles = [Pt, Wt, os];
 let D = oe;
-Y([
+V([
   u({ attribute: !1 })
 ], D.prototype, "hass");
-Y([
+V([
   A()
 ], D.prototype, "_config");
-Y([
+V([
   A()
 ], D.prototype, "_error");
-Y([
+V([
   A()
 ], D.prototype, "_hint");
-Y([
+V([
   A()
 ], D.prototype, "_now");
-Y([
+V([
   A()
 ], D.prototype, "_detail");
-Y([
+V([
   A()
 ], D.prototype, "_climateSelected");
-Y([
+V([
   A()
 ], D.prototype, "_menu");
-Y([
+V([
   A()
 ], D.prototype, "_fit");
 Pi("dd");
@@ -3702,4 +3703,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Pe(Wi()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.7.0 · 2026-11-13 13:41 UTC · po 919f098 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.7.1 · 2026-11-13 14:14 UTC · po 4970d1c ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
