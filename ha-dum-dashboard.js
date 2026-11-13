@@ -2803,8 +2803,8 @@ const os = {
   coversDetail: "Podrobnosti žaluzií",
   close: "Zavřít",
   log: "Co se stalo",
-  logNew: (s, t) => `${s} ${s === 1 ? "nová" : s < 5 ? "nové" : "nových"} od ${t}`,
-  logToday: (s) => `${s} dnes`,
+  logNew: (s, t) => `${s} ${s === 1 ? "nová událost" : s < 5 ? "nové události" : "nových událostí"} od ${t}`,
+  logToday: (s) => `${s} ${s === 1 ? "událost" : s < 5 ? "události" : "událostí"} dnes`,
   logNothingNew: "Nic nového",
   logSince: "Od minulého otevření",
   logEarlier: "Dříve dnes",
@@ -2877,8 +2877,8 @@ const os = {
   coversDetail: "Blinds in detail",
   close: "Close",
   log: "What happened",
-  logNew: (s, t) => `${s} new since ${t}`,
-  logToday: (s) => `${s} today`,
+  logNew: (s, t) => `${s} new ${s === 1 ? "event" : "events"} since ${t}`,
+  logToday: (s) => `${s} ${s === 1 ? "event" : "events"} today`,
   logNothingNew: "Nothing new",
   logSince: "Since you last looked",
   logEarlier: "Earlier today",
@@ -2951,8 +2951,8 @@ const os = {
   coversDetail: "Persienner i detalj",
   close: "Stäng",
   log: "Vad hände",
-  logNew: (s, t) => `${s} ${s === 1 ? "ny" : "nya"} sedan ${t}`,
-  logToday: (s) => `${s} i dag`,
+  logNew: (s, t) => `${s} ${s === 1 ? "ny händelse" : "nya händelser"} sedan ${t}`,
+  logToday: (s) => `${s} ${s === 1 ? "händelse" : "händelser"} i dag`,
   logNothingNew: "Inget nytt",
   logSince: "Sedan du tittade senast",
   logEarlier: "Tidigare i dag",
@@ -3489,9 +3489,8 @@ const ps = h`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     n.setHours(0, 0, 0, 0);
     try {
       const o = await e.callWS({ type: "logbook/get_events", start_time: n.toISOString(), entity_ids: i });
-      this._log = (Array.isArray(o) ? o : []).filter((r) => typeof r.entity_id == "string" && r.state !== void 0 && !["unavailable", "unknown", ""].includes(String(r.state))).sort((r, a) => nt(a) - nt(r));
+      this._log = (Array.isArray(o) ? o : []).filter((r) => typeof r.entity_id == "string" && r.state !== void 0 && !["unavailable", "unknown", "opening", "closing", ""].includes(String(r.state))).sort((r, a) => nt(a) - nt(r));
     } catch {
-      this._log = void 0;
     }
   }
   /** Why it happened: the automation or script, or the app (a person); nothing when Home Assistant does not say. */
@@ -3504,10 +3503,12 @@ const ps = h`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   }
   renderLogRow(t, e) {
     if (!this.logEntities(t).length) return m;
-    const i = e.t, n = (this._log ?? []).filter((r) => nt(r) > this._seen).length, o = this._log === void 0 ? "" : n ? i.logNew(n, e.time(this._seen > 0 ? this._seen : Date.now())) : i.logNothingNew;
+    const i = e.t, n = (this._log ?? []).filter((l) => nt(l) > this._seen).length, o = /* @__PURE__ */ new Date();
+    o.setHours(0, 0, 0, 0);
+    const r = this._seen < o.getTime(), a = this._log === void 0 ? "" : n ? r ? i.logToday(n) : i.logNew(n, e.time(this._seen)) : i.logNothingNew;
     return h`<div class="group" data-part="log">
       <button class="row link-row" type="button" aria-haspopup="dialog" @click=${() => this.openLog()}>
-        <span class="main">${i.log}${o ? h`<small>${this._seen > 0 || !n ? o : i.logToday(n)}</small>` : m}</span>
+        <span class="main">${i.log}${a ? h`<small>${a}</small>` : m}</span>
         <span class="chevron-mark" aria-hidden="true">›</span>
       </button>
     </div>`;
@@ -3911,4 +3912,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Le(Xi()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.8.0 · 2026-11-13 20:57 UTC · po 86604b6 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.9.0 · 2026-11-13 20:59 UTC · po e6fa4db ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

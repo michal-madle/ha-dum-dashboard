@@ -209,10 +209,11 @@ export class HaDumDashboard extends LitElement {
     try {
       const rows = await hass.callWS<LogEntry[]>({ type: "logbook/get_events", start_time: midnight.toISOString(), entity_ids: entities });
       this._log = (Array.isArray(rows) ? rows : [])
-        .filter((row) => typeof row.entity_id === "string" && row.state !== undefined && !["unavailable", "unknown", ""].includes(String(row.state)))
+        // Unavailable is the queue's business; opening and closing are only the way to the end position of a blind.
+        .filter((row) => typeof row.entity_id === "string" && row.state !== undefined && !["unavailable", "unknown", "opening", "closing", ""].includes(String(row.state)))
         .sort((a, b) => logTime(b) - logTime(a));
     } catch {
-      this._log = undefined;
+      // A failed refresh keeps what was loaded; only a journal that never loaded says so.
     }
   }
 
@@ -233,10 +234,14 @@ export class HaDumDashboard extends LitElement {
     if (!this.logEntities(config).length) return nothing;
     const t = i18n.t;
     const fresh = (this._log ?? []).filter((entry) => logTime(entry) > this._seen).length;
-    const detail = this._log === undefined ? "" : fresh ? t.logNew(fresh, i18n.time(this._seen > 0 ? this._seen : Date.now())) : t.logNothingNew;
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    // Seen before today (or never): the journal starts at midnight, so the count is of today.
+    const today = this._seen < midnight.getTime();
+    const detail = this._log === undefined ? "" : !fresh ? t.logNothingNew : today ? t.logToday(fresh) : t.logNew(fresh, i18n.time(this._seen));
     return html`<div class="group" data-part="log">
       <button class="row link-row" type="button" aria-haspopup="dialog" @click=${() => this.openLog()}>
-        <span class="main">${t.log}${detail ? html`<small>${this._seen > 0 || !fresh ? detail : t.logToday(fresh)}</small>` : nothing}</span>
+        <span class="main">${t.log}${detail ? html`<small>${detail}</small>` : nothing}</span>
         <span class="chevron-mark" aria-hidden="true">›</span>
       </button>
     </div>`;

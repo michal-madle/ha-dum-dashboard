@@ -165,12 +165,14 @@ test.describe("fronta a co běží", () => {
 
 test.describe("Co se stalo", () => {
   test("řádek ukáže počet nových, list je rozdělí na „Od minulého otevření“ a „Dříve dnes“ s časem a důvodem; zavření je označí jako viděné", async ({ page }) => {
+    // Bez animace listu (axe by měřil kontrast během náběhu).
+    await page.emulateMedia({ reducedMotion: "reduce" });
     // Naposledy viděno před hodinou (toto zařízení).
     await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 3600000)));
     await open(page);
     const row = page.locator('[data-part="log"] button');
     await expect(row).toContainText("Co se stalo");
-    await expect(row).toContainText("1 nová od");
+    await expect(row).toContainText("1 nová událost od");
     const query = await page.evaluate(() => {
       const first = (window as any).__test.logQueries[0];
       return { entities: first.entity_ids as string[], hour: new Date(first.start_time).getHours(), minute: new Date(first.start_time).getMinutes() };
@@ -181,7 +183,7 @@ test.describe("Co se stalo", () => {
     await row.click();
     const sheet = page.locator('[data-part="log-detail"]');
     await expect(sheet.locator("h3")).toHaveText(["Od minulého otevření", "Dříve dnes"]);
-    // Nedostupná se nevypisuje; důvod je automatika nebo „Aplikace“.
+    // Nedostupná a pohyb žaluzie („closing“) se nevypisují; důvod je automatika nebo „Aplikace“.
     await expect(sheet.locator(".log-row")).toHaveCount(2);
     await expect(sheet.locator(".log-row").first()).toContainText("Žaluzie Ložnice");
     await expect(sheet.locator(".log-row").first()).toContainText("Večerní fáze");
@@ -191,13 +193,25 @@ test.describe("Co se stalo", () => {
     await expect(row).toContainText("Nic nového");
   });
 
+  test("naposledy viděno včera: počet je ode dneška („N událostí dnes“), ne „od“ včerejšího času", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 2 * 86400000)));
+    await open(page);
+    await expect(page.locator('[data-part="log"] button')).toContainText("2 události dnes");
+  });
+
   test("bez deníku řekne, že se nepodařil načíst; prázdný den „Dnes se nic nestalo.“", async ({ page }) => {
     await open(page);
     await page.evaluate(() => { (window as any).__test.logbook = []; });
     await page.locator('[data-part="log"] button').click();
     await expect(page.locator('[data-part="log-detail"]')).toHaveText("Dnes se nic nestalo.");
     await page.locator("dd-sheet .close").last().click();
+    // Nepovedené obnovení nechá, co už bylo načtené.
     await page.evaluate(() => { (window as any).__test.fail = true; });
+    await page.locator('[data-part="log"] button').click();
+    await expect(page.locator('[data-part="log-detail"]')).toHaveText("Dnes se nic nestalo.");
+    await page.locator("dd-sheet .close").last().click();
+    // Deník, který se nenačetl nikdy, to řekne.
+    await page.evaluate(() => { (window as any).__test.card._log = undefined; });
     await page.locator('[data-part="log"] button').click();
     await expect(page.locator('[data-part="log-detail"]')).toHaveText("Deník se nepodařilo načíst.");
   });
