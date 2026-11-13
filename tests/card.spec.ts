@@ -176,7 +176,7 @@ test.describe("Co se stalo", () => {
     await open(page);
     const row = page.locator('[data-part="log"] button');
     await expect(row).toContainText("Co se stalo");
-    await expect(row).toContainText("2 nové události od");
+    await expect(row).toContainText("3 nové události od");
     const query = await page.evaluate(() => {
       const first = (window as any).__test.logQueries[0];
       return { entities: first.entity_ids as string[], hour: new Date(first.start_time).getHours(), minute: new Date(first.start_time).getMinutes() };
@@ -188,11 +188,16 @@ test.describe("Co se stalo", () => {
     const sheet = page.locator('[data-part="log-detail"]');
     await expect(sheet.locator("h3")).toHaveText(["Od minulého otevření", "Dříve dnes"]);
     // Nedostupná a pohyb žaluzie („closing“) se nevypisují; důvod je automatika nebo „Aplikace“.
-    await expect(sheet.locator(".log-row")).toHaveCount(4);
+    await expect(sheet.locator(".log-row")).toHaveCount(5);
     // Spotřebič slovy, ne pomocník; žaluzie bez důvodu v deníku vezme důvod z poslední akce.
     await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" })).toContainText("Sušička · Doběhla");
     await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" }).locator("small")).toHaveText("Konec cyklu");
     await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Večerní fáze");
+    // Jedna chvíle = jeden řádek: příčina (Aplikace zapnula Větrací režim) a pod ní, co následovalo, po druzích.
+    const moment = sheet.locator(".log-row").filter({ hasText: "Větrací režim · Zapnuto" });
+    await expect(moment).toHaveCount(1);
+    await expect(moment.locator("small")).toHaveText("Aplikace");
+    await expect(moment.locator(".log-members")).toHaveText(["Větrání · Zapnuto: Koupelna přízemí, Koupelna patro", "Žaluzie · Otevřeno: Mikuláš"]);
     // Bez záznamu polohy stav slovem.
     await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Žaluzie Maxík · Zavřeno");
     // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
@@ -208,7 +213,7 @@ test.describe("Co se stalo", () => {
   test("naposledy viděno včera: počet je ode dneška („N událostí dnes“), ne „od“ včerejšího času", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 2 * 86400000)));
     await open(page);
-    await expect(page.locator('[data-part="log"] button')).toContainText("4 události dnes");
+    await expect(page.locator('[data-part="log"] button')).toContainText("5 událostí dnes");
   });
 
   test("bez deníku řekne, že se nepodařil načíst; prázdný den „Dnes se nic nestalo.“", async ({ page }) => {

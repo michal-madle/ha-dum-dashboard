@@ -109,6 +109,15 @@ const logbook = [
 ];
 // The recorder: both blinds of the evening phase stopped in Tma (position and tilt 0).
 for (const id of ["cover.loznice_zaluzie_loznice", "cover.pracovna_zaluzie_pracovna"]) history[id] ??= [{ s: "closed", a: { current_position: 0, current_tilt_position: 0 }, lu: nowSec - 600 }];
+// One moment (Q: zapnutí Větracího režimu): the app switches the mode on, the automation turns the fans on and moves
+// the slats of a blind (closed, then open again), all within a minute; 30 min ago.
+logbook.push(
+  { entity_id: "input_boolean.ventilation_mode", state: "on", name: "Ventilation mode", when: nowSec - 1800, context_user_id: "u1" },
+  { entity_id: "switch.koupelna_vetrak_koupelna_prizemi", state: "on", name: "Větrák koupelna přízemí", when: nowSec - 1798, context_name: "Ventilation mode - on" },
+  { entity_id: "switch.koupelna_vetrak_koupelna_patro", state: "on", name: "Větrák koupelna patro", when: nowSec - 1797, context_name: "Ventilation mode - on" },
+  { entity_id: "cover.mikulas_zaluzie_mikulas", state: "closed", name: "Žaluzie Mikuláš", when: nowSec - 1790 },
+  { entity_id: "cover.mikulas_zaluzie_mikulas", state: "open", name: "Žaluzie Mikuláš", when: nowSec - 1770 },
+);
 const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0, logbook, logQueries: [] });
 const card = document.createElement("ha-dum-dashboard");
 card.setConfig(config);
@@ -124,7 +133,7 @@ let current = {
   // &tado=1: Home Assistant offers the timer action of Tado CE (Boost, Ručně platí).
   services: params.get("tado") ? { tado_ce: { set_climate_timer: {} } } : {},
   // The words of Home Assistant for a state (the real frontend translates every state).
-  formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto", docked: "V doku", cleaning: "Uklízí" })[state ?? stateObj.state] ?? state ?? stateObj.state,
+  formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto", on: "Zapnuto", docked: "V doku", cleaning: "Uklízí" })[state ?? stateObj.state] ?? state ?? stateObj.state,
   callWS: async (message) => {
     if (message.type === "logbook/get_events") {
       test.logQueries.push(message);

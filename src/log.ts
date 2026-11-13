@@ -18,21 +18,39 @@ export interface LogEntry {
   context_entity_id_name?: string;
 }
 
-/** A row of the journal: one entry, or one action on several entities of one kind. */
-export interface LogRow {
+/** One change of one entity, with its reason. */
+export interface LogItem {
+  entry: LogEntry;
   time: number;
-  entries: LogEntry[];
   state: string;
   /** The automation or script, `app` for a person in the app, or "" when Home Assistant does not say. */
   reason: string;
   kind: string;
 }
 
+/** Entities of one kind that went to one state together („Větrání · Zapnuto: Koupelna patro, Záchod patro“). */
+export interface LogGroup {
+  kind: string;
+  state: string;
+  items: LogItem[];
+}
+
+/**
+ * A row of the journal: one moment. Its cause (`head`: what a person did in the app, else the first change) and what
+ * followed from it within the moment, grouped by kind and state (uživatel 13. 11. 2026 k zapnutí Větracího režimu:
+ * „To groupovani moc nefunguje. Tohle všechno byl zapnuti větrání a větracího režimu.“).
+ */
+export interface LogRow {
+  time: number;
+  head: LogItem;
+  groups: LogGroup[];
+}
+
 /** States that are not a row: unavailable is the queue's business, opening and closing the way of a blind. */
 const SKIPPED = ["unavailable", "unknown", ""];
 const WAY = ["opening", "closing"];
-/** Entries of one action are this close (a phase moves the blinds one after another). */
-const GROUP_MS = 2 * 60000;
+/** Changes this close to the previous one belong to one moment (a phase or a mode switches one thing after another). */
+const MOMENT_MS = 60000;
 
 export function logTime(entry: LogEntry): number {
   return typeof entry.when === "number" ? entry.when * 1000 : Date.parse(entry.when);
@@ -46,7 +64,7 @@ function reasonOf(entry: LogEntry): string {
 export function logRows(entries: LogEntry[], kindOf: (entity: string) => string): LogRow[] {
   const sorted = entries.filter((entry) => typeof entry.entity_id === "string" && entry.state !== undefined).sort((a, b) => logTime(a) - logTime(b));
   const way = new Map<string, string>();
-  const single: LogRow[] = [];
+  const items: LogItem[] = [];
   for (const entry of sorted) {
     const state = String(entry.state);
     if (WAY.includes(state)) {
@@ -57,24 +75,37 @@ export function logRows(entries: LogEntry[], kindOf: (entity: string) => string)
     const reason = reasonOf(entry) || way.get(entry.entity_id) || "";
     way.delete(entry.entity_id);
     if (SKIPPED.includes(state)) continue;
-    single.push({ time: logTime(entry), entries: [entry], state, reason, kind: kindOf(entry.entity_id) });
+    items.push({ entry, time: logTime(entry), state, reason, kind: kindOf(entry.entity_id) });
   }
-  const rows: LogRow[] = [];
-  for (const row of single) {
-    const group = rows.find(
-      (item) =>
-        item.kind === row.kind &&
-        item.state === row.state &&
-        item.reason === row.reason &&
-        row.time - item.time <= GROUP_MS &&
-        !item.entries.some((entry) => entry.entity_id === row.entries[0].entity_id),
-    );
-    if (group && row.kind) {
-      group.entries.push(row.entries[0]);
-      group.time = row.time;
-    } else rows.push(row);
+  // Moments: a change within a minute of the previous one belongs to it.
+  const moments: LogItem[][] = [];
+  for (const item of items) {
+    const last = moments.at(-1);
+    if (last && item.time - last[last.length - 1].time <= MOMENT_MS) last.push(item);
+    else moments.push([item]);
   }
-  return rows.sort((a, b) => b.time - a.time);
+  return moments
+    .map((moment) => {
+      // In one moment an entity counts once, with where it ended (a blind closes and then opens its slats).
+      const latest = new Map<string, LogItem>();
+      for (const item of moment) {
+        latest.delete(item.entry.entity_id);
+        latest.set(item.entry.entity_id, item);
+      }
+      const list = [...latest.values()].sort((a, b) => a.time - b.time);
+      // The cause: what a person did in the app, else the earliest change.
+      const head = list.find((item) => item.reason === "app") ?? list[0];
+      const groups: LogGroup[] = [];
+      for (const item of list) {
+        if (item === head) continue;
+        const key = item.kind || item.entry.entity_id;
+        const group = groups.find((other) => (other.kind || other.items[0].entry.entity_id) === key && other.state === item.state);
+        if (group) group.items.push(item);
+        else groups.push({ kind: item.kind, state: item.state, items: [item] });
+      }
+      return { time: moment[moment.length - 1].time, head, groups };
+    })
+    .sort((a, b) => b.time - a.time);
 }
 
 /** The names of a group without the words they all start with („Žaluzie pracovna“, „Žaluzie ložnice“ → „Pracovna, Ložnice“). */

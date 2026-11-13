@@ -17,7 +17,7 @@ import type { I18n } from "./i18n";
 import { styles } from "./styles";
 import type { HomeAssistant, Named, Preset, Settings } from "./types";
 import { logRows, logTime, shortNames } from "./log";
-import type { LogEntry, LogRow } from "./log";
+import type { LogEntry, LogItem, LogRow } from "./log";
 
 type HealthPart = "batteries" | "connections" | "system" | "updates";
 
@@ -268,6 +268,7 @@ export class HaDumDashboard extends LitElement {
       ...config.cooling.rooms.map((item) => item.entity),
       ...config.running.map((item) => item.entity),
       ...config.laundry.map((item) => item.entity),
+      ...config.devices.flatMap((group) => group.entities.map((item) => item.entity)),
     ];
   }
 
@@ -334,9 +335,11 @@ export class HaDumDashboard extends LitElement {
   private logKind(config: Settings): (entity: string) => string {
     const kinds = new Map<string, string>();
     config.covers.entities.forEach((entity) => kinds.set(entity, "covers"));
-    [config.ventilation.mode, ...config.ventilation.fans.map((item) => item.entity)].forEach((entity) => entity && kinds.set(entity, "ventilation"));
+    // The fans; Větrací režim is a cause of its own, not one of them.
+    config.ventilation.fans.forEach((item) => kinds.set(item.entity, "ventilation"));
     config.heating.rooms.forEach((item) => kinds.set(item.entity, "heating"));
     config.cooling.rooms.forEach((item) => kinds.set(item.entity, "cooling"));
+    config.devices.forEach((group, index) => group.entities.forEach((item) => kinds.set(item.entity, `devices-${index}`)));
     return (entity) => kinds.get(entity) ?? "";
   }
 
@@ -354,26 +357,38 @@ export class HaDumDashboard extends LitElement {
    * The reason of a blind when the logbook has none: the helper of the last action of each blind says who sent it
    * (the same source as the detail of the blinds), when its time is just before the entry.
    */
-  private coverReason(config: Settings, row: LogRow, i18n: I18n): string {
+  private coverReason(config: Settings, row: LogItem, i18n: I18n): string {
     if (row.reason || row.kind !== "covers") return row.reason === "app" ? i18n.t.who.aplikace : row.reason;
     const items = entityState(this.hass, config.covers.lastAction)?.attributes.polozky as Record<string, { kdo?: unknown; cas?: unknown }> | undefined;
-    const last = items && typeof items === "object" ? items[row.entries[0].entity_id] : undefined;
+    const last = items && typeof items === "object" ? items[row.entry.entity_id] : undefined;
     const time = typeof last?.cas === "string" ? Date.parse(last.cas) : NaN;
     if (!last || typeof last.kdo !== "string" || !(time <= row.time && row.time - time <= 3 * 60000)) return "";
     return i18n.t.who[last.kdo] ?? last.kdo;
   }
 
   /** „Sušička - konec cyklu“ under „Sušička · Doběhla“ says the name twice: the reason without it („Konec cyklu“). */
-  private withoutName(reason: string, row: LogRow, config: Settings): string {
-    const entity = row.entries[0].entity_id;
+  private withoutName(reason: string, row: LogItem, config: Settings): string {
+    const entity = row.entry.entity_id;
     const item = [...config.running, ...config.laundry].find((other) => other.entity === entity);
-    const name = item ? this.name(item.name) : this.logName(row.entries[0]);
+    const name = item ? this.name(item.name) : this.logName(row.entry);
     if (!reason.toLocaleLowerCase().startsWith(name.toLocaleLowerCase())) return reason;
     const rest = reason.slice(name.length).replace(/^[\s\-–—·:]+/, "");
     return rest ? rest.charAt(0).toLocaleUpperCase() + rest.slice(1) : reason;
   }
 
+  /** The name the card uses for an entity (Větrací režim, the room of a blind or a fan), else Home Assistant's. */
+  private shortName(config: Settings, entry: LogEntry): string | undefined {
+    const id = entry.entity_id;
+    if (id === config.ventilation.mode) return this.i18n.t.ventilationMode;
+    if (config.covers.names[id] !== undefined) return this.name(config.covers.names[id]);
+    const named = [...config.ventilation.fans, ...config.heating.rooms, ...config.cooling.rooms, ...config.running, ...config.laundry, ...config.devices.flatMap((group) => group.entities)].find(
+      (item) => item.entity === id,
+    );
+    return named ? this.name(named.name) : undefined;
+  }
+
   private logName(entry: LogEntry): string {
+    if (this._config && entry.entity_id === this._config.ventilation.mode) return this.i18n.t.ventilationMode;
     const entity = entityState(this.hass, entry.entity_id);
     return entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
   }
@@ -432,16 +447,33 @@ export class HaDumDashboard extends LitElement {
     const entries = this.logRows(config);
     const fresh = entries.filter((row) => row.time > this._seen);
     const earlier = entries.filter((row) => row.time <= this._seen);
-    const kinds: Record<string, string> = { covers: t.covers, ventilation: t.ventilation, heating: t.heating, cooling: t.cooling };
+    const kinds: Record<string, string> = {
+      covers: t.covers,
+      ventilation: t.ventilation,
+      heating: t.heating,
+      cooling: t.cooling,
+      ...Object.fromEntries(config.devices.map((group, index) => [`devices-${index}`, this.name(group.name)])),
+    };
+    // One row per moment: its cause, the reason, then what followed in smaller type, one line per kind and state.
     const rows = (list: LogRow[]) =>
       list.map((row) => {
-        const reason = this.withoutName(this.coverReason(config, row, i18n), row, config);
-        const group = row.entries.length > 1;
-        const title = group ? `${kinds[row.kind] ?? ""} · ${this.logState(row.entries[0], row.state)}` : this.logTitle(config, row.entries[0], row.state, i18n);
+        const head = row.head;
+        const reason = this.withoutName(this.coverReason(config, head, i18n), head, config);
+        const names = (items: LogItem[]) => {
+          const short = items.map((item) => this.shortName(config, item.entry));
+          return (short.every((name) => name !== undefined) ? (short as string[]) : shortNames(items.map((item) => this.logName(item.entry)))).join(", ");
+        };
+        // The cause and its kind together („Žaluzie · Tma“ with „Ložnice, Pracovna“ under it), not twice.
+        const same = head.kind ? row.groups.find((group) => group.kind === head.kind && group.state === head.state) : undefined;
+        const title = same ? `${kinds[head.kind] ?? ""} · ${this.logState(head.entry, head.state)}` : this.logTitle(config, head.entry, head.state, i18n);
+        const lines = row.groups.map((group) => {
+          if (group === same) return names([head, ...group.items]);
+          const state = this.logState(group.items[0].entry, group.state);
+          if (!group.kind) return `${this.logName(group.items[0].entry)} · ${state}`;
+          return `${kinds[group.kind] ?? ""} · ${state}: ${names(group.items)}`;
+        });
         return html`<div class="log-row"><span class="log-time">${i18n.time(row.time)}</span><span class="main"
-            >${title}${group ? html`<span class="log-members">${shortNames(row.entries.map((entry) => this.logName(entry))).join(", ")}</span>` : nothing}${reason
-              ? html`<small>${reason}</small>`
-              : nothing}</span
+            >${title}${reason ? html`<small>${reason}</small>` : nothing}${lines.map((line) => html`<span class="log-members">${line}</span>`)}</span
           ></div>`;
       });
     return html`<dd-sheet .open=${open} .heading=${t.log} .closeLabel=${t.close} @hdk-close=${() => this.closeLog()}>
