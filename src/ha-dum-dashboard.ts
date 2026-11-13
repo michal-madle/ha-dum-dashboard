@@ -7,6 +7,7 @@ import { hintStyles } from "ha-dashboard-kit/controls";
 import type { TileState } from "ha-dashboard-kit/controls";
 import { entityState, isNoValue, readNumber, readText } from "ha-dashboard-kit/entities";
 import { HoldOrDoubleTap } from "ha-dashboard-kit/gesture";
+import { fitJoined, joined, joinedStyles, joinedText } from "ha-dashboard-kit/joined";
 import { RunStarts } from "ha-dashboard-kit/runstart";
 import { normalizeConfig } from "./config";
 import { cardLanguage, getI18n } from "./i18n";
@@ -33,7 +34,7 @@ const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
  * by mistake (hold or double tap); a tile with a chevron only opens the detail of its device.
  */
 export class HaDumDashboard extends LitElement {
-  static styles = [hintStyles, styles];
+  static styles = [hintStyles, joinedStyles, styles];
 
   @property({ attribute: false }) hass?: HomeAssistant;
   @state() private _config?: Settings;
@@ -44,6 +45,9 @@ export class HaDumDashboard extends LitElement {
   @state() private _menu?: string;
 
   private timer?: number;
+  /** What moves the texts from parts: the width of the card and a loaded font (fitJoined). */
+  @state() private _fit = "";
+  private resize?: ResizeObserver;
   private hintTimer?: number;
   /** Since when the running things run: from the recorder, so a restart of Home Assistant does not start the durations again. */
   private readonly starts = new RunStarts(() => this.requestUpdate());
@@ -66,6 +70,13 @@ export class HaDumDashboard extends LitElement {
     this.timer = window.setInterval(() => (this._now = Date.now()), 30000);
     window.addEventListener("pointerdown", this.closeMenu);
     window.addEventListener("keydown", this.closeMenu);
+    this.resize = new ResizeObserver(() => (this._fit = `${Math.round(this.getBoundingClientRect().width)}|${this._fit.split("|")[1] ?? ""}`));
+    this.resize.observe(this);
+    void document.fonts?.ready.then(() => (this._fit = `${this._fit.split("|")[0] ?? ""}|${document.fonts.size}`));
+  }
+
+  protected updated(): void {
+    fitJoined(this.renderRoot, this._fit);
   }
 
   /** A tap outside the open menu "Odložit", or Escape, closes it. */
@@ -82,6 +93,7 @@ export class HaDumDashboard extends LitElement {
     window.clearTimeout(this.hintTimer);
     window.removeEventListener("pointerdown", this.closeMenu);
     window.removeEventListener("keydown", this.closeMenu);
+    this.resize?.disconnect();
     this.gesture.dispose();
   }
 
@@ -133,7 +145,7 @@ export class HaDumDashboard extends LitElement {
         const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
         const time = item.cas ? Date.parse(item.cas) : NaN;
         // The reason and the time; without a reason the action that failed.
-        const detail = [item.duvod || item.akce, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean).join(" · ");
+        const detail = joined([item.duvod || item.akce, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean));
         const retry = this.retryOf(config, item);
         return html`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
@@ -148,7 +160,7 @@ export class HaDumDashboard extends LitElement {
       ...low.map((battery) => {
         const level = readNumber(this.hass, battery.level);
         const type = readText(this.hass, battery.type);
-        const detail = [t.battery(level === undefined ? undefined : i18n.percent(Math.round(level))), type].filter(Boolean).join(" · ");
+        const detail = joined([t.battery(level === undefined ? undefined : i18n.percent(Math.round(level))), type].filter(Boolean));
         return html`<div class="row" data-row="battery">
           <span class="mark">${ICON_BATTERY}</span>
           <span class="main">${this.name(battery.name)}<small>${detail}</small></span>
@@ -159,7 +171,7 @@ export class HaDumDashboard extends LitElement {
         const h = (value: number) => `${i18n.whole(Math.floor(value))} h`;
         return html`<div class="row two" data-row="filter">
           <span class="mark">${ICON_FILTER}</span>
-          <span class="main">${this.name(filter.name)}<small>${t.filter(h(hours), h(threshold))}</small></span>
+          <span class="main">${this.name(filter.name)}<small>${joinedText(t.filter(h(hours), h(threshold)))}</small></span>
           <span class="actions">
             ${this.snoozeButton(config, `filter:${filter.hours}`, i18n)}
             <button class="button" type="button" @click=${() => this.call("input_number", "set_value", { entity_id: filter.hours, value: 0 })}>${t.done}</button>
@@ -247,9 +259,9 @@ export class HaDumDashboard extends LitElement {
   private renderRunning(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!config.running.length) return nothing;
     const active = config.running.filter((item) => ["on", "cleaning", "returning"].includes(readText(this.hass, item.entity) ?? ""));
-    const text = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity, i18n)}`.trim()).join(" · ");
+    const parts = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity, i18n)}`.trim());
     return html`<h2><span>${i18n.t.running}</span></h2>
-      <div class="group" data-part="running"><div class="row now ${active.length ? "" : "none"}"><span class="main" style="font-size:inherit;line-height:inherit">${text || i18n.t.nothingRuns}</span></div></div>`;
+      <div class="group" data-part="running"><div class="row now ${active.length ? "" : "none"}"><span class="main" style="font-size:inherit;line-height:inherit">${parts.length ? joined(parts) : i18n.t.nothingRuns}</span></div></div>`;
   }
 
   /* ---------- Žaluzie ---------- */

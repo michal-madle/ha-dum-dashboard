@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parse } from "yaml";
-import { axeViolations } from "ha-dashboard-kit/testing/helpers.mjs";
+import { axeViolations, joinedLines } from "ha-dashboard-kit/testing/helpers.mjs";
 import { expect, test } from "./fixtures";
 import type { Page } from "./fixtures";
 
@@ -93,6 +93,17 @@ test.describe("fronta a co běží", () => {
     const tomorrow = (await calls(page))[1].data!.do;
     await update(page, { "sensor.dum_odlozeno": { state: "1", attributes: { polozky: [{ klic: "filter:input_number.loznice_ac_loznice_filtr_hodiny", do: tomorrow }] } } });
     await expect(row).toHaveCount(0);
+  });
+
+  test("text z částí: na 320 px se zalomí v místě tečky (tečka zmizí) nebo teče bez tečky na kraji řádku; na 393 px je na jednom řádku", async ({ page }) => {
+    await open(page, "evening", "dark", "cs", 320);
+    const battery = page.locator('[data-row="battery"] small');
+    expect(await joinedLines(battery)).toEqual(["Baterie 8 %", "CR2032"]);
+    await expect(battery.locator(".joined")).toHaveClass(/stacked/);
+    // „žaluzie nedostupná“ se nevejde ani na vlastní řádek: souvislý text, tečka drží u předchozího slova.
+    await expect(page.locator('[data-row="failed"] small .joined')).toHaveClass(/flow/);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await expect.poll(() => joinedLines(battery)).toEqual(["Baterie 8 % · CR2032"]);
   });
 
   test("Teď běží: spotřebiče s dobou běhu a jednotkou, jinak „Nic neběží“", async ({ page }) => {
