@@ -209,6 +209,54 @@ devices:                            # další oddíly dlaždic, každý druh vla
         entity: vacuum.roborock_s5_ea9e_robot_cleaner
       - name: Přízemí
         entity: vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner
+health:                             # Zdraví: baterie čidel (%), připojení (on = připojeno), systém (hodnota, nebo binary_sensor: on = problém), aktualizace
+  battery_low: 20                   # pod touto hodnotou (%) je baterie ve „Vyžaduje pozornost“
+  batteries:
+    - name: Okno Ložnice
+      entity: sensor.loznice_okno_loznice_battery
+    - name: Okno Maxík
+      entity: sensor.maxik_okno_maxik_battery
+    - name: Okno Mikuláš
+      entity: sensor.mikulas_okno_mikulas_battery
+    - name: Okno Pracovna
+      entity: sensor.pracovna_okno_pracovna_battery
+    - name: Dveře Zahrada
+      entity: sensor.obyvak_dvere_zahrada_battery
+    - name: Garážová vrata
+      entity: sensor.garaz_garazova_vrata_battery
+    - name: Teploměr Garáž
+      entity: sensor.garaz_teplomer_garaz_battery
+  connections:
+    - name: Tado bridge
+      entity: binary_sensor.tado_ce_internet_bridge_connection
+    - name: Tado Obývák
+      entity: binary_sensor.obyvak_tado_ce_obyvak_connection_ru01
+    - name: Tado Ložnice
+      entity: binary_sensor.loznice_tado_ce_loznice_connection
+    - name: Tado Maxík
+      entity: binary_sensor.maxik_tado_ce_maxik_connection
+    - name: Tado Mikuláš
+      entity: binary_sensor.mikulas_tado_ce_mikulas_connection
+    - name: Tado Pracovna
+      entity: binary_sensor.pracovna_tado_ce_pracovna_connection
+    - name: Tado Garáž
+      entity: binary_sensor.garaz_tado_ce_garaz_connection
+  system:
+    - name: NAS svazek
+      entity: sensor.madlovi_volume_1_status
+    - name: NAS místo
+      entity: sensor.madlovi_volume_1_volume_used
+    - name: NAS teplota
+      entity: sensor.madlovi_temperature
+    - name: NAS disk 1 sektory
+      entity: binary_sensor.madlovi_drive_1_exceeded_max_bad_sectors
+    - name: NAS disk 1 životnost
+      entity: binary_sensor.madlovi_drive_1_below_min_remaining_life
+    - name: NAS disk 2 sektory
+      entity: binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors
+    - name: NAS disk 2 životnost
+      entity: binary_sensor.madlovi_drive_2_below_min_remaining_life
+  updates: true                     # všechny aktualizace Home Assistantu (update.*), které čekají
 send_delay_seconds: 2                # popup Topení / Klimatizace odešle změnu tolik sekund po poslední (nebo při zavření)
 guard:
   hold_ms: 550                      # podržení chráněného prvku

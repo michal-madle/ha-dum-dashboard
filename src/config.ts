@@ -121,6 +121,10 @@ function normalize(raw: unknown): Settings {
     };
   });
 
+  const health = section(raw.health, "health");
+  checkKeys(health, ["battery_low", "batteries", "connections", "system", "updates"], "health");
+  if (health.updates !== undefined && typeof health.updates !== "boolean") fail("health.updates must be true or false.");
+
   return {
     language: languageSetting(raw.language),
     houseMode: entityId(raw.house_mode_entity, "house_mode_entity", { domain: "input_select" }),
@@ -152,6 +156,13 @@ function normalize(raw: unknown): Settings {
     },
     cooling: { rooms: named(cooling.rooms, "cooling.rooms", ["climate"]) },
     devices,
+    health: {
+      batteryLow: number(health.battery_low, "health.battery_low", 20, 1, 99),
+      batteries: named(health.batteries, "health.batteries", ["sensor"]),
+      connections: named(health.connections, "health.connections", ["binary_sensor"]),
+      system: named(health.system, "health.system", ["sensor", "binary_sensor"]),
+      updates: health.updates === true,
+    },
     sendDelaySeconds: number(raw.send_delay_seconds, "send_delay_seconds", 2, 0, 30),
     guard: {
       holdMs: number(guard.hold_ms, "guard.hold_ms", 550, 200, 3000),

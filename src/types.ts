@@ -75,6 +75,14 @@ export interface Settings {
   cooling: { rooms: Named[] };
   /** Further sections of tiles (Světla, Zásuvky, Vysavače …), each with its own heading, in this order. */
   devices: { name: LocalizedText; entities: Named[] }[];
+  /** Zdraví (uživatel 13. 11. 2026: „Q214 ok“): baterie čidel, připojení, systém, aktualizace. */
+  health: {
+    batteryLow: number;
+    batteries: Named[];
+    connections: Named[];
+    system: Named[];
+    updates: boolean;
+  };
   guard: { holdMs: number; doubleTapMs: number; hintSeconds: number };
   /** The popup Topení / Klimatizace sends a change this long after the last one (or when it closes). */
   sendDelaySeconds: number;

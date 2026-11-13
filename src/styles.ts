@@ -183,6 +183,30 @@ export const styles = css`
     color: var(--dd-secondary);
     font-size: 15px;
   }
+  .health-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    border-top: 0.5px solid var(--dd-sep);
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .health-row.tap {
+    cursor: pointer;
+  }
+  .health-row .main {
+    flex: 1;
+    min-width: 0;
+  }
+  .health-row .value {
+    flex: none;
+    color: var(--dd-secondary);
+    font-size: 15px;
+  }
+  .health-row .value.warn {
+    color: var(--dd-warning);
+  }
   .cover-row {
     display: flex;
     align-items: center;
@@ -206,6 +230,7 @@ export const styles = css`
     font-size: 13px;
     line-height: 18px;
   }
+  .row small.warn,
   .cover-row small.warn {
     color: var(--dd-warning);
   }

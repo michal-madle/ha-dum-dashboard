@@ -232,9 +232,9 @@ test.describe("Co se stalo", () => {
 test.describe("ovládání", () => {
   test("pořadí oddílů: Žaluzie, Větrání a potom Topení a Klimatizace podle režimu domu", async ({ page }) => {
     await open(page);
-    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Topení", "Klimatizace", "Světla", "Zásuvky", "Vysavače"]);
+    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Topení", "Klimatizace", "Světla", "Zásuvky", "Vysavače", "Zdraví"]);
     await open(page, "summer");
-    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Klimatizace", "Topení", "Světla", "Zásuvky", "Vysavače"]);
+    expect((await headings(page)).slice(2)).toEqual(["Žaluzie", "Větrání", "Klimatizace", "Topení", "Světla", "Zásuvky", "Vysavače", "Zdraví"]);
   });
 
   test("žaluzie: předvolba všech svítí, smíšený stav má počet, nedostupná žaluzie se nepočítá do žádné", async ({ page }) => {
@@ -447,7 +447,7 @@ test.describe("ovládání", () => {
   test("další zařízení: každý druh vlastní oddíl za klimatizací; světlo přepne dvojklep a bliká do potvrzení; vysavač dvojklepem spustí úklid nebo jede do doku", async ({ page }) => {
     await open(page);
     const names = await headings(page);
-    expect(names.slice(names.indexOf("Klimatizace") + 1)).toEqual(["Světla", "Zásuvky", "Vysavače"]);
+    expect(names.slice(names.indexOf("Klimatizace") + 1)).toEqual(["Světla", "Zásuvky", "Vysavače", "Zdraví"]);
     expect((await tiles(page, "devices-0")).map((item) => [item.name, item.text, item.state])).toEqual([
       ["Kuchyně", "Zapnuto", "on"],
       ["Lampa pracovna", "Vypnuto", "off"],
@@ -466,6 +466,29 @@ test.describe("ovládání", () => {
     await page.waitForTimeout(500);
     await tile(page, "devices-2", "Přízemí").dblclick();
     expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "return_to_base", data: { entity_id: "vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner" } });
+  });
+
+  test("Zdraví: „Vyžaduje pozornost“ jen při problému; řádek na část se shrnutím otevře list; aktualizace z celého Home Assistantu", async ({ page }) => {
+    await open(page);
+    const health = page.locator('[data-part="health"]');
+    await expect(health.locator('[data-row="attention"]')).toContainText("Okno Ložnice 8 %");
+    await expect(health.locator('[data-health="batteries"]')).toContainText("Nejslabší Okno Ložnice 8 %");
+    await expect(health.locator('[data-health="connections"]')).toContainText("Vše připojeno");
+    await expect(health.locator('[data-health="system"]')).toContainText("V pořádku");
+    await expect(health.locator('[data-health="updates"]')).toContainText("1 dostupná");
+    await health.locator('[data-health="batteries"]').click();
+    const rows = page.locator('[data-part="health-detail"] .health-row');
+    await expect(rows.first()).toContainText("Okno Ložnice");
+    await expect(rows).toHaveCount(7);
+    await page.locator("dd-sheet .close").last().click();
+    // Odpojené čidlo a vadný disk jdou nahoru.
+    await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" } });
+    await expect(health.locator('[data-row="attention"]')).toContainText("Tado Maxík · Odpojeno");
+    await expect(health.locator('[data-row="attention"]')).toContainText("NAS disk 2 sektory");
+    await expect(health.locator('[data-health="connections"]')).toContainText("1 odpojeno");
+    await health.locator('[data-health="updates"]').click();
+    await page.locator('[data-part="health-detail"] .health-row').first().click();
+    expect((await calls(page)).at(-1)).toEqual({ moreInfo: "update.madlovi_dsm_update" });
   });
 
   test("chyba volání Home Assistantu je vidět v kartě", async ({ page }) => {

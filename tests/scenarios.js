@@ -43,6 +43,13 @@ for (const room of config.cooling.rooms) states[room.entity] = ac("off", { tempe
 for (const group of config.devices ?? []) for (const item of group.entities) states[item.entity] = entity(item.entity.startsWith("vacuum.") ? "docked" : "off");
 states["switch.kuchyne_osvetleni_kuchyne"] = entity("on");
 states["vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner"] = entity("cleaning", {}, 12);
+if (config.health) {
+  config.health.batteries.forEach((item, index) => (states[item.entity] = entity(String([90, 15, 64, 77, 100, 55, 81][index] ?? 80))));
+  for (const item of config.health.connections) states[item.entity] = entity("on");
+  for (const item of config.health.system) states[item.entity] = entity(item.entity.startsWith("binary_sensor.") ? "off" : item.entity.endsWith("_used") ? "63" : item.entity.endsWith("temperature") ? "41" : "normal");
+  states["update.madlovi_dsm_update"] = entity("on", { friendly_name: "madlovi Aktualizace DSM", latest_version: "7.2.2" });
+  states["update.shelly_koupelna_update"] = entity("off", { friendly_name: "Shelly Koupelna" });
+}
 states[config.failed_actions] = entity("0", { polozky: [] });
 states[config.snoozed] = entity("0", { polozky: [] });
 

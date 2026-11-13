@@ -19,6 +19,8 @@ import type { HomeAssistant, Named, Preset, Settings } from "./types";
 import { logRows, logTime, shortNames } from "./log";
 import type { LogEntry, LogRow } from "./log";
 
+type HealthPart = "batteries" | "connections" | "system" | "updates";
+
 const SEEN_KEY = "dum-dashboard.log-seen";
 
 /** The time „Co se stalo“ was last closed on this device; 0 when unknown (storage blocked or empty). */
@@ -69,7 +71,7 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling" | "log";
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | `health:${HealthPart}`;
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
   @state() private _log?: LogEntry[];
   /** Position and tilt of each blind through today (recorder), to say the preset of a row of the journal. */
@@ -171,10 +173,87 @@ export class HaDumDashboard extends LitElement {
     const climate = summer ? [this.renderCooling(config, i18n), this.renderHeating(config, i18n)] : [this.renderHeating(config, i18n), this.renderCooling(config, i18n)];
     return html`<ha-card>
       ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
-      ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderLogRow(config, i18n)}
+      ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderHealth(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)}`;
+  }
+
+  /* ---------- Zdraví ---------- */
+
+  /** The state of each part of Zdraví: what needs attention first, then one summary line per part. */
+  private healthState(config: Settings, i18n: I18n) {
+    const t = i18n.t;
+    const h = config.health;
+    const batteries = h.batteries
+      .map((item) => ({ item, level: readNumber(this.hass, item.entity) }))
+      .sort((a, b) => (a.level ?? -1) - (b.level ?? -1));
+    const connections = h.connections.map((item) => ({ item, state: readText(this.hass, item.entity) }));
+    const system = h.system.map((item) => {
+      const entity = entityState(this.hass, item.entity);
+      const binary = item.entity.startsWith("binary_sensor.");
+      const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
+      const value = !entity || isNoValue(entity.state) ? t.unavailable : binary ? (entity.state === "on" ? t.healthProblem : t.healthOk) : hass?.formatEntityState ? hass.formatEntityState(entity) : entity.state;
+      return { item, value, problem: binary && entity?.state === "on" };
+    });
+    const updates = h.updates
+      ? Object.entries(this.hass?.states ?? {})
+          .filter(([id, entity]) => id.startsWith("update.") && entity.state === "on")
+          .map(([id, entity]) => ({ id, name: typeof entity.attributes.friendly_name === "string" ? entity.attributes.friendly_name : id, version: String(entity.attributes.latest_version ?? "") }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+      : [];
+    const attention = [
+      ...batteries.filter(({ level }) => level !== undefined && level < h.batteryLow).map(({ item, level }) => `${this.name(item.name)} ${i18n.percent(Math.round(level!))}`),
+      ...connections.filter(({ state }) => state !== "on").map(({ item }) => `${this.name(item.name)} · ${t.healthOffline}`),
+      ...system.filter(({ problem }) => problem).map(({ item }) => this.name(item.name)),
+    ];
+    return { batteries, connections, system, updates, attention };
+  }
+
+  private renderHealth(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    const h = config.health;
+    if (!h.batteries.length && !h.connections.length && !h.system.length && !h.updates) return nothing;
+    const t = i18n.t;
+    const state = this.healthState(config, i18n);
+    const lowest = state.batteries.find(({ level }) => level !== undefined);
+    const offline = state.connections.filter(({ state: value }) => value !== "on").length;
+    const problems = state.system.filter(({ problem }) => problem).length;
+    const row = (part: HealthPart, title: string, detail: string, warn = false) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-health=${part} @click=${() => (this._detail = `health:${part}`)}>
+      <span class="main">${title}<small class=${warn ? "warn" : ""}>${detail}</small></span>
+      <span class="chevron-mark" aria-hidden="true">›</span>
+    </button>`;
+    return html`<h2><span>${t.health}</span></h2>
+      <div class="group" data-part="health">
+        ${state.attention.length
+          ? html`<div class="row" data-row="attention"><span class="mark warn" aria-hidden="true">!</span><span class="main">${t.healthAttention}<small class="warn">${joined(state.attention)}</small></span></div>`
+          : nothing}
+        ${h.batteries.length && lowest ? row("batteries", t.healthBatteries, t.healthLowest(`${this.name(lowest.item.name)} ${i18n.percent(Math.round(lowest.level!))}`), lowest.level! < h.batteryLow) : nothing}
+        ${h.connections.length ? row("connections", t.healthConnections, offline ? t.healthOfflineCount(offline) : t.healthAllOnline, offline > 0) : nothing}
+        ${h.system.length ? row("system", t.healthSystem, problems ? t.healthProblem : t.healthOk, problems > 0) : nothing}
+        ${h.updates ? row("updates", t.healthUpdates, state.updates.length ? t.healthUpdatesCount(state.updates.length) : t.healthUpToDate) : nothing}
+      </div>`;
+  }
+
+  private renderHealthDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    const t = i18n.t;
+    const part = this._detail?.startsWith("health:") ? (this._detail.slice(7) as HealthPart) : undefined;
+    const titles: Record<HealthPart, string> = { batteries: t.healthBatteries, connections: t.healthConnections, system: t.healthSystem, updates: t.healthUpdates };
+    const state = part ? this.healthState(config, i18n) : undefined;
+    const line = (name: string, value: string, warn: boolean, entity?: string) =>
+      html`<div class="health-row ${entity ? "tap" : ""}" @click=${entity ? () => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: entity } })) : undefined}>
+        <span class="main">${name}</span><span class="value ${warn ? "warn" : ""}">${value}</span>
+      </div>`;
+    const body = (): unknown => {
+      if (!state || !part) return nothing;
+      if (part === "batteries")
+        return state.batteries.map(({ item, level }) => line(this.name(item.name), level === undefined ? t.unavailable : i18n.percent(Math.round(level)), level !== undefined && level < config.health.batteryLow));
+      if (part === "connections") return state.connections.map(({ item, state: value }) => line(this.name(item.name), value === "on" ? t.healthOnline : t.healthOffline, value !== "on"));
+      if (part === "system") return state.system.map(({ item, value, problem }) => line(this.name(item.name), value, problem));
+      return state.updates.length ? state.updates.map((item) => line(item.name, item.version, false, item.id)) : html`<p class="log-empty">${t.healthUpToDate}</p>`;
+    };
+    return html`<dd-sheet .open=${part !== undefined} .heading=${part ? titles[part] : ""} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
+      ${part ? html`<div class="detail" data-part="health-detail">${body()}</div>` : nothing}
+    </dd-sheet>`;
   }
 
   /* ---------- Co se stalo ---------- */
