@@ -1,6 +1,6 @@
 import { checkKeys, entityId, fail, isRecord, languageSetting, localizedText, section, text, withCardName } from "ha-dashboard-kit/config";
 import type { LocalizedText } from "ha-dashboard-kit/config";
-import type { Battery, Filter, Named, Preset, Settings } from "./types";
+import type { Battery, Filter, Maintenance, Named, Preset, Settings } from "./types";
 
 /*
  * The YAML of the card (CURRENT_SPEC.md, Konfigurace). The rules are the kit's: every key is optional, a key without a
@@ -98,6 +98,18 @@ function normalize(raw: unknown): Settings {
     };
   });
 
+  const maintenance = list(raw.maintenance, "maintenance").map((item, index): Maintenance => {
+    const at = `maintenance[${index}]`;
+    if (!isRecord(item)) fail(`${at} must be a mapping with name, task, counter and every.`);
+    checkKeys(item, ["name", "task", "counter", "every"], at);
+    return {
+      name: localizedText(item.name, `${at}.name`) ?? fail(`${at}.name is missing.`),
+      task: localizedText(item.task, `${at}.task`) ?? fail(`${at}.task is missing.`),
+      counter: entityId(item.counter, `${at}.counter`, { domain: "counter" }) ?? fail(`${at}.counter is missing.`),
+      every: number(item.every, `${at}.every`, 30, 1, 1000),
+    };
+  });
+
   return {
     language: languageSetting(raw.language),
     houseMode: entityId(raw.house_mode_entity, "house_mode_entity", { domain: "input_select" }),
@@ -109,6 +121,7 @@ function normalize(raw: unknown): Settings {
     batteries,
     filters,
     laundry: named(raw.laundry, "laundry", ["input_boolean"]),
+    maintenance,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
       script: entityId(covers.script, "covers.script", { domain: "script" }) ?? "script.zaluzie_posun",

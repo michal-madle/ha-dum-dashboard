@@ -64,6 +64,37 @@ laundry:                            # prádlo čeká (input_boolean, yaml/packag
       en: Dryer
       sv: Torktumlare
     entity: input_boolean.technicka_mistnost_susicka_pradlo_ceka
+maintenance:                        # údržba po počtu cyklů (counter, yaml/packages/udrzba.yaml); Hotovo počítadlo vynuluje
+  - name:
+      cs: Pračka
+      en: Washing machine
+      sv: Tvättmaskin
+    task:
+      cs: Vyčistit buben
+      en: Clean the drum
+      sv: Rengör trumman
+    counter: counter.technicka_mistnost_pracka_cykly_od_udrzby
+    every: 40
+  - name:
+      cs: Myčka
+      en: Dishwasher
+      sv: Diskmaskin
+    task:
+      cs: Vyčistit filtr
+      en: Clean the filter
+      sv: Rengör filtret
+    counter: counter.kuchyne_mycka_cykly_od_udrzby
+    every: 30
+  - name:
+      cs: Sušička
+      en: Dryer
+      sv: Torktumlare
+    task:
+      cs: Vyčistit kondenzátor
+      en: Clean the condenser
+      sv: Rengör kondensorn
+    counter: counter.technicka_mistnost_susicka_cykly_od_udrzby
+    every: 30
 running:
   - name:
       cs: Pračka

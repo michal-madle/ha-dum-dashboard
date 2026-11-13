@@ -114,6 +114,21 @@ test.describe("fronta a co běží", () => {
     await expect(row.getByRole("button", { name: "Odložit" })).toHaveCount(0);
   });
 
+  test("údržba podle cyklů: úkol od intervalu z konfigurace, „Hotovo“ vynuluje počítadlo, „Odložit“ ho schová", async ({ page }) => {
+    await open(page, "day");
+    await expect(page.locator('[data-row="maintenance"]')).toHaveCount(0);
+    await update(page, { "counter.technicka_mistnost_pracka_cykly_od_udrzby": { state: "41" }, "counter.kuchyne_mycka_cykly_od_udrzby": { state: "29" } });
+    const row = page.locator('[data-row="maintenance"]');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("Pračka");
+    expect((await joinedLines(row.locator("small"))).join(" · ")).toBe("Vyčistit buben · 41 z 40 cyklů");
+    await row.getByRole("button", { name: "Hotovo" }).click();
+    expect(await calls(page)).toEqual([{ domain: "counter", service: "reset", data: { entity_id: "counter.technicka_mistnost_pracka_cykly_od_udrzby" } }]);
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await row.getByRole("menuitem", { name: /O týden/ }).click();
+    expect((await calls(page))[1]).toMatchObject({ service: "dum_odlozit", data: { klic: "maintenance:counter.technicka_mistnost_pracka_cykly_od_udrzby" } });
+  });
+
   test("text z částí: na 320 px se zalomí v místě tečky (tečka zmizí) nebo teče bez tečky na kraji řádku; na 393 px je na jednom řádku", async ({ page }) => {
     await open(page, "evening", "dark", "cs", 320);
     const battery = page.locator('[data-row="battery"] small');
@@ -374,6 +389,7 @@ test.describe("konfigurace, jazyky, mobil a přístupnost", () => {
     expect(await configError(page, { ...example(), covers: { ...example().covers, speed: 1 } })).toContain('covers: unknown key "speed"');
     expect(await configError(page, { ...example(), guard: { hold_ms: 5 } })).toBe("Dům Dashboard: guard.hold_ms must be a number from 200 to 3000.");
     expect(await configError(page, { ...example(), filters: [{ name: "X", hours: "sensor.x", threshold: "select.y" }] })).toBe("Dům Dashboard: filters[0].hours must be a input_number entity (input_number.…), not sensor.x.");
+    expect(await configError(page, { ...example(), maintenance: [{ name: "X", task: "Y", counter: "sensor.x", every: 30 }] })).toBe("Dům Dashboard: maintenance[0].counter must be a counter entity (counter.…), not sensor.x.");
     expect(await configError(page, { ...example(), heating: { rooms: [{ name: "X", entity: "switch.x" }] } })).toBe("Dům Dashboard: heating.rooms[0].entity must be one of climate, not switch.x.");
   });
 

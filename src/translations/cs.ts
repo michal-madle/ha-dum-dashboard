@@ -10,6 +10,7 @@ export const cs = {
   battery: (level: string | undefined) => (level ? `Baterie ${level}` : "Slabá baterie"),
   filter: (hours: string, threshold: string) => `Vyčistit filtr · ${hours} z ${threshold}`,
   laundry: (since: string) => (since ? `Prádlo čeká · od ${since}` : "Prádlo čeká"),
+  cycles: (count: number, every: number) => `${count} z ${every} cyklů`,
   running: "Teď běží",
   nothingRuns: "Nic neběží",
   minutes: (value: number) => `${value} min`,

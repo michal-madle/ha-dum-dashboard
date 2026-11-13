@@ -27,6 +27,17 @@ export interface Filter {
   threshold: string;
 }
 
+/** Maintenance of an appliance after a number of cycles (CURRENT_SPEC.md, úkoly ve frontě). */
+export interface Maintenance {
+  name: LocalizedText;
+  /** What to do: „Vyčistit buben“. */
+  task: LocalizedText;
+  /** counter: cycles since the last maintenance (yaml/packages/udrzba.yaml in ha-config). */
+  counter: string;
+  /** After how many cycles. */
+  every: number;
+}
+
 export interface Preset {
   name: LocalizedText;
   position: number;
@@ -47,6 +58,7 @@ export interface Settings {
   filters: Filter[];
   /** input_boolean per machine: on = the laundry waits in it (yaml/packages/pradlo.yaml in ha-config). */
   laundry: Named[];
+  maintenance: Maintenance[];
   running: Named[];
   covers: {
     script: string;

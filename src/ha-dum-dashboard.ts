@@ -30,6 +30,8 @@ const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
 
+const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
+
 /**
  * Dům: the control centre of the house (CURRENT_SPEC.md of the card). The first screen: what needs the user, what
  * runs now, and the controls by group. Everything that switches something on this screen is protected against a tap
@@ -145,7 +147,7 @@ export class HaDumDashboard extends LitElement {
   }
 
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
@@ -153,7 +155,12 @@ export class HaDumDashboard extends LitElement {
     const dirty = this.dirtyFilters(config).filter(({ filter }) => !snoozed.has(`filter:${filter.hours}`));
     // Laundry cannot wait a week: only „Hotovo“, no „Odložit“ (uživatel 13. 11. 2026).
     const waiting = config.laundry.filter((item) => readText(this.hass, item.entity) === "on");
-    const count = failed.length + low.length + dirty.length + waiting.length;
+    // Maintenance after its number of cycles; a counter without a value is no task.
+    const due = config.maintenance.flatMap((item) => {
+      const cycles = readNumber(this.hass, item.counter);
+      return cycles !== undefined && cycles >= item.every && !snoozed.has(`maintenance:${item.counter}`) ? [{ item, cycles }] : [];
+    });
+    const count = failed.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
       ...failed.map((item, index) => {
         const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
@@ -194,6 +201,14 @@ export class HaDumDashboard extends LitElement {
           </span>
         </div>`;
       }),
+      ...due.map(({ item, cycles }) => html`<div class="row two" data-row="maintenance">
+        <span class="mark">${ICON_MAINTENANCE}</span>
+        <span class="main">${this.name(item.name)}<small>${joined([this.name(item.task), t.cycles(cycles, item.every)])}</small></span>
+        <span class="actions">
+          ${this.snoozeButton(config, `maintenance:${item.counter}`, i18n)}
+          <button class="button" type="button" @click=${() => this.call("counter", "reset", { entity_id: item.counter })}>${t.done}</button>
+        </span>
+      </div>`),
       ...waiting.map((item) => {
         // Since when it waits: from the recorder, so a restart of Home Assistant does not move it.
         const start = this.starts.of(this.hass, item.entity);
