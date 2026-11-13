@@ -95,6 +95,26 @@ test.describe("fronta a co běží", () => {
     await expect(row).toHaveCount(0);
   });
 
+  test("prádlo čeká: řádek s časem od konce cyklu, „Hotovo“ vypne pomocníka, „Odložit“ ho schová", async ({ page }) => {
+    await open(page, "day");
+    await expect(page.locator('[data-row="laundry"]')).toHaveCount(0);
+    const since = new Date(Date.now() - 50 * 60000);
+    await update(page, { "input_boolean.technicka_mistnost_pracka_pradlo_ceka": { state: "on", last_changed: since.toISOString(), last_updated: since.toISOString() } });
+    const row = page.locator('[data-row="laundry"]');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("Pračka");
+    // Čas formátuje karta v časovém pásmu Home Assistantu; tady stačí tvar a minuty.
+    const lines = await joinedLines(row.locator("small"));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatch(new RegExp(`^Prádlo čeká · od \\d\\d:${String(since.getMinutes()).padStart(2, "0")}$`));
+    expect((await headings(page))[0]).toBe("Potřebuje tebe · 1");
+    await row.getByRole("button", { name: "Hotovo" }).click();
+    expect(await calls(page)).toContainEqual({ domain: "input_boolean", service: "turn_off", data: { entity_id: "input_boolean.technicka_mistnost_pracka_pradlo_ceka" } });
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await row.getByRole("menuitem", { name: /O den/ }).click();
+    expect(await calls(page)).toContainEqual(expect.objectContaining({ service: "dum_odlozit", data: expect.objectContaining({ klic: "laundry:input_boolean.technicka_mistnost_pracka_pradlo_ceka" }) }));
+  });
+
   test("text z částí: na 320 px se zalomí v místě tečky (tečka zmizí) nebo teče bez tečky na kraji řádku; na 393 px je na jednom řádku", async ({ page }) => {
     await open(page, "evening", "dark", "cs", 320);
     const battery = page.locator('[data-row="battery"] small');

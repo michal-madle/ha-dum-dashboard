@@ -1,6 +1,6 @@
 # Dům Dashboard
 
-Lovelace custom card pro Home Assistant: řídicí centrum domu. Nahoře je, co tě potřebuje (nepovedené akce automatiky, slabé baterie, filtr klimatizace k vyčištění), pod tím co právě běží a ovládání po skupinách: žaluzie, větrání, topení a klimatizace.
+Lovelace custom card pro Home Assistant: řídicí centrum domu. Nahoře je, co tě potřebuje (nepovedené akce automatiky, slabé baterie, filtr klimatizace k vyčištění, prádlo čeká), pod tím co právě běží a ovládání po skupinách: žaluzie, větrání, topení a klimatizace.
 
 Karta je třetí vedle `ha-klima-dashboard` a `ha-energie-dashboard`; společné prvky (dlaždice, chráněné gesto, jazyky, pravidla konfigurace) jsou v `ha-dashboard-kit`.
 
@@ -24,6 +24,7 @@ Karta je třetí vedle `ha-klima-dashboard` a `ha-energie-dashboard`; společné
 | `snoozed`, `snooze_script` | senzor odložených věcí a skript „odložit“ (klíč a den návratu); bez nich tlačítko „Odložit“ není |
 | `batteries` | čidla s baterií: `low` (binary_sensor, `on` = slabá), volitelně `level` a `type` |
 | `filters` | filtry klimatizací: `hours` (input_number, hodiny od čištění) a `threshold` (select, práh v hodinách); úkol ve frontě od prahu, „Hotovo“ hodiny vynuluje |
+| `laundry` | prádlo čeká: `name` a `entity` (input_boolean, `on` = čeká); úkol ve frontě s „Odložit“ a „Hotovo“ (vypne ho) |
 | `running` | spotřebiče, které se ukážou v „Teď běží“ s dobou běhu |
 | `covers` | žaluzie, skript posunu (`entity`, `pos`, `tilt`) a předvolby |
 | `ventilation` | větrací režim a větráky |

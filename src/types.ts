@@ -45,6 +45,8 @@ export interface Settings {
   snoozeScript?: string;
   batteries: Battery[];
   filters: Filter[];
+  /** input_boolean per machine: on = the laundry waits in it (yaml/packages/pradlo.yaml in ha-config). */
+  laundry: Named[];
   running: Named[];
   covers: { script: string; entities: string[]; presets: Preset[]; tolerance: number };
   ventilation: { mode?: string; fans: Named[] };

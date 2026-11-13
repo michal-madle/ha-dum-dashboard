@@ -24,6 +24,7 @@ for (const filter of config.filters) {
   states[filter.hours] = entity("120.4");
   states[filter.threshold] = entity("300");
 }
+for (const item of config.laundry) states[item.entity] = entity("off");
 for (const item of config.running) states[item.entity] = entity("off");
 for (const id of config.covers.entities) states[id] = entity("closed", { current_position: 0, current_tilt_position: 0, friendly_name: id });
 states[config.ventilation.mode] = entity("off");

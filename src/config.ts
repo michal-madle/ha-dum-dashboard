@@ -96,6 +96,7 @@ function normalize(raw: unknown): Settings {
     snoozeScript: entityId(raw.snooze_script, "snooze_script", { domain: "script" }),
     batteries,
     filters,
+    laundry: named(raw.laundry, "laundry", ["input_boolean"]),
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
       script: entityId(covers.script, "covers.script", { domain: "script" }) ?? "script.zaluzie_posun",

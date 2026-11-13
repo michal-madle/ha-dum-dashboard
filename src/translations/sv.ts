@@ -11,6 +11,7 @@ export const sv: typeof cs = {
   done: "Klart",
   battery: (level) => (level ? `Batteri ${level}` : "Svagt batteri"),
   filter: (hours, threshold) => `Rengör filtret · ${hours} av ${threshold}`,
+  laundry: (since) => (since ? `Tvätt väntar · sedan ${since}` : "Tvätt väntar"),
   running: "Körs nu",
   nothingRuns: "Inget körs",
   minutes: (value) => `${value} min`,

@@ -28,6 +28,8 @@ const ICON_BATTERY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 
 const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`;
 
+const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
+
 /**
  * Dům: the control centre of the house (CURRENT_SPEC.md of the card). The first screen: what needs the user, what
  * runs now, and the controls by group. Everything that switches something on this screen is protected against a tap
@@ -133,13 +135,14 @@ export class HaDumDashboard extends LitElement {
   }
 
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length && !config.filters.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
     const low = config.batteries.filter((battery) => readText(this.hass, battery.low) === "on" && !snoozed.has(`battery:${battery.low}`));
     const dirty = this.dirtyFilters(config).filter(({ filter }) => !snoozed.has(`filter:${filter.hours}`));
-    const count = failed.length + low.length + dirty.length;
+    const waiting = config.laundry.filter((item) => readText(this.hass, item.entity) === "on" && !snoozed.has(`laundry:${item.entity}`));
+    const count = failed.length + low.length + dirty.length + waiting.length;
     const rows = [
       ...failed.map((item, index) => {
         const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
@@ -175,6 +178,20 @@ export class HaDumDashboard extends LitElement {
           <span class="actions">
             ${this.snoozeButton(config, `filter:${filter.hours}`, i18n)}
             <button class="button" type="button" @click=${() => this.call("input_number", "set_value", { entity_id: filter.hours, value: 0 })}>${t.done}</button>
+          </span>
+        </div>`;
+      }),
+      ...waiting.map((item) => {
+        // Since when it waits: from the recorder, so a restart of Home Assistant does not move it.
+        const start = this.starts.of(this.hass, item.entity);
+        const today = start !== undefined && new Date(start).toDateString() === new Date(this._now).toDateString();
+        const since = start === undefined ? "" : today ? i18n.time(start) : i18n.day(start);
+        return html`<div class="row two" data-row="laundry">
+          <span class="mark">${ICON_LAUNDRY}</span>
+          <span class="main">${this.name(item.name)}<small>${joinedText(t.laundry(since))}</small></span>
+          <span class="actions">
+            ${this.snoozeButton(config, `laundry:${item.entity}`, i18n)}
+            <button class="button" type="button" @click=${() => this.call("input_boolean", "turn_off", { entity_id: item.entity })}>${t.done}</button>
           </span>
         </div>`;
       }),

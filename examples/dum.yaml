@@ -53,6 +53,17 @@ filters:                            # filtr klimatizace: hodiny od čištění p
   - name: Klimatizace Pracovna
     hours: input_number.pracovna_ac_pracovna_filtr_hodiny
     threshold: select.pracovna_ac_pracovna_dust_filter_alarm_threshold
+laundry:                            # prádlo čeká (input_boolean, yaml/packages/pradlo.yaml); Hotovo ho vypne
+  - name:
+      cs: Pračka
+      en: Washing machine
+      sv: Tvättmaskin
+    entity: input_boolean.technicka_mistnost_pracka_pradlo_ceka
+  - name:
+      cs: Sušička
+      en: Dryer
+      sv: Torktumlare
+    entity: input_boolean.technicka_mistnost_susicka_pradlo_ceka
 running:
   - name:
       cs: Pračka

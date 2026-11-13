@@ -11,6 +11,7 @@ export const en: typeof cs = {
   done: "Done",
   battery: (level) => (level ? `Battery ${level}` : "Low battery"),
   filter: (hours, threshold) => `Clean the filter · ${hours} of ${threshold}`,
+  laundry: (since) => (since ? `Laundry waiting · since ${since}` : "Laundry waiting"),
   running: "Running now",
   nothingRuns: "Nothing is running",
   minutes: (value) => `${value} min`,
