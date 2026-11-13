@@ -444,7 +444,7 @@ test.describe("ovládání", () => {
     }
   });
 
-  test("další zařízení: každý druh vlastní oddíl za klimatizací; světlo přepne dvojklep a bliká do potvrzení; vysavač otevře detail s dobou úklidu", async ({ page }) => {
+  test("další zařízení: každý druh vlastní oddíl za klimatizací; světlo přepne dvojklep a bliká do potvrzení; vysavač dvojklepem spustí úklid nebo jede do doku", async ({ page }) => {
     await open(page);
     const names = await headings(page);
     expect(names.slice(names.indexOf("Klimatizace") + 1)).toEqual(["Světla", "Zásuvky", "Vysavače"]);
@@ -459,8 +459,13 @@ test.describe("ovládání", () => {
     await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on" } });
     await expect(lamp).not.toHaveAttribute("pending", "");
     expect((await tiles(page, "devices-2")).map((item) => item.text)).toEqual(["V doku", "Uklízí · 12 min"]);
-    await tile(page, "devices-2", "Patro").click();
-    expect((await calls(page)).at(-1)).toEqual({ moreInfo: "vacuum.roborock_s5_ea9e_robot_cleaner" });
+    // Vysavač: dvojklep spustí úklid, uklízející pošle do doku („Q221 A“).
+    await tile(page, "devices-2", "Patro").dblclick();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "start", data: { entity_id: "vacuum.roborock_s5_ea9e_robot_cleaner" } });
+    await expect(tile(page, "devices-2", "Patro")).toHaveAttribute("pending", "");
+    await page.waitForTimeout(500);
+    await tile(page, "devices-2", "Přízemí").dblclick();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "return_to_base", data: { entity_id: "vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner" } });
   });
 
   test("chyba volání Home Assistantu je vidět v kartě", async ({ page }) => {

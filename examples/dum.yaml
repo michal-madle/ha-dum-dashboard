@@ -183,7 +183,7 @@ cooling:
       entity: climate.mikulas_ac_mikulas
     - name: Pracovna
       entity: climate.pracovna_ac_pracovna
-devices:                            # další oddíly dlaždic, každý druh vlastní (světlo, vypínač, větrák: dvojklep nebo podržení přepne; vysavač otevře detail)
+devices:                            # další oddíly dlaždic, každý druh vlastní (dvojklep nebo podržení: světlo, vypínač, větrák přepne; vysavač spustí úklid nebo pošle do doku)
   - name:
       cs: Světla
       en: Lights

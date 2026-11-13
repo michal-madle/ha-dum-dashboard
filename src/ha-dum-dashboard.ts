@@ -745,7 +745,7 @@ export class HaDumDashboard extends LitElement {
 
   /**
    * One section per kind from the configuration („Q218 zatím A“). A light, a switch or a fan is a guarded toggle like
-   * a fan of Větrání; a vacuum opens its details in Home Assistant (one tap changes nothing).
+   * a fan of Větrání; a vacuum starts cleaning, or goes home while it cleans („Q221 A“).
    */
   private renderDevices(config: Settings, i18n: I18n): TemplateResult[] {
     const t = i18n.t;
@@ -762,14 +762,26 @@ export class HaDumDashboard extends LitElement {
                 const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
                 const words = entity && hass?.formatEntityState ? hass.formatEntityState(entity) : (entity?.state ?? "");
                 const text = missing ? t.unavailable : cleaning ? [words, this.duration(item.entity, i18n)].filter(Boolean).join(" · ") : words;
+                // A double tap (or holding) starts cleaning; while it cleans, it sends it home (uživatel 13. 11. 2026: „Q221 A“).
+                const key = `vacuum:${item.entity}`;
                 return html`<dd-tile
-                  kind="open"
+                  kind="action"
+                  guarded
                   data-entity=${item.entity}
                   .name=${this.name(item.name)}
                   .text=${text}
                   .state=${(cleaning ? "on" : missing ? "off" : "idle") as TileState}
                   .disabled=${missing}
-                  @hdk-open=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: item.entity } }))}
+                  .hint=${t.hint}
+                  .hintAlign=${this.align(index)}
+                  .holdMs=${config.guard.holdMs}
+                  .doubleTapMs=${config.guard.doubleTapMs}
+                  .hintSeconds=${config.guard.hintSeconds}
+                  .pending=${this.pending.has(key)}
+                  @hdk-press=${() =>
+                    cleaning
+                      ? this.send(key, { entities: [item.entity], done: () => ["returning", "docked"].includes(readText(this.hass, item.entity) ?? "") }, "vacuum", "return_to_base", { entity_id: item.entity })
+                      : this.send(key, { entities: [item.entity], done: () => readText(this.hass, item.entity) === "cleaning" }, "vacuum", "start", { entity_id: item.entity })}
                 ></dd-tile>`;
               }
               const on = entity?.state === "on";
