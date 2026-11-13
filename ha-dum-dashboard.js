@@ -882,7 +882,6 @@ const yi = ["next", "30", "60", "180", "forever"], xi = [0, 60, 180, 480], Jt = 
       label: r,
       options: i.map((a) => ({ value: a, label: n[a] ?? a })),
       value: o,
-      wrap: !0,
       onSelect: (a) => this.change(t === "fan" ? { fan: a } : { swing: a })
     })}`;
   }
@@ -3703,4 +3702,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Pe(Wi()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.7.1 · 2026-11-13 14:14 UTC · po 4970d1c ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.7.2 · 2026-11-13 14:20 UTC · po 262961d ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
