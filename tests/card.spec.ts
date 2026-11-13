@@ -95,7 +95,7 @@ test.describe("fronta a co běží", () => {
     await expect(row).toHaveCount(0);
   });
 
-  test("prádlo čeká: řádek s časem od konce cyklu, „Hotovo“ vypne pomocníka, „Odložit“ ho schová", async ({ page }) => {
+  test("prádlo čeká: řádek s časem od konce cyklu, „Hotovo“ vypne pomocníka, „Odložit“ nemá", async ({ page }) => {
     await open(page, "day");
     await expect(page.locator('[data-row="laundry"]')).toHaveCount(0);
     const since = new Date(Date.now() - 50 * 60000);
@@ -110,9 +110,8 @@ test.describe("fronta a co běží", () => {
     expect((await headings(page))[0]).toBe("Potřebuje tebe · 1");
     await row.getByRole("button", { name: "Hotovo" }).click();
     expect(await calls(page)).toContainEqual({ domain: "input_boolean", service: "turn_off", data: { entity_id: "input_boolean.technicka_mistnost_pracka_pradlo_ceka" } });
-    await row.getByRole("button", { name: "Odložit" }).click();
-    await row.getByRole("menuitem", { name: /O den/ }).click();
-    expect(await calls(page)).toContainEqual(expect.objectContaining({ service: "dum_odlozit", data: expect.objectContaining({ klic: "laundry:input_boolean.technicka_mistnost_pracka_pradlo_ceka" }) }));
+    // Prádlo na týden odložit nejde (uživatel 13. 11. 2026).
+    await expect(row.getByRole("button", { name: "Odložit" })).toHaveCount(0);
   });
 
   test("text z částí: na 320 px se zalomí v místě tečky (tečka zmizí) nebo teče bez tečky na kraji řádku; na 393 px je na jednom řádku", async ({ page }) => {

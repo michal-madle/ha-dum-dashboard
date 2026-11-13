@@ -151,7 +151,8 @@ export class HaDumDashboard extends LitElement {
     const snoozed = this.snoozed(config);
     const low = config.batteries.filter((battery) => readText(this.hass, battery.low) === "on" && !snoozed.has(`battery:${battery.low}`));
     const dirty = this.dirtyFilters(config).filter(({ filter }) => !snoozed.has(`filter:${filter.hours}`));
-    const waiting = config.laundry.filter((item) => readText(this.hass, item.entity) === "on" && !snoozed.has(`laundry:${item.entity}`));
+    // Laundry cannot wait a week: only „Hotovo“, no „Odložit“ (uživatel 13. 11. 2026).
+    const waiting = config.laundry.filter((item) => readText(this.hass, item.entity) === "on");
     const count = failed.length + low.length + dirty.length + waiting.length;
     const rows = [
       ...failed.map((item, index) => {
@@ -198,13 +199,10 @@ export class HaDumDashboard extends LitElement {
         const start = this.starts.of(this.hass, item.entity);
         const today = start !== undefined && new Date(start).toDateString() === new Date(this._now).toDateString();
         const since = start === undefined ? "" : today ? i18n.time(start) : i18n.day(start);
-        return html`<div class="row two" data-row="laundry">
+        return html`<div class="row" data-row="laundry">
           <span class="mark">${ICON_LAUNDRY}</span>
           <span class="main">${this.name(item.name)}<small>${joinedText(t.laundry(since))}</small></span>
-          <span class="actions">
-            ${this.snoozeButton(config, `laundry:${item.entity}`, i18n)}
-            <button class="button" type="button" @click=${() => this.call("input_boolean", "turn_off", { entity_id: item.entity })}>${t.done}</button>
-          </span>
+          <button class="button" type="button" @click=${() => this.call("input_boolean", "turn_off", { entity_id: item.entity })}>${t.done}</button>
         </div>`;
       }),
     ];

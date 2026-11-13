@@ -24,7 +24,7 @@ Karta je třetí vedle `ha-klima-dashboard` a `ha-energie-dashboard`; společné
 | `snoozed`, `snooze_script` | senzor odložených věcí a skript „odložit“ (klíč a den návratu); bez nich tlačítko „Odložit“ není |
 | `batteries` | čidla s baterií: `low` (binary_sensor, `on` = slabá), volitelně `level` a `type` |
 | `filters` | filtry klimatizací: `hours` (input_number, hodiny od čištění) a `threshold` (select, práh v hodinách); úkol ve frontě od prahu, „Hotovo“ hodiny vynuluje |
-| `laundry` | prádlo čeká: `name` a `entity` (input_boolean, `on` = čeká); úkol ve frontě s „Odložit“ a „Hotovo“ (vypne ho) |
+| `laundry` | prádlo čeká: `name` a `entity` (input_boolean, `on` = čeká); úkol ve frontě s „Hotovo“ (vypne ho), bez „Odložit“ |
 | `running` | spotřebiče, které se ukážou v „Teď běží“ s dobou běhu |
 | `covers` | žaluzie (entita, nebo `name` a `entity`), skript posunu (`entity`, `pos`, `tilt`), předvolby a `last_action` (senzor poslední akce, kdo žaluzií pohnul; detail za šipkou u nadpisu) |
 | `ventilation` | větrací režim a větráky |
