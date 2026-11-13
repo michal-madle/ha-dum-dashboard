@@ -10,6 +10,7 @@ export const en: typeof cs = {
   snoozeFor: { day: "A day", weekend: "To the weekend", week: "A week", month: "A month" },
   done: "Done",
   battery: (level) => (level ? `Battery ${level}` : "Low battery"),
+  filter: (hours, threshold) => `Clean the filter · ${hours} of ${threshold}`,
   running: "Running now",
   nothingRuns: "Nothing is running",
   minutes: (value) => `${value} min`,

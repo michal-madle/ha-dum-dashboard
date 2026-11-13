@@ -1,5 +1,5 @@
 import { checkKeys, entityId, fail, isRecord, languageSetting, localizedText, section, text, withCardName } from "ha-dashboard-kit/config";
-import type { Battery, Named, Preset, Settings } from "./types";
+import type { Battery, Filter, Named, Preset, Settings } from "./types";
 
 /*
  * The YAML of the card (CURRENT_SPEC.md, Konfigurace). The rules are the kit's: every key is optional, a key without a
@@ -75,6 +75,16 @@ function normalize(raw: unknown): Settings {
       type: entityId(item.type, `${at}.type`, { domain: "sensor" }),
     };
   });
+  const filters = list(raw.filters, "filters").map((item, index): Filter => {
+    const at = `filters[${index}]`;
+    if (!isRecord(item)) fail(`${at} must be a mapping with name, hours and threshold.`);
+    checkKeys(item, ["name", "hours", "threshold"], at);
+    return {
+      name: localizedText(item.name, `${at}.name`) ?? fail(`${at}.name is missing.`),
+      hours: entityId(item.hours, `${at}.hours`, { domain: "input_number" }) ?? fail(`${at}.hours is missing.`),
+      threshold: entityId(item.threshold, `${at}.threshold`, { domain: "select" }) ?? fail(`${at}.threshold is missing.`),
+    };
+  });
 
   return {
     language: languageSetting(raw.language),
@@ -85,6 +95,7 @@ function normalize(raw: unknown): Settings {
     snoozed: entityId(raw.snoozed, "snoozed", { domain: "sensor" }),
     snoozeScript: entityId(raw.snooze_script, "snooze_script", { domain: "script" }),
     batteries,
+    filters,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
       script: entityId(covers.script, "covers.script", { domain: "script" }) ?? "script.zaluzie_posun",

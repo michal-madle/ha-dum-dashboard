@@ -120,6 +120,24 @@ export const styles = css`
     font-size: 17px;
     line-height: 22px;
   }
+  /* A row with two buttons: they go under the text when the text would have less than about 160 px. */
+  .row.two {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .row.two .main {
+    flex: 1 1 160px;
+  }
+  /* The menu "Odložit" keeps to the right edge of the row, so it never leaves the card. */
+  .actions {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    margin-inline-start: auto;
+  }
+  .actions .snooze {
+    position: static;
+  }
   .row small {
     display: block;
     color: var(--dd-secondary);

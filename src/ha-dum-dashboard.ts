@@ -24,6 +24,8 @@ interface Failed {
 
 const ICON_BATTERY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2" stroke-linecap="round"></path><rect x="5" y="10" width="3" height="4" fill="currentColor" stroke="none"></rect></svg>`;
 
+const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`;
+
 /**
  * Dům: the control centre of the house (CURRENT_SPEC.md of the card). The first screen: what needs the user, what
  * runs now, and the controls by group. Everything that switches something on this screen is protected against a tap
@@ -116,12 +118,13 @@ export class HaDumDashboard extends LitElement {
   }
 
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
     const low = config.batteries.filter((battery) => readText(this.hass, battery.low) === "on" && !snoozed.has(`battery:${battery.low}`));
-    const count = failed.length + low.length;
+    const dirty = this.dirtyFilters(config).filter(({ filter }) => !snoozed.has(`filter:${filter.hours}`));
+    const count = failed.length + low.length + dirty.length;
     const rows = [
       ...failed.map((item, index) => {
         const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
@@ -149,11 +152,31 @@ export class HaDumDashboard extends LitElement {
           ${this.snoozeButton(config, `battery:${battery.low}`, i18n)}
         </div>`;
       }),
+      ...dirty.map(({ filter, hours, threshold }) => {
+        const h = (value: number) => `${i18n.whole(Math.floor(value))} h`;
+        return html`<div class="row two" data-row="filter">
+          <span class="mark">${ICON_FILTER}</span>
+          <span class="main">${this.name(filter.name)}<small>${t.filter(h(hours), h(threshold))}</small></span>
+          <span class="actions">
+            ${this.snoozeButton(config, `filter:${filter.hours}`, i18n)}
+            <button class="button" type="button" @click=${() => this.call("input_number", "set_value", { entity_id: filter.hours, value: 0 })}>${t.done}</button>
+          </span>
+        </div>`;
+      }),
     ];
     return html`<h2><span>${count ? `${t.needsYou} · ${count}` : t.needsYou}</span></h2>
       <div class="group" data-part="queue">
         ${rows.length ? rows : html`<div class="row"><span class="main">${t.nothingWaits}</span></div>`}
       </div>`;
+  }
+
+  /** Air conditioners that ran at least their threshold since the filter was cleaned; a missing value is no task. */
+  private dirtyFilters(config: Settings): Array<{ filter: Settings["filters"][number]; hours: number; threshold: number }> {
+    return config.filters.flatMap((filter) => {
+      const hours = readNumber(this.hass, filter.hours);
+      const threshold = readNumber(this.hass, filter.threshold);
+      return hours !== undefined && threshold !== undefined && threshold > 0 && hours >= threshold ? [{ filter, hours, threshold }] : [];
+    });
   }
 
   /* ---------- Odložit ---------- */

@@ -37,6 +37,22 @@ batteries:
     low: binary_sensor.garaz_teplomer_garaz_battery
     level: sensor.garaz_teplomer_garaz_battery
     type: sensor.garaz_teplomer_garaz_battery_type
+filters:                            # filtr klimatizace: hodiny od čištění proti prahu klimatizace; Hotovo je vynuluje
+  - name: Klimatizace Obývák
+    hours: input_number.obyvak_ac_obyvak_filtr_hodiny
+    threshold: select.obyvak_ac_obyvak_dust_filter_alarm_threshold
+  - name: Klimatizace Ložnice
+    hours: input_number.loznice_ac_loznice_filtr_hodiny
+    threshold: select.loznice_ac_loznice_dust_filter_alarm_threshold
+  - name: Klimatizace Maxík
+    hours: input_number.maxik_ac_maxik_filtr_hodiny
+    threshold: select.maxik_ac_maxik_dust_filter_alarm_threshold
+  - name: Klimatizace Mikuláš
+    hours: input_number.mikulas_ac_mikulas_filtr_hodiny
+    threshold: select.mikulas_ac_mikulas_dust_filter_alarm_threshold
+  - name: Klimatizace Pracovna
+    hours: input_number.pracovna_ac_pracovna_filtr_hodiny
+    threshold: select.pracovna_ac_pracovna_dust_filter_alarm_threshold
 running:
   - name: {cs: Pračka, en: Washing machine, sv: Tvättmaskin}
     entity: input_boolean.technicka_mistnost_pracka_bezi

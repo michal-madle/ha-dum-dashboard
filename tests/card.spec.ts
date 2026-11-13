@@ -76,6 +76,25 @@ test.describe("fronta a co běží", () => {
     await expect(page.locator('[data-row="battery"]')).toHaveCount(1);
   });
 
+  test("filtr klimatizace: úkol až od prahu, „Hotovo“ vynuluje hodiny, „Odložit“ ho schová; chybějící práh není úkol", async ({ page }) => {
+    await open(page, "day");
+    await expect(page.locator('[data-row="filter"]')).toHaveCount(0);
+    await update(page, { "input_number.loznice_ac_loznice_filtr_hodiny": { state: "312.6" }, "input_number.maxik_ac_maxik_filtr_hodiny": { state: "900" }, "select.maxik_ac_maxik_dust_filter_alarm_threshold": { state: "unavailable" } });
+    const row = page.locator('[data-row="filter"]');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText("Klimatizace Ložnice");
+    await expect(row).toContainText("Vyčistit filtr · 312 h z 300 h");
+    expect((await headings(page))[0]).toBe("Potřebuje tebe · 1");
+    await row.getByRole("button", { name: "Hotovo" }).click();
+    expect(await calls(page)).toEqual([{ domain: "input_number", service: "set_value", data: { entity_id: "input_number.loznice_ac_loznice_filtr_hodiny", value: 0 } }]);
+    await row.getByRole("button", { name: "Odložit" }).click();
+    await row.getByRole("menuitem", { name: /O den/ }).click();
+    expect((await calls(page))[1]).toMatchObject({ domain: "script", service: "dum_odlozit", data: { klic: "filter:input_number.loznice_ac_loznice_filtr_hodiny" } });
+    const tomorrow = (await calls(page))[1].data!.do;
+    await update(page, { "sensor.dum_odlozeno": { state: "1", attributes: { polozky: [{ klic: "filter:input_number.loznice_ac_loznice_filtr_hodiny", do: tomorrow }] } } });
+    await expect(row).toHaveCount(0);
+  });
+
   test("Teď běží: spotřebiče s dobou běhu a jednotkou, jinak „Nic neběží“", async ({ page }) => {
     await open(page);
     await expect(page.locator('[data-part="running"]')).toHaveText("Pračka 42 min · Myčka 1 h 5 min");
@@ -199,6 +218,7 @@ test.describe("konfigurace, jazyky, mobil a přístupnost", () => {
     expect(await configError(page, { ...example(), failed_actions: "switch.x" })).toBe("Dům Dashboard: failed_actions must be a sensor entity (sensor.…), not switch.x.");
     expect(await configError(page, { ...example(), covers: { ...example().covers, speed: 1 } })).toContain('covers: unknown key "speed"');
     expect(await configError(page, { ...example(), guard: { hold_ms: 5 } })).toBe("Dům Dashboard: guard.hold_ms must be a number from 200 to 3000.");
+    expect(await configError(page, { ...example(), filters: [{ name: "X", hours: "sensor.x", threshold: "select.y" }] })).toBe("Dům Dashboard: filters[0].hours must be a input_number entity (input_number.…), not sensor.x.");
     expect(await configError(page, { ...example(), heating: { rooms: [{ name: "X", entity: "switch.x" }] } })).toBe("Dům Dashboard: heating.rooms[0].entity must be one of climate, not switch.x.");
   });
 
@@ -215,6 +235,15 @@ test.describe("konfigurace, jazyky, mobil a přístupnost", () => {
   test("320 až 430 px: bez vodorovného posouvání, cíle aspoň 44 px; axe v tmavém i světlém režimu", async ({ page }) => {
     for (const width of [320, 393, 430]) {
       await open(page, "evening", "dark", "cs", width);
+      // A task with two buttons is the widest row of the queue.
+      await update(page, { "input_number.pracovna_ac_pracovna_filtr_hodiny": { state: "305" } });
+      await page.locator('[data-row="filter"]').waitFor();
+      // The menu "Odložit" of the row stays inside the screen.
+      await page.locator('[data-row="filter"]').getByRole("button", { name: "Odložit" }).click();
+      const menu = await page.locator('[data-row="filter"] [role="menu"]').boundingBox();
+      expect(menu!.x, `šířka ${width}`).toBeGreaterThanOrEqual(0);
+      expect(menu!.x + menu!.width, `šířka ${width}`).toBeLessThanOrEqual(width);
+      await page.keyboard.press("Escape");
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `šířka ${width}`).toBeLessThanOrEqual(width);
       const small = await page.locator("ha-dum-dashboard").evaluate((card) => {
         const out: string[] = [];
@@ -230,6 +259,7 @@ test.describe("konfigurace, jazyky, mobil a přístupnost", () => {
     }
     for (const theme of ["dark", "light"] as const) {
       await open(page, "evening", theme);
+      await update(page, { "input_number.pracovna_ac_pracovna_filtr_hodiny": { state: "305" } });
       // The card has no heading of its own: the name of the dashboard is the heading of the page in Home Assistant.
       expect(await axeViolations(page, ["page-has-heading-one"]), theme).toEqual([]);
     }

@@ -18,6 +18,15 @@ export interface Battery {
   type?: string;
 }
 
+/** An air conditioner whose filter is counted (CURRENT_SPEC.md, úkoly ve frontě). */
+export interface Filter {
+  name: LocalizedText;
+  /** input_number: hours of running since the filter was cleaned. */
+  hours: string;
+  /** select: the threshold of the air conditioner in hours ("180", "300" …). */
+  threshold: string;
+}
+
 export interface Preset {
   name: LocalizedText;
   position: number;
@@ -35,6 +44,7 @@ export interface Settings {
   snoozed?: string;
   snoozeScript?: string;
   batteries: Battery[];
+  filters: Filter[];
   running: Named[];
   covers: { script: string; entities: string[]; presets: Preset[]; tolerance: number };
   ventilation: { mode?: string; fans: Named[] };

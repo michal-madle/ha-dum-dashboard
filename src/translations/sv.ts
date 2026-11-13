@@ -10,6 +10,7 @@ export const sv: typeof cs = {
   snoozeFor: { day: "En dag", weekend: "Till helgen", week: "En vecka", month: "En månad" },
   done: "Klart",
   battery: (level) => (level ? `Batteri ${level}` : "Svagt batteri"),
+  filter: (hours, threshold) => `Rengör filtret · ${hours} av ${threshold}`,
   running: "Körs nu",
   nothingRuns: "Inget körs",
   minutes: (value) => `${value} min`,

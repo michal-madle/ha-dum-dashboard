@@ -8,6 +8,7 @@ export const cs = {
   snoozeFor: { day: "O den", weekend: "Na víkend", week: "O týden", month: "O měsíc" },
   done: "Hotovo",
   battery: (level: string | undefined) => (level ? `Baterie ${level}` : "Slabá baterie"),
+  filter: (hours: string, threshold: string) => `Vyčistit filtr · ${hours} z ${threshold}`,
   running: "Teď běží",
   nothingRuns: "Nic neběží",
   minutes: (value: number) => `${value} min`,
