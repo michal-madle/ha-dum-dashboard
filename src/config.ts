@@ -127,6 +127,7 @@ function normalize(raw: unknown): Settings {
       rooms: named(heating.rooms, "heating.rooms", ["climate"]),
     },
     cooling: { rooms: named(cooling.rooms, "cooling.rooms", ["climate"]) },
+    sendDelaySeconds: number(raw.send_delay_seconds, "send_delay_seconds", 2, 0, 30),
     guard: {
       holdMs: number(guard.hold_ms, "guard.hold_ms", 550, 200, 3000),
       doubleTapMs: number(guard.double_tap_ms, "guard.double_tap_ms", 400, 150, 1500),

@@ -152,6 +152,7 @@ cooling:
       entity: climate.mikulas_ac_mikulas
     - name: Pracovna
       entity: climate.pracovna_ac_pracovna
+send_delay_seconds: 2                # popup Topení / Klimatizace odešle změnu tolik sekund po poslední (nebo při zavření)
 guard:
   hold_ms: 550                      # podržení chráněného prvku
   double_tap_ms: 400                # druhé klepnutí do této doby

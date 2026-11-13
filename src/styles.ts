@@ -26,6 +26,14 @@ export const styles = css`
     --hdk-tile-on-border: transparent;
     --hdk-tile-mixed: #17395d;
     --hdk-tile-badge: rgb(255 255 255 / 16%);
+    /* Slider and segmented control of the popup Topení / Klimatizace: the values of Energie (one visual language). */
+    --hdk-track: #2c2c2e;
+    --hdk-track-compact: #3a3a3c;
+    --hdk-bar: rgb(255 255 255 / 14%);
+    --hdk-tick: rgb(255 255 255 / 28%);
+    --hdk-seg-thumb: #ffffff;
+    --hdk-seg-text: #ebebf5;
+    --hdk-seg-selected: #000000;
     --hdk-bubble: #3a3a3c;
     --hdk-bubble-text: #ffffff;
     color: var(--dd-text);
@@ -51,6 +59,11 @@ export const styles = css`
     --hdk-tile-on-border: #0a6ed1;
     --hdk-tile-mixed: #e6eff9;
     --hdk-tile-badge: rgb(60 60 67 / 14%);
+    --hdk-track: #f2f2f7;
+    --hdk-track-compact: #e5e5ea;
+    --hdk-bar: rgb(60 60 67 / 18%);
+    --hdk-tick: rgb(60 60 67 / 30%);
+    --hdk-seg-text: #000000;
   }
   ha-card {
     padding: 4px 16px 20px;

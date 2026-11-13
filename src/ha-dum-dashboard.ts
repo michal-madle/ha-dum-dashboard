@@ -44,7 +44,9 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers";
+  @state() private _detail?: "covers" | "heating" | "cooling";
+  /** The rooms the popup Topení / Klimatizace opened with (the tile that was tapped). */
+  @state() private _climateSelected: string[] = [];
   /** The row whose menu "Odložit" is open. */
   @state() private _menu?: string;
 
@@ -132,7 +134,7 @@ export class HaDumDashboard extends LitElement {
       ${this.renderVentilation(config, i18n)} ${climate}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)}`;
   }
 
   /* ---------- Potřebuje tebe ---------- */
@@ -472,7 +474,7 @@ export class HaDumDashboard extends LitElement {
           const mode = readText(this.hass, room.entity);
           const text = mode === undefined ? t.unavailable : mode === "off" ? t.off : [mode === "auto" ? t.schedule : t.manual, this.target(room.entity, i18n, true)].filter(Boolean).join(" · ");
           const tileState: TileState = mode === undefined || mode === "off" ? "off" : mode === "auto" ? "idle" : "on";
-          return this.openTile(room, text, tileState, mode === undefined);
+          return this.openTile("heating", room, text, tileState, mode === undefined);
         })}
       </div>`;
   }
@@ -493,13 +495,13 @@ export class HaDumDashboard extends LitElement {
           const preset = String(entityState(this.hass, room.entity)?.attributes.preset_mode ?? "");
           const key = mode === "cool" && preset === "wind_free" ? "wind_free" : mode === "heat_cool" ? "auto" : (mode ?? "");
           const text = mode === undefined ? t.unavailable : mode === "off" ? t.off : [t.mode[key] ?? t.on, mode === "fan_only" ? "" : this.target(room.entity, i18n, false)].filter(Boolean).join(" · ");
-          return this.openTile(room, text, mode === undefined || mode === "off" ? "off" : "on", mode === undefined);
+          return this.openTile("cooling", room, text, mode === undefined || mode === "off" ? "off" : "on", mode === undefined);
         })}
       </div>`;
   }
 
-  /** A tile that opens the detail of its device: one tap, it changes nothing by itself. */
-  private openTile(room: Named, text: string, tileState: TileState, missing: boolean): TemplateResult {
+  /** A tile that opens the popup Topení / Klimatizace with its room selected: one tap, it changes nothing by itself. */
+  private openTile(system: "heating" | "cooling", room: Named, text: string, tileState: TileState, missing: boolean): TemplateResult {
     return html`<dd-tile
       kind="open"
       data-entity=${room.entity}
@@ -507,8 +509,38 @@ export class HaDumDashboard extends LitElement {
       .text=${text}
       .state=${tileState}
       .disabled=${missing}
-      @hdk-open=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: room.entity }, bubbles: true, composed: true }))}
+      @hdk-open=${() => {
+        this._climateSelected = [room.entity];
+        this._detail = system;
+      }}
     ></dd-tile>`;
+  }
+
+  /** The shared popup of the kit for one system (spec of the kit: in the card Dům only one system, no switch). */
+  private renderClimate(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    const system = this._detail === "heating" || this._detail === "cooling" ? this._detail : undefined;
+    const rooms = (system ?? "heating") === "heating" ? config.heating.rooms : config.cooling.rooms;
+    if (!config.heating.rooms.length && !config.cooling.rooms.length) return nothing;
+    const close = async () => {
+      // What waits goes now (spec: „odešle se při zavření nebo po 2s od změny“).
+      await (this.renderRoot.querySelector("dd-climate") as (Element & { flush(): Promise<void> }) | null)?.flush();
+      this._detail = undefined;
+    };
+    return html`<dd-sheet .open=${system !== undefined} .heading=${system === "cooling" ? i18n.t.cooling : i18n.t.heating} .closeLabel=${i18n.t.close} @hdk-close=${close}>
+      ${system
+        ? html`<dd-climate
+            .hass=${this.hass}
+            .i18n=${i18n}
+            .texts=${i18n.t.climate}
+            .system=${system}
+            .rooms=${rooms.map((room) => ({ name: this.name(room.name), entity: room.entity }))}
+            .selected=${this._climateSelected}
+            .delayMs=${config.sendDelaySeconds * 1000}
+            @hdk-select-rooms=${(event: CustomEvent<{ selected: string[] }>) => (this._climateSelected = event.detail.selected)}
+            @hdk-error=${(event: CustomEvent<{ message: string }>) => (this._error = event.detail.message)}
+          ></dd-climate>`
+        : nothing}
+    </dd-sheet>`;
   }
 
   /* ---------- Chráněný odkaz v nadpisu oddílu ---------- */

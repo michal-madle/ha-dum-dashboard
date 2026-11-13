@@ -1,9 +1,11 @@
+import { defineClimate } from "ha-dashboard-kit/climate";
 import { defineControls } from "ha-dashboard-kit/controls";
 import { HaDumDashboard } from "./ha-dum-dashboard";
 import { getI18n, pageLanguage } from "./i18n";
 
 // <dd-tile> and the other controls of the kit, named by the prefix of this card.
 defineControls("dd");
+defineClimate("dd");
 if (!customElements.get("ha-dum-dashboard")) {
   customElements.define("ha-dum-dashboard", HaDumDashboard);
 }

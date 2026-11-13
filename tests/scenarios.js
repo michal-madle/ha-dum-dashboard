@@ -13,6 +13,11 @@ const secondsAgo = (minutes) => (Date.now() - minutes * 60000) / 1000;
 /** The rows of the recorder (`history/history_during_period`, minimal response) by entity. */
 const history = {};
 const entity = (state, attributes = {}, minutes = 600) => ({ state, attributes, last_changed: ago(minutes), last_updated: ago(minutes) });
+// The attributes the climate entities have in Home Assistant (ha-config/ha/entities.json): Tado CE and Samsung SmartThings.
+const TADO = { min_temp: 5, max_temp: 25, target_temp_step: 0.5, hvac_modes: ["heat", "off", "auto"], preset_modes: ["home", "away"], current_temperature: 21.6 };
+const AC = { min_temp: 16, max_temp: 30, hvac_modes: ["off", "cool", "dry", "fan_only", "auto", "heat"], preset_modes: ["none", "sleep", "quiet", "smart", "boost", "wind_free", "wind_free_sleep"], current_temperature: 23.4 };
+const tado = (state, attributes) => entity(state, { ...TADO, ...attributes });
+const ac = (state, attributes) => entity(state, { ...AC, preset_mode: "none", ...attributes });
 
 const states = { "input_select.house_mode": entity("Zima") };
 for (const battery of config.batteries) {
@@ -32,8 +37,8 @@ states[config.covers.last_action] = entity(ago(100), { polozky: Object.fromEntri
 states[config.ventilation.mode] = entity("off");
 for (const fan of config.ventilation.fans) states[fan.entity] = entity("off");
 const targets = [21, 19, 20, 20, 22.5, 8];
-config.heating.rooms.forEach((room, index) => (states[room.entity] = entity("auto", { temperature: targets[index] })));
-for (const room of config.cooling.rooms) states[room.entity] = entity("off", { temperature: 22, preset_mode: "none" });
+config.heating.rooms.forEach((room, index) => (states[room.entity] = tado("auto", { temperature: targets[index] })));
+for (const room of config.cooling.rooms) states[room.entity] = ac("off", { temperature: 22 });
 states[config.failed_actions] = entity("0", { polozky: [] });
 states[config.snoozed] = entity("0", { polozky: [] });
 
@@ -46,15 +51,15 @@ if (scenario === "evening") {
   states["input_boolean.technicka_mistnost_pracka_bezi"] = entity("on", {}, 42);
   states["input_boolean.kuchyne_mycka_bezi"] = entity("on", {}, 65);
   states["switch.koupelna_vetrak_zachod_patro"] = entity("on", {}, 8);
-  states["climate.pracovna_tado_ce_pracovna"] = entity("heat", { temperature: 22.5 });
-  states["climate.garaz_tado_ce_garaz"] = entity("off", { temperature: 8 });
-  states["climate.obyvak_ac_obyvak"] = entity("heat", { temperature: 23, preset_mode: "none" });
+  states["climate.pracovna_tado_ce_pracovna"] = tado("heat", { temperature: 22.5 });
+  states["climate.garaz_tado_ce_garaz"] = tado("off", { temperature: 8 });
+  states["climate.obyvak_ac_obyvak"] = ac("heat", { temperature: 23, preset_mode: "none" });
 }
 if (scenario === "summer") {
   states["input_select.house_mode"] = entity("Léto");
   states["cover.loznice_zaluzie_loznice"] = entity("open", { current_position: 100, current_tilt_position: 100 });
-  states["climate.obyvak_ac_obyvak"] = entity("cool", { temperature: 22, preset_mode: "none" });
-  states["climate.loznice_ac_loznice"] = entity("cool", { temperature: 24, preset_mode: "wind_free" });
+  states["climate.obyvak_ac_obyvak"] = ac("cool", { temperature: 22, preset_mode: "none" });
+  states["climate.loznice_ac_loznice"] = ac("cool", { temperature: 24, preset_mode: "wind_free" });
   states["climate.maxik_ac_maxik"] = entity("unavailable");
 }
 if (scenario === "day") {

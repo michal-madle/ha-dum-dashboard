@@ -62,6 +62,8 @@ export interface Settings {
   heating: { resume?: string; rooms: Named[] };
   cooling: { rooms: Named[] };
   guard: { holdMs: number; doubleTapMs: number; hintSeconds: number };
+  /** The popup Topení / Klimatizace sends a change this long after the last one (or when it closes). */
+  sendDelaySeconds: number;
 }
 
 declare global {

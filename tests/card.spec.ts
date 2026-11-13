@@ -270,7 +270,7 @@ test.describe("ovládání", () => {
     await expect(page.locator('[data-link="resume"]')).toHaveCount(0);
   });
 
-  test("klimatizace: režim a celé stupně, WindFree, nedostupná; „Vypnout vše“ vypne jen běžící; dlaždice otevře detail jedním klepnutím", async ({ page }) => {
+  test("klimatizace: režim a celé stupně, WindFree, nedostupná; „Vypnout vše“ vypne jen běžící", async ({ page }) => {
     await open(page, "summer");
     const list = await tiles(page, "cooling");
     expect(list.slice(0, 3)).toEqual([
@@ -278,14 +278,58 @@ test.describe("ovládání", () => {
       { name: "Ložnice", text: "WindFree · 24°", state: "on" },
       { name: "Maxík", text: "Nedostupné", state: "off" },
     ]);
-    await tile(page, "cooling", "Obývák").click();
     await page.locator('[data-link="alloff"]').dblclick();
-    expect(await calls(page)).toEqual([
-      { moreInfo: "climate.obyvak_ac_obyvak" },
-      { domain: "climate", service: "turn_off", data: { entity_id: ["climate.obyvak_ac_obyvak", "climate.loznice_ac_loznice"] } },
-    ]);
+    expect(await calls(page)).toEqual([{ domain: "climate", service: "turn_off", data: { entity_id: ["climate.obyvak_ac_obyvak", "climate.loznice_ac_loznice"] } }]);
     await open(page, "day");
     await expect(page.locator('[data-link="alloff"]')).toHaveCount(0);
+  });
+
+  test("popup Klimatizace: dlaždice ho otevře jedním klepnutím s tou místností, klepnutí na jinou zapnutou vybere všechny zapnuté, zavření změnu hned odešle", async ({ page }) => {
+    await open(page, "summer");
+    await tile(page, "cooling", "Obývák").click();
+    const dialog = page.getByRole("dialog", { name: "Klimatizace" });
+    await expect(dialog).toBeVisible();
+    const selected = () => page.locator("dd-climate .rooms dd-tile").evaluateAll((items) => items.filter((item: any) => item.pressed).map((item: any) => item.name));
+    expect(await selected()).toEqual(["Obývák"]);
+    await expect(page.locator("dd-climate .big")).toHaveText("22°");
+    await page.locator("dd-climate .rooms dd-tile").filter({ hasText: "Ložnice" }).click();
+    expect(await selected()).toEqual(["Obývák", "Ložnice"]);
+    await expect(page.locator("dd-climate .big")).toHaveText("22–24°");
+    await page.locator("dd-climate .modes dd-tile").filter({ hasText: "Chlazení" }).click();
+    await expect(page.locator("dd-climate .busy")).toBeVisible();
+    expect(await calls(page)).toEqual([]);
+    await page.getByRole("button", { name: "Zavřít" }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await calls(page)).toEqual([
+      { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.obyvak_ac_obyvak", hvac_mode: "cool" } },
+      { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.loznice_ac_loznice", hvac_mode: "cool" } },
+      { domain: "climate", service: "set_preset_mode", data: { entity_id: "climate.loznice_ac_loznice", preset_mode: "none" } },
+    ]);
+  });
+
+  test("popup Topení: jen jeden systém bez přepínače; posunutí teploty je Ručně, odešle se po prodlevě z konfigurace", async ({ page }) => {
+    await open(page);
+    await tile(page, "heating", "Pracovna").click();
+    await expect(page.getByRole("dialog", { name: "Topení" })).toBeVisible();
+    await expect(page.locator("dd-climate .big")).toHaveText("22,5°");
+    await expect(page.getByRole("tab")).toHaveCount(0);
+    await page.locator("dd-climate dd-slider input").fill("21");
+    await page.locator("dd-climate dd-slider input").dispatchEvent("change");
+    await expect.poll(() => calls(page), { timeout: 4000 }).toEqual([
+      { domain: "climate", service: "set_temperature", data: { entity_id: "climate.pracovna_tado_ce_pracovna", temperature: 21, hvac_mode: "heat" } },
+    ]);
+  });
+
+  test("popup 320 px: bez vodorovného posouvání, axe tmavě i světle", async ({ page }) => {
+    for (const theme of ["dark", "light"] as const) {
+      await open(page, "summer", theme, "cs", 320);
+      // Axe measures the finished sheet, not its fade-in.
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await tile(page, "cooling", "Obývák").click();
+      await page.locator("dd-climate .big").waitFor();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+      expect(await axeViolations(page, ["page-has-heading-one"]), theme).toEqual([]);
+    }
   });
 
   test("chyba volání Home Assistantu je vidět v kartě", async ({ page }) => {
