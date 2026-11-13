@@ -326,6 +326,23 @@ export const styles = css`
     cursor: pointer;
     white-space: nowrap;
   }
+  /* Sent and on its way (spec kitu, Odezva): the button or the link pulses until Home Assistant reports the result. */
+  .button.pending,
+  .link.pending {
+    animation: dd-pending 1.3s ease-in-out infinite alternate;
+  }
+  @keyframes dd-pending {
+    to {
+      opacity: 0.45;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .button.pending,
+    .link.pending {
+      animation: none;
+      opacity: 0.6;
+    }
+  }
   .button.primary {
     background: #0a6ed1;
     color: #ffffff;

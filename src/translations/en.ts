@@ -28,6 +28,10 @@ export const en: typeof cs = {
   logEarlier: "Earlier today",
   logEmpty: "Nothing happened today.",
   logFailed: "The logbook could not be loaded.",
+  logRuns: "Running",
+  logFinished: "Finished",
+  logLaundryWaits: "Laundry waiting",
+  logLaundryOut: "Laundry taken out",
   climate: {
     rooms: "Rooms",
     temperature: "Target temperature",

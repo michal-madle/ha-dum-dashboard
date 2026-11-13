@@ -9,6 +9,8 @@ import { entityState, isNoValue, readNumber, readText } from "ha-dashboard-kit/e
 import { HoldOrDoubleTap } from "ha-dashboard-kit/gesture";
 import { fitJoined, joined, joinedStyles, joinedText } from "ha-dashboard-kit/joined";
 import { RunStarts } from "ha-dashboard-kit/runstart";
+import { Pending } from "ha-dashboard-kit/pending";
+import type { PendingCommand } from "ha-dashboard-kit/pending";
 import { normalizeConfig } from "./config";
 import { cardLanguage, getI18n } from "./i18n";
 import type { I18n } from "./i18n";
@@ -73,6 +75,8 @@ export class HaDumDashboard extends LitElement {
   /** When the person last saw „Co se stalo“ (this device); entries after it are new. */
   @state() private _seen = readSeen();
   private logTimer?: number;
+  /** Commands on their way: the control pulses until Home Assistant reports the result (spec kitu, Odezva). */
+  private readonly pending = new Pending(() => this.requestUpdate());
   /** The rooms the popup Topení / Klimatizace opened with (the tile that was tapped). */
   @state() private _climateSelected: string[] = [];
   /** The row whose menu "Odložit" is open. */
@@ -132,6 +136,7 @@ export class HaDumDashboard extends LitElement {
     super.disconnectedCallback();
     window.clearInterval(this.timer);
     window.clearInterval(this.logTimer);
+    this.pending.clear();
     window.clearTimeout(this.hintTimer);
     window.removeEventListener("pointerdown", this.closeMenu);
     window.removeEventListener("keydown", this.closeMenu);
@@ -144,6 +149,7 @@ export class HaDumDashboard extends LitElement {
       this.toggleAttribute("data-light", this.hass?.themes?.darkMode === false);
       this._now = Date.now();
       if (!changed.get("hass")) void this.loadLog();
+      this.pending.check(this.hass);
     }
   }
 
@@ -210,6 +216,29 @@ export class HaDumDashboard extends LitElement {
     return (entity) => kinds.get(entity) ?? "";
   }
 
+  /** Pračka, sušička, myčka in words („Sušička · Doběhla“), not their helpers („Sušička běží · Vypnuto“). */
+  private logTitle(config: Settings, entry: LogEntry, state: string, i18n: I18n): string {
+    const t = i18n.t;
+    const running = config.running.find((item) => item.entity === entry.entity_id);
+    if (running) return `${this.name(running.name)} · ${state === "on" ? t.logRuns : t.logFinished}`;
+    const laundry = config.laundry.find((item) => item.entity === entry.entity_id);
+    if (laundry) return `${this.name(laundry.name)} · ${state === "on" ? t.logLaundryWaits : t.logLaundryOut}`;
+    return `${this.logName(entry)} · ${this.logState(entry, state)}`;
+  }
+
+  /**
+   * The reason of a blind when the logbook has none: the helper of the last action of each blind says who sent it
+   * (the same source as the detail of the blinds), when its time is just before the entry.
+   */
+  private coverReason(config: Settings, row: LogRow, i18n: I18n): string {
+    if (row.reason || row.kind !== "covers") return row.reason === "app" ? i18n.t.who.aplikace : row.reason;
+    const items = entityState(this.hass, config.covers.lastAction)?.attributes.polozky as Record<string, { kdo?: unknown; cas?: unknown }> | undefined;
+    const last = items && typeof items === "object" ? items[row.entries[0].entity_id] : undefined;
+    const time = typeof last?.cas === "string" ? Date.parse(last.cas) : NaN;
+    if (!last || typeof last.kdo !== "string" || !(time <= row.time && row.time - time <= 3 * 60000)) return "";
+    return i18n.t.who[last.kdo] ?? last.kdo;
+  }
+
   private logName(entry: LogEntry): string {
     const entity = entityState(this.hass, entry.entity_id);
     return entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
@@ -264,10 +293,9 @@ export class HaDumDashboard extends LitElement {
     const kinds: Record<string, string> = { covers: t.covers, ventilation: t.ventilation, heating: t.heating, cooling: t.cooling };
     const rows = (list: LogRow[]) =>
       list.map((row) => {
-        const reason = row.reason === "app" ? t.who.aplikace : row.reason;
-        const state = this.logState(row.entries[0], row.state);
+        const reason = this.coverReason(config, row, i18n);
         const group = row.entries.length > 1;
-        const title = group ? `${kinds[row.kind] ?? ""} · ${state}` : `${this.logName(row.entries[0])} · ${state}`;
+        const title = group ? `${kinds[row.kind] ?? ""} · ${this.logState(row.entries[0], row.state)}` : this.logTitle(config, row.entries[0], row.state, i18n);
         return html`<div class="log-row"><span class="log-time">${i18n.time(row.time)}</span><span class="main"
             >${title}${group ? html`<span class="log-members">${shortNames(row.entries.map((entry) => this.logName(entry))).join(", ")}</span>` : nothing}${reason
               ? html`<small>${reason}</small>`
@@ -322,7 +350,7 @@ export class HaDumDashboard extends LitElement {
           <span class="mark warn" aria-hidden="true">!</span>
           <span class="main">${typeof friendly === "string" ? friendly : item.entita}<small>${detail}</small></span>
           ${retry
-            ? html`<button class="button ${index === 0 ? "primary" : ""}" type="button" @click=${retry}>${t.retry}</button>`
+            ? html`<button class="button ${index === 0 ? "primary" : ""} ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
             : config.clearFailed
               ? html`<button class="button" type="button" @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
               : nothing}
@@ -434,7 +462,15 @@ export class HaDumDashboard extends LitElement {
     const pos = Number(target.pos);
     const tilt = Number(target.tilt);
     if (!Number.isFinite(pos) || !Number.isFinite(tilt)) return undefined;
-    return () => this.call("script", config.covers.script.split(".")[1], { entity: item.entita, pos, tilt });
+    const preset = { name: "", position: pos, tilt } as Preset;
+    return () =>
+      this.send(
+        `retry:${item.entita}`,
+        { entities: [item.entita], done: () => this.coverDone(config, item.entita, preset) },
+        "script",
+        config.covers.script.split(".")[1],
+        { entity: item.entita, pos, tilt },
+      );
   }
 
   /* ---------- Teď běží ---------- */
@@ -506,7 +542,8 @@ export class HaDumDashboard extends LitElement {
             .holdMs=${config.guard.holdMs}
             .doubleTapMs=${config.guard.doubleTapMs}
             .hintSeconds=${config.guard.hintSeconds}
-            @hdk-press=${() => this.setCovers(config, preset)}
+            .pending=${this.pending.has(`covers:${index}`)}
+            @hdk-press=${() => this.setCovers(config, preset, `covers:${index}`)}
           ></dd-tile>`;
         })}
       </div>`;
@@ -551,13 +588,19 @@ export class HaDumDashboard extends LitElement {
                 <span class="main">${name}${action ? html`<small class=${action.warn ? "warn" : ""}>${joinedText(action.text)}</small>` : nothing}</span>
                 <span class="presets">
                   ${config.covers.presets.map(
-                    (preset) => html`<dd-tile
+                    (preset, index) => html`<dd-tile
                       kind="action"
                       centered
                       .name=${this.name(preset.name)}
                       .label=${`${name}: ${this.name(preset.name)}`}
                       .state=${(this.coverIn(config, id, preset) ? "on" : "idle") as TileState}
-                      @hdk-press=${() => this.call("script", config.covers.script.split(".")[1], { entity: id, pos: preset.position, tilt: preset.tilt })}
+                      .pending=${this.pending.has(`cover:${id}:${index}`)}
+                      @hdk-press=${() =>
+                        this.send(`cover:${id}:${index}`, { entities: [id], done: () => this.coverDone(config, id, preset) }, "script", config.covers.script.split(".")[1], {
+                          entity: id,
+                          pos: preset.position,
+                          tilt: preset.tilt,
+                        })}
                     ></dd-tile>`,
                   )}
                 </span>
@@ -568,10 +611,11 @@ export class HaDumDashboard extends LitElement {
     </dd-sheet>`;
   }
 
-  private setCovers(config: Settings, preset: Preset): void {
+  private setCovers(config: Settings, preset: Preset, key: string): void {
     const script = config.covers.script.split(".")[1];
+    this.pending.start(key, this.hass, { entities: config.covers.entities, done: () => config.covers.entities.every((id) => this.coverDone(config, id, preset)) });
     for (const entity of config.covers.entities) {
-      this.call("script", script, { entity, pos: preset.position, tilt: preset.tilt });
+      this.call("script", script, { entity, pos: preset.position, tilt: preset.tilt }, key);
     }
   }
 
@@ -604,8 +648,13 @@ export class HaDumDashboard extends LitElement {
             .holdMs=${config.guard.holdMs}
             .doubleTapMs=${config.guard.doubleTapMs}
             .hintSeconds=${config.guard.hintSeconds}
-            @hdk-toggle=${(event: CustomEvent<{ checked: boolean }>) =>
-              this.call("homeassistant", event.detail.checked ? "turn_on" : "turn_off", { entity_id: item.entity })}
+            .pending=${this.pending.has(`toggle:${item.entity}`)}
+            @hdk-toggle=${(event: CustomEvent<{ checked: boolean }>) => {
+              const want = event.detail.checked ? "on" : "off";
+              this.send(`toggle:${item.entity}`, { entities: [item.entity], done: () => readText(this.hass, item.entity) === want }, "homeassistant", event.detail.checked ? "turn_on" : "turn_off", {
+                entity_id: item.entity,
+              });
+            }}
           ></dd-tile>`;
         })}
       </div>`;
@@ -626,7 +675,13 @@ export class HaDumDashboard extends LitElement {
         <span>${t.heating}</span>
         ${manual && config.heating.resume
           ? this.link("resume", html`<span class="count">${t.manualCount(manual)} · </span>${t.resume}`, () =>
-              this.call("button", "press", { entity_id: config.heating.resume }),
+              this.send(
+                "resume",
+                { entities: config.heating.rooms.map((room) => room.entity), done: () => !config.heating.rooms.some((room) => readText(this.hass, room.entity) === "heat") },
+                "button",
+                "press",
+                { entity_id: config.heating.resume },
+              ),
             )
           : nothing}
       </h2>
@@ -647,7 +702,15 @@ export class HaDumDashboard extends LitElement {
     return html`<h2>
         <span>${t.cooling}</span>
         ${running.length
-          ? this.link("alloff", t.allOff, () => this.call("climate", "turn_off", { entity_id: running.map((room) => room.entity) }))
+          ? this.link("alloff", t.allOff, () =>
+              this.send(
+                "alloff",
+                { entities: running.map((room) => room.entity), done: () => running.every((room) => ["off", undefined].includes(readText(this.hass, room.entity))) },
+                "climate",
+                "turn_off",
+                { entity_id: running.map((room) => room.entity) },
+              ),
+            )
           : nothing}
       </h2>
       <div class="tiles" data-part="cooling">
@@ -737,17 +800,30 @@ export class HaDumDashboard extends LitElement {
       });
     };
     const release = () => this.gesture.release();
-    return html`<button class="link" type="button" data-link=${key} @click=${tap} @pointerdown=${down} @pointerup=${release} @pointerleave=${release} @pointercancel=${release} @contextmenu=${(event: Event) => event.preventDefault()}>
+    return html`<button class="link ${this.pending.has(key) ? "pending" : ""}" type="button" data-link=${key} aria-busy=${this.pending.has(key) ? "true" : nothing} @click=${tap} @pointerdown=${down} @pointerup=${release} @pointerleave=${release} @pointercancel=${release} @contextmenu=${(event: Event) => event.preventDefault()}>
       ${label}${this._hint === key ? html`<div class="hint above end" aria-hidden="true"><i></i><span style="position: relative">${this.i18n.t.hint}</span></div>` : nothing}
     </button>`;
   }
 
   /* ---------- Volání Home Assistantu ---------- */
 
-  private call(domain: string, service: string, data: Record<string, unknown>): void {
+  private call(domain: string, service: string, data: Record<string, unknown>, key?: string): void {
     this._error = "";
     this.hass?.callService(domain, service, data).catch((error: unknown) => {
+      if (key) this.pending.stop(key);
       this._error = `${this.i18n.t.failed}: ${error instanceof Error ? error.message : String(error)}`;
     });
+  }
+
+  /** Sends and pulses the control `key` until `command` is done (or nothing changes for a while, or the call fails). */
+  private send(key: string, command: PendingCommand, domain: string, service: string, data: Record<string, unknown>): void {
+    this.pending.start(key, this.hass, command);
+    this.call(domain, service, data, key);
+  }
+
+  /** A blind in a preset and still (its way is over). */
+  private coverDone(config: Settings, id: string, preset: Preset): boolean {
+    const state = entityState(this.hass, id)?.state;
+    return state === undefined || isNoValue(state) || (this.coverIn(config, id, preset) === true && state !== "opening" && state !== "closing");
   }
 }

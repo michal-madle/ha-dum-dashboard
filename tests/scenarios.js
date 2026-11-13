@@ -92,6 +92,9 @@ const logbook = [
   { entity_id: "cover.pracovna_zaluzie_pracovna", state: "closed", name: "Žaluzie Pracovna", when: nowSec - 590 },
   { entity_id: "climate.obyvak_ac_obyvak", state: "heat", name: "Klimatizace Obývák", when: nowSec - 7200, context_user_id: "u1" },
   { entity_id: "cover.loznice_zaluzie_loznice", state: "closing", name: "Žaluzie Ložnice", when: nowSec - 640, context_name: "Večerní fáze" },
+  // No reason in the logbook: the last action of the blind says the evening phase (100 min ago).
+  { entity_id: "cover.maxik_zaluzie_maxik", state: "closed", name: "Žaluzie Maxík", when: nowSec - 5970 },
+  { entity_id: "input_boolean.technicka_mistnost_susicka_bezi", state: "off", name: "Sušička běží", when: nowSec - 3000, context_name: "Sušička - konec cyklu" },
   { entity_id: "climate.obyvak_ac_obyvak", state: "unavailable", name: "Klimatizace Obývák", when: nowSec - 7300 },
 ];
 const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0, logbook, logQueries: [] });

@@ -28,6 +28,10 @@ export const sv: typeof cs = {
   logEarlier: "Tidigare i dag",
   logEmpty: "Inget har hänt i dag.",
   logFailed: "Loggboken kunde inte läsas in.",
+  logRuns: "Kör",
+  logFinished: "Klar",
+  logLaundryWaits: "Tvätten väntar",
+  logLaundryOut: "Tvätten urtagen",
   climate: {
     rooms: "Rum",
     temperature: "Måltemperatur",

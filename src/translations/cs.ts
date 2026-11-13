@@ -26,6 +26,10 @@ export const cs = {
   logEarlier: "Dříve dnes",
   logEmpty: "Dnes se nic nestalo.",
   logFailed: "Deník se nepodařilo načíst.",
+  logRuns: "Běží",
+  logFinished: "Doběhla",
+  logLaundryWaits: "Prádlo čeká",
+  logLaundryOut: "Prádlo vyndáno",
   climate: {
     rooms: "Místnosti",
     temperature: "Cílová teplota",

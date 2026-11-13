@@ -172,7 +172,7 @@ test.describe("Co se stalo", () => {
     await open(page);
     const row = page.locator('[data-part="log"] button');
     await expect(row).toContainText("Co se stalo");
-    await expect(row).toContainText("1 nová událost od");
+    await expect(row).toContainText("2 nové události od");
     const query = await page.evaluate(() => {
       const first = (window as any).__test.logQueries[0];
       return { entities: first.entity_ids as string[], hour: new Date(first.start_time).getHours(), minute: new Date(first.start_time).getMinutes() };
@@ -184,12 +184,15 @@ test.describe("Co se stalo", () => {
     const sheet = page.locator('[data-part="log-detail"]');
     await expect(sheet.locator("h3")).toHaveText(["Od minulého otevření", "Dříve dnes"]);
     // Nedostupná a pohyb žaluzie („closing“) se nevypisují; důvod je automatika nebo „Aplikace“.
-    await expect(sheet.locator(".log-row")).toHaveCount(2);
+    await expect(sheet.locator(".log-row")).toHaveCount(4);
+    // Spotřebič slovy, ne pomocník; žaluzie bez důvodu v deníku vezme důvod z poslední akce.
+    await expect(sheet.locator(".log-row").filter({ hasText: "Sušička" })).toContainText("Sušička · Doběhla");
+    await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Večerní fáze");
     // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
     await expect(sheet.locator(".log-row").first().locator(".main")).toContainText("Žaluzie · Zavřeno");
     await expect(sheet.locator(".log-row").first().locator(".log-members")).toHaveText("Ložnice, Pracovna");
     await expect(sheet.locator(".log-row").first()).toContainText("Večerní fáze");
-    await expect(sheet.locator(".log-row").nth(1)).toContainText("Aplikace");
+    await expect(sheet.locator(".log-row").filter({ hasText: "Klimatizace" })).toContainText("Aplikace");
     expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
     await page.locator("dd-sheet .close").last().click();
     await expect(row).toContainText("Nic nového");
@@ -198,7 +201,7 @@ test.describe("Co se stalo", () => {
   test("naposledy viděno včera: počet je ode dneška („N událostí dnes“), ne „od“ včerejšího času", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 2 * 86400000)));
     await open(page);
-    await expect(page.locator('[data-part="log"] button')).toContainText("2 události dnes");
+    await expect(page.locator('[data-part="log"] button')).toContainText("4 události dnes");
   });
 
   test("bez deníku řekne, že se nepodařil načíst; prázdný den „Dnes se nic nestalo.“", async ({ page }) => {
@@ -248,6 +251,23 @@ test.describe("ovládání", () => {
     const sent = await calls(page);
     expect(sent.length).toBe(4);
     expect(sent[0]).toEqual({ domain: "script", service: "zaluzie_posun", data: { entity: "cover.loznice_zaluzie_loznice", pos: 0, tilt: 0 } });
+  });
+
+  test("odezva: odeslaná předvolba pulzuje, dokud žaluzie nedojedou; bez změny po 5 s přestane", async ({ page }) => {
+    await open(page, "day");
+    const covers = ["cover.loznice_zaluzie_loznice", "cover.maxik_zaluzie_maxik", "cover.mikulas_zaluzie_mikulas", "cover.pracovna_zaluzie_pracovna"];
+    const dark = tile(page, "covers", "Tma");
+    await dark.dblclick();
+    await expect(dark).toHaveAttribute("pending", "");
+    await update(page, Object.fromEntries(covers.map((id) => [id, { state: "closing", attributes: { current_position: 40, current_tilt_position: 40 } }])));
+    await expect(dark).toHaveAttribute("pending", "");
+    await update(page, Object.fromEntries(covers.map((id) => [id, { state: "closed", attributes: { current_position: 0, current_tilt_position: 0 } }])));
+    await expect(dark).not.toHaveAttribute("pending", "");
+    // Nic se nehne: po 5 s bez změny přestane.
+    const day = tile(page, "covers", "Den");
+    await day.dblclick();
+    await expect(day).toHaveAttribute("pending", "");
+    await expect(day).not.toHaveAttribute("pending", "", { timeout: 7000 });
   });
 
   test("detail žaluzií: šipka u nadpisu otevře list, u místnosti poslední akce (nepovedená oranžově) a předvolba jen pro ni jedním klepnutím", async ({ page }) => {
