@@ -1409,7 +1409,10 @@ Et.styles = [
       }
       button {
         position: relative;
-        display: block;
+        /* The name starts at the top in every tile of a row, whatever the height of the tallest one. */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
         box-sizing: border-box;
         width: 100%;
         height: 100%;
@@ -1469,7 +1472,7 @@ Et.styles = [
         color: var(--hdk-tile-on-sub, #fff);
       }
       :host([centered]) button {
-        display: flex;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
         gap: 8px;
@@ -2344,4 +2347,4 @@ window.customCards.some((n) => n.type === "ha-dum-dashboard") || window.customCa
   description: ie(Ze()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.1.0 · 2026-11-13 02:17 UTC · po unknown ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.1.0 · 2026-11-13 02:18 UTC · po 5420bd0 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
