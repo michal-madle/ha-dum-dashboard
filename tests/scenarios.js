@@ -94,6 +94,8 @@ let current = {
     test.calls.push({ domain, service, data });
     if (test.fail) throw new Error("offline");
   },
+  // &tado=1: Home Assistant offers the timer action of Tado CE (Boost, Ručně platí).
+  services: params.get("tado") ? { tado_ce: { set_climate_timer: {} } } : {},
   callWS: async (message) => {
     if (message.type !== "history/history_during_period") return {};
     test.lookups += 1;
