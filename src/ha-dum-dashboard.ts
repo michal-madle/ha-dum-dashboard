@@ -245,8 +245,8 @@ export class HaDumDashboard extends LitElement {
   private presetAt(config: Settings, id: string, time: number): Preset | undefined {
     const rows = this.coverHistory[id] ?? [];
     let at: { position: number; tilt: number } | undefined;
-    // Its position a moment after the entry: the end position and the tilt come in the same second or just after.
-    for (const row of rows) if (row.time <= time + 5000) at = row;
+    // Its position after the entry: the tilt can settle up to a minute after the end position.
+    for (const row of rows) if (row.time <= time + 60000) at = row;
     if (!at) return undefined;
     return config.covers.presets.find((preset) => Math.abs(at!.position - preset.position) <= config.covers.tolerance && Math.abs(at!.tilt - preset.tilt) <= config.covers.tolerance);
   }
@@ -419,7 +419,7 @@ export class HaDumDashboard extends LitElement {
           <span class="mark warn" aria-hidden="true">!</span>
           <span class="main">${typeof friendly === "string" ? friendly : item.entita}<small>${detail}</small></span>
           ${retry
-            ? html`<button class="button small ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
+            ? html`<button class="button small ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-label=${`${t.retry}: ${typeof friendly === "string" ? friendly : item.entita}`} aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
             : config.clearFailed
               ? html`<button class="button" type="button" @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
               : nothing}

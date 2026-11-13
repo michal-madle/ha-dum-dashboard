@@ -3699,7 +3699,7 @@ const xs = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   presetAt(t, e, i) {
     const n = this.coverHistory[e] ?? [];
     let o;
-    for (const a of n) a.time <= i + 5e3 && (o = a);
+    for (const a of n) a.time <= i + 6e4 && (o = a);
     if (o)
       return t.covers.presets.find((a) => Math.abs(o.position - a.position) <= t.covers.tolerance && Math.abs(o.tilt - a.tilt) <= t.covers.tolerance);
   }
@@ -3798,7 +3798,7 @@ const xs = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
         return c`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
           <span class="main">${typeof x == "string" ? x : u.entita}<small>${ot}</small></span>
-          ${J ? c`<button class="button small ${this.pending.has(`retry:${u.entita}`) ? "pending" : ""}" type="button" aria-busy=${this.pending.has(`retry:${u.entita}`) ? "true" : m} @click=${J}>${i.retry}</button>` : t.clearFailed ? c`<button class="button" type="button" @click=${() => this.call("script", t.clearFailed.split(".")[1], { entita: u.entita })}>${i.done}</button>` : m}
+          ${J ? c`<button class="button small ${this.pending.has(`retry:${u.entita}`) ? "pending" : ""}" type="button" aria-label=${`${i.retry}: ${typeof x == "string" ? x : u.entita}`} aria-busy=${this.pending.has(`retry:${u.entita}`) ? "true" : m} @click=${J}>${i.retry}</button>` : t.clearFailed ? c`<button class="button" type="button" @click=${() => this.call("script", t.clearFailed.split(".")[1], { entita: u.entita })}>${i.done}</button>` : m}
         </div>`;
       }),
       ...a.map((u) => {
@@ -4266,4 +4266,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Fe(ts()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.11.0 · 2026-11-13 21:47 UTC · po aa7e9dd ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.11.1 · 2026-11-13 21:48 UTC · po cbb5f17 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
