@@ -167,6 +167,11 @@ export const styles = css`
     font-size: 17px;
     line-height: 22px;
   }
+  .log-members {
+    display: block;
+    font-size: 15px;
+    line-height: 20px;
+  }
   .log-row small {
     display: block;
     color: var(--dd-secondary);

@@ -86,7 +86,10 @@ if (light) {
 // The logbook of today (Co se stalo): a phase moved the blinds 10 min ago, the app switched the AC 2 h ago.
 const nowSec = Date.now() / 1000;
 const logbook = [
-  { entity_id: "cover.loznice_zaluzie_loznice", state: "closed", name: "Žaluzie Ložnice", when: nowSec - 600, context_name: "Večerní fáze" },
+  // Bulk: the phase closes two blinds; the end position comes without a reason (the device reports it).
+  { entity_id: "cover.loznice_zaluzie_loznice", state: "closed", name: "Žaluzie Ložnice", when: nowSec - 600 },
+  { entity_id: "cover.pracovna_zaluzie_pracovna", state: "closing", name: "Žaluzie Pracovna", when: nowSec - 630, context_name: "Večerní fáze" },
+  { entity_id: "cover.pracovna_zaluzie_pracovna", state: "closed", name: "Žaluzie Pracovna", when: nowSec - 590 },
   { entity_id: "climate.obyvak_ac_obyvak", state: "heat", name: "Klimatizace Obývák", when: nowSec - 7200, context_user_id: "u1" },
   { entity_id: "cover.loznice_zaluzie_loznice", state: "closing", name: "Žaluzie Ložnice", when: nowSec - 640, context_name: "Večerní fáze" },
   { entity_id: "climate.obyvak_ac_obyvak", state: "unavailable", name: "Klimatizace Obývák", when: nowSec - 7300 },

@@ -14,22 +14,8 @@ import { cardLanguage, getI18n } from "./i18n";
 import type { I18n } from "./i18n";
 import { styles } from "./styles";
 import type { HomeAssistant, Named, Preset, Settings } from "./types";
-
-/** One entry of the logbook of Home Assistant (`logbook/get_events`). */
-interface LogEntry {
-  entity_id: string;
-  state?: unknown;
-  name?: string;
-  /** Seconds since the epoch, or an ISO time. */
-  when: number | string;
-  context_user_id?: string;
-  context_name?: string;
-  context_entity_id_name?: string;
-}
-
-function logTime(entry: LogEntry): number {
-  return typeof entry.when === "number" ? entry.when * 1000 : Date.parse(entry.when);
-}
+import { logRows, shortNames } from "./log";
+import type { LogEntry, LogRow } from "./log";
 
 const SEEN_KEY = "dum-dashboard.log-seen";
 
@@ -208,32 +194,41 @@ export class HaDumDashboard extends LitElement {
     midnight.setHours(0, 0, 0, 0);
     try {
       const rows = await hass.callWS<LogEntry[]>({ type: "logbook/get_events", start_time: midnight.toISOString(), entity_ids: entities });
-      this._log = (Array.isArray(rows) ? rows : [])
-        // Unavailable is the queue's business; opening and closing are only the way to the end position of a blind.
-        .filter((row) => typeof row.entity_id === "string" && row.state !== undefined && !["unavailable", "unknown", "opening", "closing", ""].includes(String(row.state)))
-        .sort((a, b) => logTime(b) - logTime(a));
+      this._log = Array.isArray(rows) ? rows : [];
     } catch {
       // A failed refresh keeps what was loaded; only a journal that never loaded says so.
     }
   }
 
-  /** Why it happened: the automation or script, or the app (a person); nothing when Home Assistant does not say. */
-  private logReason(entry: LogEntry, i18n: I18n): string {
-    return entry.context_name || entry.context_entity_id_name || (entry.context_user_id ? i18n.t.who.aplikace : "");
+  /** Which entities are one kind: one action on several of them is one row. */
+  private logKind(config: Settings): (entity: string) => string {
+    const kinds = new Map<string, string>();
+    config.covers.entities.forEach((entity) => kinds.set(entity, "covers"));
+    [config.ventilation.mode, ...config.ventilation.fans.map((item) => item.entity)].forEach((entity) => entity && kinds.set(entity, "ventilation"));
+    config.heating.rooms.forEach((item) => kinds.set(item.entity, "heating"));
+    config.cooling.rooms.forEach((item) => kinds.set(item.entity, "cooling"));
+    return (entity) => kinds.get(entity) ?? "";
   }
 
-  private logText(entry: LogEntry): string {
+  private logName(entry: LogEntry): string {
+    const entity = entityState(this.hass, entry.entity_id);
+    return entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
+  }
+
+  private logState(entry: LogEntry, state: string): string {
     const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown, state?: string) => string }) | undefined;
     const entity = entityState(this.hass, entry.entity_id);
-    const name = entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
-    const state = entity && hass?.formatEntityState ? hass.formatEntityState(entity, String(entry.state)) : String(entry.state);
-    return `${name} · ${state}`;
+    return entity && hass?.formatEntityState ? hass.formatEntityState(entity, state) : state;
+  }
+
+  private logRows(config: Settings): LogRow[] {
+    return logRows(this._log ?? [], this.logKind(config));
   }
 
   private renderLogRow(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!this.logEntities(config).length) return nothing;
     const t = i18n.t;
-    const fresh = (this._log ?? []).filter((entry) => logTime(entry) > this._seen).length;
+    const fresh = this.logRows(config).filter((row) => row.time > this._seen).length;
     const midnight = new Date();
     midnight.setHours(0, 0, 0, 0);
     // Seen before today (or never): the journal starts at midnight, so the count is of today.
@@ -263,13 +258,21 @@ export class HaDumDashboard extends LitElement {
     if (!this.logEntities(config).length) return nothing;
     const t = i18n.t;
     const open = this._detail === "log";
-    const entries = this._log ?? [];
-    const fresh = entries.filter((entry) => logTime(entry) > this._seen);
-    const earlier = entries.filter((entry) => logTime(entry) <= this._seen);
-    const rows = (list: LogEntry[]) =>
-      list.map((entry) => {
-        const reason = this.logReason(entry, i18n);
-        return html`<div class="log-row"><span class="log-time">${i18n.time(logTime(entry))}</span><span class="main">${this.logText(entry)}${reason ? html`<small>${reason}</small>` : nothing}</span></div>`;
+    const entries = this.logRows(config);
+    const fresh = entries.filter((row) => row.time > this._seen);
+    const earlier = entries.filter((row) => row.time <= this._seen);
+    const kinds: Record<string, string> = { covers: t.covers, ventilation: t.ventilation, heating: t.heating, cooling: t.cooling };
+    const rows = (list: LogRow[]) =>
+      list.map((row) => {
+        const reason = row.reason === "app" ? t.who.aplikace : row.reason;
+        const state = this.logState(row.entries[0], row.state);
+        const group = row.entries.length > 1;
+        const title = group ? `${kinds[row.kind] ?? ""} · ${state}` : `${this.logName(row.entries[0])} · ${state}`;
+        return html`<div class="log-row"><span class="log-time">${i18n.time(row.time)}</span><span class="main"
+            >${title}${group ? html`<span class="log-members">${shortNames(row.entries.map((entry) => this.logName(entry))).join(", ")}</span>` : nothing}${reason
+              ? html`<small>${reason}</small>`
+              : nothing}</span
+          ></div>`;
       });
     return html`<dd-sheet .open=${open} .heading=${t.log} .closeLabel=${t.close} @hdk-close=${() => this.closeLog()}>
       ${open

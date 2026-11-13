@@ -185,7 +185,9 @@ test.describe("Co se stalo", () => {
     await expect(sheet.locator("h3")).toHaveText(["Od minulého otevření", "Dříve dnes"]);
     // Nedostupná a pohyb žaluzie („closing“) se nevypisují; důvod je automatika nebo „Aplikace“.
     await expect(sheet.locator(".log-row")).toHaveCount(2);
-    await expect(sheet.locator(".log-row").first()).toContainText("Žaluzie Ložnice");
+    // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
+    await expect(sheet.locator(".log-row").first().locator(".main")).toContainText("Žaluzie · Zavřeno");
+    await expect(sheet.locator(".log-row").first().locator(".log-members")).toHaveText("Ložnice, Pracovna");
     await expect(sheet.locator(".log-row").first()).toContainText("Večerní fáze");
     await expect(sheet.locator(".log-row").nth(1)).toContainText("Aplikace");
     expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
