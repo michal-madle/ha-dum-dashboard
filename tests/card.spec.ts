@@ -29,7 +29,7 @@ test.describe("fronta a co běží", () => {
     const rows = page.locator('[data-part="queue"] .row');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toContainText("Žaluzie Maxík");
-    await expect(rows.nth(0)).toContainText("žaluzie nedostupná");
+    await expect(rows.nth(0)).toContainText("Žaluzie nedostupná");
     await expect(rows.nth(1)).toContainText("Okno Ložnice");
     await expect(rows.nth(1)).toContainText("Baterie 8 % · CR2032");
     await rows.nth(0).getByRole("button", { name: "Zkusit znovu" }).click();
@@ -190,7 +190,7 @@ test.describe("ovládání", () => {
     const rows = page.locator('[data-part="covers-detail"] .cover-row');
     await expect(rows).toHaveCount(4);
     await expect(rows.nth(0)).toContainText("Ložnice");
-    await expect(rows.nth(0).locator("small")).toContainText(/^Večerní fáze \d\d:\d\d$/);
+    await expect(rows.nth(0).locator("small")).toContainText(/^Večerní fáze\s\d\d:\d\d$/);
     await expect(rows.nth(0).locator("small")).not.toHaveClass(/warn/);
     // Maxík: nepovedená akce má přednost před poslední akcí.
     await expect(rows.nth(1).locator("small")).toHaveClass(/warn/);
@@ -215,7 +215,7 @@ test.describe("ovládání", () => {
       });
       await page.getByRole("button", { name: "Podrobnosti žaluzií" }).click();
       const rows = page.locator('[data-part="covers-detail"] .cover-row');
-      await expect(rows.nth(0).locator("small")).toContainText(/^Ručně \d/);
+      await expect(rows.nth(0).locator("small")).toContainText(/^Ručně\s\d/);
       await expect(rows.nth(1).locator("small")).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
       // Text pod názvem nesmí vjet pod předvolby.

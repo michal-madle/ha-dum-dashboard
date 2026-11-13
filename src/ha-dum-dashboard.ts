@@ -156,7 +156,9 @@ export class HaDumDashboard extends LitElement {
         const friendly = entityState(this.hass, item.entita)?.attributes.friendly_name;
         const time = item.cas ? Date.parse(item.cas) : NaN;
         // The reason and the time; without a reason the action that failed.
-        const detail = joined([item.duvod || item.akce, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean));
+        // The reason comes from Home Assistant in lower case; it starts the line like every other detail.
+        const reason = item.duvod || item.akce;
+        const detail = joined([reason ? reason.charAt(0).toLocaleUpperCase(i18n.language) + reason.slice(1) : undefined, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean));
         const retry = this.retryOf(config, item);
         return html`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
@@ -364,7 +366,8 @@ export class HaDumDashboard extends LitElement {
     const last = items && typeof items === "object" ? items[id] : undefined;
     if (!last || typeof last.kdo !== "string") return undefined;
     const time = typeof last.cas === "string" ? Date.parse(last.cas) : NaN;
-    return { text: [t.who[last.kdo] ?? last.kdo, Number.isFinite(time) ? this.when(time, i18n) : ""].filter(Boolean).join(" "), warn: false };
+    // The time stays with its word on a narrow screen ("Večerní fáze 16:40").
+    return { text: [t.who[last.kdo] ?? last.kdo, Number.isFinite(time) ? this.when(time, i18n) : ""].filter(Boolean).join("\u00a0"), warn: false };
   }
 
   /** Detail of the blinds: every room with its last action and the three presets just for it (one tap: the sheet was opened on purpose). */
