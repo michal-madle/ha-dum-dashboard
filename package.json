@@ -9,7 +9,7 @@
     "test": "npm run build && playwright test"
   },
   "dependencies": {
-    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#5c55413ec5d664e08da0322463c6b53c5debd58d",
+    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#798eb9fb589fd7c451393d58eb3baee26568fa29",
     "lit": "^3.3.1"
   },
   "devDependencies": {

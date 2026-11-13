@@ -7,6 +7,7 @@ import { hintStyles } from "ha-dashboard-kit/controls";
 import type { TileState } from "ha-dashboard-kit/controls";
 import { entityState, isNoValue, readNumber, readText } from "ha-dashboard-kit/entities";
 import { HoldOrDoubleTap } from "ha-dashboard-kit/gesture";
+import { RunStarts } from "ha-dashboard-kit/runstart";
 import { normalizeConfig } from "./config";
 import { cardLanguage, getI18n } from "./i18n";
 import type { I18n } from "./i18n";
@@ -44,6 +45,8 @@ export class HaDumDashboard extends LitElement {
 
   private timer?: number;
   private hintTimer?: number;
+  /** Since when the running things run: from the recorder, so a restart of Home Assistant does not start the durations again. */
+  private readonly starts = new RunStarts(() => this.requestUpdate());
   private readonly gesture = new HoldOrDoubleTap(() => ({
     holdMs: this._config?.guard.holdMs ?? 550,
     doubleTapMs: this._config?.guard.doubleTapMs ?? 400,
@@ -234,9 +237,9 @@ export class HaDumDashboard extends LitElement {
 
   /* ---------- Teď běží ---------- */
 
-  private duration(since: string | undefined, i18n: I18n): string {
-    const start = since ? Date.parse(since) : NaN;
-    if (!Number.isFinite(start)) return "";
+  private duration(entityId: string, i18n: I18n): string {
+    const start = this.starts.of(this.hass, entityId);
+    if (start === undefined) return "";
     const minutes = Math.max(0, Math.floor((this._now - start) / 60000));
     return minutes < 60 ? i18n.t.minutes(minutes) : i18n.t.hours(Math.floor(minutes / 60), minutes % 60);
   }
@@ -244,7 +247,7 @@ export class HaDumDashboard extends LitElement {
   private renderRunning(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!config.running.length) return nothing;
     const active = config.running.filter((item) => ["on", "cleaning", "returning"].includes(readText(this.hass, item.entity) ?? ""));
-    const text = active.map((item) => `${this.name(item.name)} ${this.duration(entityState(this.hass, item.entity)?.last_changed, i18n)}`.trim()).join(" · ");
+    const text = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity, i18n)}`.trim()).join(" · ");
     return html`<h2><span>${i18n.t.running}</span></h2>
       <div class="group" data-part="running"><div class="row now ${active.length ? "" : "none"}"><span class="main" style="font-size:inherit;line-height:inherit">${text || i18n.t.nothingRuns}</span></div></div>`;
   }
@@ -323,7 +326,7 @@ export class HaDumDashboard extends LitElement {
             guarded
             data-entity=${item.entity}
             .name=${this.name(item.name)}
-            .text=${missing ? t.unavailable : on ? t.runs(this.duration(entity?.last_changed, i18n)).trim() : t.off}
+            .text=${missing ? t.unavailable : on ? t.runs(this.duration(item.entity, i18n)).trim() : t.off}
             .state=${(on ? "on" : "off") as TileState}
             .disabled=${missing}
             .hint=${t.hint}

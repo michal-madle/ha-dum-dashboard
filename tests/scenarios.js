@@ -9,6 +9,9 @@ const light = params.get("theme") === "light";
 const lang = params.get("lang") ?? "cs";
 const config = parse(await (await fetch("/examples/dum.yaml")).text());
 const ago = (minutes) => new Date(Date.now() - minutes * 60000).toISOString();
+const secondsAgo = (minutes) => (Date.now() - minutes * 60000) / 1000;
+/** The rows of the recorder (`history/history_during_period`, minimal response) by entity. */
+const history = {};
 const entity = (state, attributes = {}, minutes = 600) => ({ state, attributes, last_changed: ago(minutes), last_updated: ago(minutes) });
 
 const states = { "input_select.house_mode": entity("Zima") };
@@ -55,13 +58,23 @@ if (scenario === "day") {
   for (const id of config.covers.entities) states[id] = entity("open", { current_position: 100, current_tilt_position: 97 });
 }
 
+if (scenario === "restart") {
+  // Home Assistant restarted 2 minutes ago: the helpers came back "on" with the time of the restart (last_changed),
+  // but the recorder knows that the washing machine began 30 minutes and the vent 25 minutes ago. The dishwasher has no history.
+  states["input_boolean.technicka_mistnost_pracka_bezi"] = entity("on", {}, 2);
+  states["input_boolean.kuchyne_mycka_bezi"] = entity("on", {}, 2);
+  states["switch.koupelna_vetrak_zachod_patro"] = entity("on", {}, 2);
+  history["input_boolean.technicka_mistnost_pracka_bezi"] = [{ s: "off", lu: secondsAgo(180) }, { s: "on", lu: secondsAgo(30) }, { s: "on", lu: secondsAgo(2) }];
+  history["switch.koupelna_vetrak_zachod_patro"] = [{ s: "on", lu: secondsAgo(2) }, { s: "unavailable", lu: secondsAgo(2.5) }, { s: "on", lu: secondsAgo(25) }].sort((a, b) => a.lu - b.lu);
+}
+
 if (light) {
   document.documentElement.style.background = "#f2f2f7";
   document.body.style.background = "#f2f2f7";
   document.body.style.color = "#000";
 }
 
-const test = (window.__test = { config, calls: [], fail: false });
+const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0 });
 const card = document.createElement("ha-dum-dashboard");
 card.setConfig(config);
 let current = {
@@ -73,7 +86,11 @@ let current = {
     test.calls.push({ domain, service, data });
     if (test.fail) throw new Error("offline");
   },
-  callWS: async () => ({}),
+  callWS: async (message) => {
+    if (message.type !== "history/history_during_period") return {};
+    test.lookups += 1;
+    return Object.fromEntries(message.entity_ids.filter((id) => history[id]).map((id) => [id, history[id]]));
+  },
 };
 card.hass = current;
 test.card = card;

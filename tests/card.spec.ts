@@ -101,6 +101,21 @@ test.describe("fronta a co běží", () => {
     await open(page, "day");
     await expect(page.locator('[data-part="running"]')).toHaveText("Nic neběží");
   });
+
+  test("restart Home Assistantu nezačne doby znovu: Teď běží i větrák berou začátek z historie, bez historie platí last_changed", async ({ page }) => {
+    await open(page, "restart");
+    // Pračka: off, on před 30 min, on znovu při restartu (stejný stav). Myčka historii nemá.
+    await expect(page.locator('[data-part="running"]')).toHaveText("Pračka 30 min · Myčka 2 min");
+    // Větrák: mezera unavailable při restartu běh nepřeruší.
+    await expect(tile(page, "ventilation", "Záchod patro")).toBeVisible();
+    expect((await tiles(page, "ventilation")).find((item) => item.name === "Záchod patro")?.text).toBe("Běží 25 min");
+    // Jeden dotaz na všechny entity, nepřeptává se při každém překreslení.
+    const lookups = await page.evaluate(() => (window as any).__test.lookups as number);
+    expect(lookups).toBeGreaterThanOrEqual(1);
+    await update(page, { "input_select.house_mode": { state: "Léto" } });
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => (window as any).__test.lookups as number)).toBe(lookups);
+  });
 });
 
 test.describe("ovládání", () => {
