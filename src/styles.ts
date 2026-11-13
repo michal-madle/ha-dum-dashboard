@@ -117,6 +117,66 @@ export const styles = css`
     --hdk-sheet-border: rgb(0 0 0 / 8%);
     --hdk-sheet-grabber: rgb(60 60 67 / 30%);
   }
+  /* „Co se stalo“ has no heading: the gap of a section heading keeps it apart from the tiles above. */
+  .group[data-part="log"] {
+    margin-top: 24px;
+  }
+  .link-row {
+    width: 100%;
+    border: 0;
+    background: none;
+    color: var(--dd-text);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .link-row:focus-visible {
+    outline: 2px solid var(--dd-accent);
+    outline-offset: -2px;
+    border-radius: 12px;
+  }
+  .chevron-mark {
+    flex: none;
+    color: var(--dd-secondary);
+    font-size: 24px;
+  }
+  .detail h3 {
+    margin: 16px 0 4px;
+    color: var(--dd-secondary);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 18px;
+    text-transform: uppercase;
+  }
+  .log-row {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 0.5px solid var(--dd-sep);
+  }
+  .log-time {
+    flex: none;
+    width: 48px;
+    color: var(--dd-secondary);
+    font-size: 15px;
+    line-height: 22px;
+  }
+  .log-row .main {
+    flex: 1;
+    min-width: 0;
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .log-row small {
+    display: block;
+    color: var(--dd-secondary);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .log-empty {
+    color: var(--dd-secondary);
+    font-size: 15px;
+  }
   .cover-row {
     display: flex;
     align-items: center;

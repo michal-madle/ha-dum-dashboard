@@ -83,7 +83,14 @@ if (light) {
   document.body.style.color = "#000";
 }
 
-const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0 });
+// The logbook of today (Co se stalo): a phase moved the blinds 10 min ago, the app switched the AC 2 h ago.
+const nowSec = Date.now() / 1000;
+const logbook = [
+  { entity_id: "cover.loznice_zaluzie_loznice", state: "closed", name: "Žaluzie Ložnice", when: nowSec - 600, context_name: "Večerní fáze" },
+  { entity_id: "climate.obyvak_ac_obyvak", state: "cool", name: "Klimatizace Obývák", when: nowSec - 7200, context_user_id: "u1" },
+  { entity_id: "climate.obyvak_ac_obyvak", state: "unavailable", name: "Klimatizace Obývák", when: nowSec - 7300 },
+];
+const test = (window.__test = { config, calls: [], fail: false, history, lookups: 0, logbook, logQueries: [] });
 const card = document.createElement("ha-dum-dashboard");
 card.setConfig(config);
 let current = {
@@ -97,7 +104,14 @@ let current = {
   },
   // &tado=1: Home Assistant offers the timer action of Tado CE (Boost, Ručně platí).
   services: params.get("tado") ? { tado_ce: { set_climate_timer: {} } } : {},
+  // The words of Home Assistant for a state (the real frontend translates every state).
+  formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto" })[state ?? stateObj.state] ?? state ?? stateObj.state,
   callWS: async (message) => {
+    if (message.type === "logbook/get_events") {
+      test.logQueries.push(message);
+      if (test.fail) throw new Error("offline");
+      return test.logbook.filter((entry) => message.entity_ids.includes(entry.entity_id));
+    }
     if (message.type !== "history/history_during_period") return {};
     test.lookups += 1;
     return Object.fromEntries(message.entity_ids.filter((id) => history[id]).map((id) => [id, history[id]]));

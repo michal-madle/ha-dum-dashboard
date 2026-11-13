@@ -15,6 +15,41 @@ import type { I18n } from "./i18n";
 import { styles } from "./styles";
 import type { HomeAssistant, Named, Preset, Settings } from "./types";
 
+/** One entry of the logbook of Home Assistant (`logbook/get_events`). */
+interface LogEntry {
+  entity_id: string;
+  state?: unknown;
+  name?: string;
+  /** Seconds since the epoch, or an ISO time. */
+  when: number | string;
+  context_user_id?: string;
+  context_name?: string;
+  context_entity_id_name?: string;
+}
+
+function logTime(entry: LogEntry): number {
+  return typeof entry.when === "number" ? entry.when * 1000 : Date.parse(entry.when);
+}
+
+const SEEN_KEY = "dum-dashboard.log-seen";
+
+/** The time „Co se stalo“ was last closed on this device; 0 when unknown (storage blocked or empty). */
+function readSeen(): number {
+  try {
+    return Number(localStorage.getItem(SEEN_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeSeen(value: number): void {
+  try {
+    localStorage.setItem(SEEN_KEY, String(value));
+  } catch {
+    /* no storage: the journal shows everything as new */
+  }
+}
+
 /** One failed action of the automations (`polozky` of sensor.dum_nesplnene_akce). */
 interface Failed {
   entita: string;
@@ -46,7 +81,12 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling";
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log";
+  /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
+  @state() private _log?: LogEntry[];
+  /** When the person last saw „Co se stalo“ (this device); entries after it are new. */
+  @state() private _seen = readSeen();
+  private logTimer?: number;
   /** The rooms the popup Topení / Klimatizace opened with (the tile that was tapped). */
   @state() private _climateSelected: string[] = [];
   /** The row whose menu "Odložit" is open. */
@@ -81,6 +121,8 @@ export class HaDumDashboard extends LitElement {
     this.resize = new ResizeObserver(() => (this._fit = `${Math.round(this.getBoundingClientRect().width)}|${this._fit.split("|")[1] ?? ""}`));
     this.resize.observe(this);
     void document.fonts?.ready.then(() => (this._fit = `${this._fit.split("|")[0] ?? ""}|${document.fonts.size}`));
+    // The logbook every 5 minutes (the count of the new entries on the first screen); at once when „Co se stalo“ opens.
+    this.logTimer = window.setInterval(() => void this.loadLog(), 5 * 60000);
   }
 
   protected updated(changed: PropertyValues): void {
@@ -103,6 +145,7 @@ export class HaDumDashboard extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.clearInterval(this.timer);
+    window.clearInterval(this.logTimer);
     window.clearTimeout(this.hintTimer);
     window.removeEventListener("pointerdown", this.closeMenu);
     window.removeEventListener("keydown", this.closeMenu);
@@ -114,6 +157,7 @@ export class HaDumDashboard extends LitElement {
     if (changed.has("hass")) {
       this.toggleAttribute("data-light", this.hass?.themes?.darkMode === false);
       this._now = Date.now();
+      if (!changed.get("hass")) void this.loadLog();
     }
   }
 
@@ -133,10 +177,106 @@ export class HaDumDashboard extends LitElement {
     const climate = summer ? [this.renderCooling(config, i18n), this.renderHeating(config, i18n)] : [this.renderHeating(config, i18n), this.renderCooling(config, i18n)];
     return html`<ha-card>
       ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
-      ${this.renderVentilation(config, i18n)} ${climate}
+      ${this.renderVentilation(config, i18n)} ${climate} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)}`;
+  }
+
+  /* ---------- Co se stalo ---------- */
+
+  /** The entities the card shows or switches: what happened to them today is the journal (uživatel 13. 11. 2026: „Q212 a“). */
+  private logEntities(config: Settings): string[] {
+    return [
+      ...config.covers.entities,
+      ...(config.ventilation.mode ? [config.ventilation.mode] : []),
+      ...config.ventilation.fans.map((item) => item.entity),
+      ...config.heating.rooms.map((item) => item.entity),
+      ...config.cooling.rooms.map((item) => item.entity),
+      ...config.running.map((item) => item.entity),
+      ...config.laundry.map((item) => item.entity),
+    ];
+  }
+
+  private async loadLog(): Promise<void> {
+    const config = this._config;
+    const hass = this.hass;
+    if (!config || !hass?.callWS) return;
+    const entities = this.logEntities(config);
+    if (!entities.length) return;
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    try {
+      const rows = await hass.callWS<LogEntry[]>({ type: "logbook/get_events", start_time: midnight.toISOString(), entity_ids: entities });
+      this._log = (Array.isArray(rows) ? rows : [])
+        .filter((row) => typeof row.entity_id === "string" && row.state !== undefined && !["unavailable", "unknown", ""].includes(String(row.state)))
+        .sort((a, b) => logTime(b) - logTime(a));
+    } catch {
+      this._log = undefined;
+    }
+  }
+
+  /** Why it happened: the automation or script, or the app (a person); nothing when Home Assistant does not say. */
+  private logReason(entry: LogEntry, i18n: I18n): string {
+    return entry.context_name || entry.context_entity_id_name || (entry.context_user_id ? i18n.t.who.aplikace : "");
+  }
+
+  private logText(entry: LogEntry): string {
+    const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown, state?: string) => string }) | undefined;
+    const entity = entityState(this.hass, entry.entity_id);
+    const name = entry.name || (typeof entity?.attributes.friendly_name === "string" ? entity.attributes.friendly_name : entry.entity_id);
+    const state = entity && hass?.formatEntityState ? hass.formatEntityState(entity, String(entry.state)) : String(entry.state);
+    return `${name} · ${state}`;
+  }
+
+  private renderLogRow(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    if (!this.logEntities(config).length) return nothing;
+    const t = i18n.t;
+    const fresh = (this._log ?? []).filter((entry) => logTime(entry) > this._seen).length;
+    const detail = this._log === undefined ? "" : fresh ? t.logNew(fresh, i18n.time(this._seen > 0 ? this._seen : Date.now())) : t.logNothingNew;
+    return html`<div class="group" data-part="log">
+      <button class="row link-row" type="button" aria-haspopup="dialog" @click=${() => this.openLog()}>
+        <span class="main">${t.log}${detail ? html`<small>${this._seen > 0 || !fresh ? detail : t.logToday(fresh)}</small>` : nothing}</span>
+        <span class="chevron-mark" aria-hidden="true">›</span>
+      </button>
+    </div>`;
+  }
+
+  private openLog(): void {
+    this._detail = "log";
+    void this.loadLog();
+  }
+
+  private closeLog(): void {
+    this._detail = undefined;
+    // What was open is seen now (this device).
+    this._seen = Date.now();
+    writeSeen(this._seen);
+  }
+
+  private renderLog(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    if (!this.logEntities(config).length) return nothing;
+    const t = i18n.t;
+    const open = this._detail === "log";
+    const entries = this._log ?? [];
+    const fresh = entries.filter((entry) => logTime(entry) > this._seen);
+    const earlier = entries.filter((entry) => logTime(entry) <= this._seen);
+    const rows = (list: LogEntry[]) =>
+      list.map((entry) => {
+        const reason = this.logReason(entry, i18n);
+        return html`<div class="log-row"><span class="log-time">${i18n.time(logTime(entry))}</span><span class="main">${this.logText(entry)}${reason ? html`<small>${reason}</small>` : nothing}</span></div>`;
+      });
+    return html`<dd-sheet .open=${open} .heading=${t.log} .closeLabel=${t.close} @hdk-close=${() => this.closeLog()}>
+      ${open
+        ? html`<div class="detail" data-part="log-detail">
+            ${this._log === undefined
+              ? html`<p class="log-empty">${t.logFailed}</p>`
+              : entries.length
+                ? html`${fresh.length ? html`<h3>${t.logSince}</h3>${rows(fresh)}` : nothing}${earlier.length ? html`<h3>${t.logEarlier}</h3>${rows(earlier)}` : nothing}`
+                : html`<p class="log-empty">${t.logEmpty}</p>`}
+          </div>`
+        : nothing}
+    </dd-sheet>`;
   }
 
   /* ---------- Potřebuje tebe ---------- */
