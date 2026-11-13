@@ -1,4 +1,5 @@
 import { checkKeys, entityId, fail, isRecord, languageSetting, localizedText, section, text, withCardName } from "ha-dashboard-kit/config";
+import type { LocalizedText } from "ha-dashboard-kit/config";
 import type { Battery, Filter, Named, Preset, Settings } from "./types";
 
 /*
@@ -42,7 +43,18 @@ function named(value: unknown, where: string, domains: string[]): Named[] {
 function normalize(raw: unknown): Settings {
   if (!isRecord(raw)) fail("the configuration must be a mapping of keys.");
   const covers = section(raw.covers, "covers");
-  checkKeys(covers, ["script", "entities", "presets", "tolerance"], "covers");
+  checkKeys(covers, ["script", "entities", "last_action", "presets", "tolerance"], "covers");
+  // A blind is its entity, or a mapping with its name for the detail.
+  const names: Record<string, LocalizedText> = {};
+  const coverIds = list(covers.entities, "covers.entities").map((item, index) => {
+    const at = `covers.entities[${index}]`;
+    if (!isRecord(item)) return entityId(item, at, { domain: "cover" }) ?? fail(`${at} is missing.`);
+    checkKeys(item, ["name", "entity"], at);
+    const id = entityId(item.entity, `${at}.entity`, { domain: "cover" }) ?? fail(`${at}.entity is missing.`);
+    const name = localizedText(item.name, `${at}.name`);
+    if (name !== undefined) names[id] = name;
+    return id;
+  });
   const ventilation = section(raw.ventilation, "ventilation");
   checkKeys(ventilation, ["mode", "fans"], "ventilation");
   const heating = section(raw.heating, "heating");
@@ -100,9 +112,9 @@ function normalize(raw: unknown): Settings {
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
       script: entityId(covers.script, "covers.script", { domain: "script" }) ?? "script.zaluzie_posun",
-      entities: list(covers.entities, "covers.entities").map(
-        (item, index) => entityId(item, `covers.entities[${index}]`, { domain: "cover" }) ?? fail(`covers.entities[${index}] is missing.`),
-      ),
+      entities: coverIds,
+      names,
+      lastAction: entityId(covers.last_action, "covers.last_action", { domain: "sensor" }),
       presets: presets.length ? presets : DEFAULT_PRESETS,
       tolerance: number(covers.tolerance, "covers.tolerance", 5, 0, 20),
     },

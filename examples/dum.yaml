@@ -83,11 +83,16 @@ running:
 covers:
   script: script.zaluzie_posun      # volá se s entity, pos, tilt pro každou žaluzii
   tolerance: 5                      # % odchylky polohy a náklonu, kdy žaluzie ještě patří do předvolby
-  entities:
-    - cover.loznice_zaluzie_loznice
-    - cover.maxik_zaluzie_maxik
-    - cover.mikulas_zaluzie_mikulas
-    - cover.pracovna_zaluzie_pracovna
+  last_action: sensor.zaluzie_posledni_akce   # kdo žaluzií pohnul naposledy (detail žaluzií)
+  entities:                         # entita, nebo name a entity (jméno v detailu)
+    - name: Ložnice
+      entity: cover.loznice_zaluzie_loznice
+    - name: Maxík
+      entity: cover.maxik_zaluzie_maxik
+    - name: Mikuláš
+      entity: cover.mikulas_zaluzie_mikulas
+    - name: Pracovna
+      entity: cover.pracovna_zaluzie_pracovna
   presets:
     - name:
         cs: Den

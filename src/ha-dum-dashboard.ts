@@ -43,6 +43,8 @@ export class HaDumDashboard extends LitElement {
   @state() private _error = "";
   @state() private _hint?: string;
   @state() private _now = Date.now();
+  /** The open detail (a sheet from the bottom). */
+  @state() private _detail?: "covers";
   /** The row whose menu "Odložit" is open. */
   @state() private _menu?: string;
 
@@ -77,8 +79,13 @@ export class HaDumDashboard extends LitElement {
     void document.fonts?.ready.then(() => (this._fit = `${this._fit.split("|")[0] ?? ""}|${document.fonts.size}`));
   }
 
-  protected updated(): void {
+  protected updated(changed: PropertyValues): void {
     fitJoined(this.renderRoot, this._fit);
+    // The texts in a sheet are laid out only once the sheet has drawn its frame.
+    if (changed.has("_detail") && this._detail) {
+      const sheet = this.renderRoot.querySelector("dd-sheet") as (Element & { updateComplete?: Promise<unknown> }) | null;
+      void sheet?.updateComplete?.then(() => fitJoined(this.renderRoot, this._fit));
+    }
   }
 
   /** A tap outside the open menu "Odložit", or Escape, closes it. */
@@ -124,7 +131,8 @@ export class HaDumDashboard extends LitElement {
       ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
       ${this.renderVentilation(config, i18n)} ${climate}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
-    </ha-card>`;
+    </ha-card>
+    ${this.renderCoversDetail(config, i18n)}`;
   }
 
   /* ---------- Potřebuje tebe ---------- */
@@ -283,18 +291,25 @@ export class HaDumDashboard extends LitElement {
 
   /* ---------- Žaluzie ---------- */
 
+  /** Whether one blind is in the preset: undefined when it does not report its position. */
+  private coverIn(config: Settings, id: string, preset: Preset): boolean | undefined {
+    const entity = entityState(this.hass, id);
+    if (!entity || isNoValue(entity.state)) return undefined;
+    const position = Number(entity.attributes.current_position);
+    const tilt = Number(entity.attributes.current_tilt_position);
+    if (!Number.isFinite(position) || !Number.isFinite(tilt)) return undefined;
+    return Math.abs(position - preset.position) <= config.covers.tolerance && Math.abs(tilt - preset.tilt) <= config.covers.tolerance;
+  }
+
   /** How many blinds are in the preset, and how many report their position at all. */
   private inPreset(config: Settings, preset: Preset): { count: number; known: number } {
     let count = 0;
     let known = 0;
     for (const id of config.covers.entities) {
-      const entity = entityState(this.hass, id);
-      if (!entity || isNoValue(entity.state)) continue;
-      const position = Number(entity.attributes.current_position);
-      const tilt = Number(entity.attributes.current_tilt_position);
-      if (!Number.isFinite(position) || !Number.isFinite(tilt)) continue;
+      const inside = this.coverIn(config, id, preset);
+      if (inside === undefined) continue;
       known += 1;
-      if (Math.abs(position - preset.position) <= config.covers.tolerance && Math.abs(tilt - preset.tilt) <= config.covers.tolerance) count += 1;
+      if (inside) count += 1;
     }
     return { count, known };
   }
@@ -302,7 +317,12 @@ export class HaDumDashboard extends LitElement {
   private renderCovers(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!config.covers.entities.length) return nothing;
     const last = config.covers.presets.length - 1;
-    return html`<h2><span>${i18n.t.covers}</span></h2>
+    return html`<h2>
+        <span>${i18n.t.covers}</span>
+        <button class="chevron" type="button" data-open="covers" aria-haspopup="dialog" aria-label=${i18n.t.coversDetail} @click=${() => (this._detail = "covers")}>
+          <span aria-hidden="true">›</span>
+        </button>
+      </h2>
       <div class="tiles" data-part="covers">
         ${config.covers.presets.map((preset, index) => {
           const { count, known } = this.inPreset(config, preset);
@@ -325,6 +345,61 @@ export class HaDumDashboard extends LitElement {
           ></dd-tile>`;
         })}
       </div>`;
+  }
+
+  /** When something happened: the time today, else the day. */
+  private when(ms: number, i18n: I18n): string {
+    return new Date(ms).toDateString() === new Date(this._now).toDateString() ? i18n.time(ms) : i18n.day(ms);
+  }
+
+  /** The last action of one blind: a failed command first (warning), else who moved it and when. */
+  private coverAction(config: Settings, id: string, i18n: I18n): { text: string; warn: boolean } | undefined {
+    const t = i18n.t;
+    const failed = this.failed(config).find((item) => item.entita === id);
+    if (failed) {
+      const time = failed.cas ? Date.parse(failed.cas) : NaN;
+      return { text: [Number.isFinite(time) ? t.notArrived(this.when(time, i18n)) : t.notArrived("").trim(), failed.duvod].filter(Boolean).join(" · "), warn: true };
+    }
+    const items = entityState(this.hass, config.covers.lastAction)?.attributes.polozky as Record<string, { kdo?: unknown; cas?: unknown }> | undefined;
+    const last = items && typeof items === "object" ? items[id] : undefined;
+    if (!last || typeof last.kdo !== "string") return undefined;
+    const time = typeof last.cas === "string" ? Date.parse(last.cas) : NaN;
+    return { text: [t.who[last.kdo] ?? last.kdo, Number.isFinite(time) ? this.when(time, i18n) : ""].filter(Boolean).join(" "), warn: false };
+  }
+
+  /** Detail of the blinds: every room with its last action and the three presets just for it (one tap: the sheet was opened on purpose). */
+  private renderCoversDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    if (!config.covers.entities.length) return nothing;
+    const t = i18n.t;
+    const open = this._detail === "covers";
+    return html`<dd-sheet .open=${open} .heading=${t.covers} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
+      ${open
+        ? html`<div class="detail" data-part="covers-detail">
+            ${config.covers.entities.map((id) => {
+              const entity = entityState(this.hass, id);
+              const configured = config.covers.names[id];
+              const friendly = entity?.attributes.friendly_name;
+              const name = configured !== undefined ? this.name(configured) : typeof friendly === "string" ? friendly : id;
+              const action = this.coverAction(config, id, i18n);
+              return html`<div class="cover-row" data-cover=${id}>
+                <span class="main">${name}${action ? html`<small class=${action.warn ? "warn" : ""}>${joinedText(action.text)}</small>` : nothing}</span>
+                <span class="presets">
+                  ${config.covers.presets.map(
+                    (preset) => html`<dd-tile
+                      kind="action"
+                      centered
+                      .name=${this.name(preset.name)}
+                      .label=${`${name}: ${this.name(preset.name)}`}
+                      .state=${(this.coverIn(config, id, preset) ? "on" : "idle") as TileState}
+                      @hdk-press=${() => this.call("script", config.covers.script.split(".")[1], { entity: id, pos: preset.position, tilt: preset.tilt })}
+                    ></dd-tile>`,
+                  )}
+                </span>
+              </div>`;
+            })}
+          </div>`
+        : nothing}
+    </dd-sheet>`;
   }
 
   private setCovers(config: Settings, preset: Preset): void {

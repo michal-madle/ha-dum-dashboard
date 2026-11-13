@@ -26,7 +26,7 @@ Karta je třetí vedle `ha-klima-dashboard` a `ha-energie-dashboard`; společné
 | `filters` | filtry klimatizací: `hours` (input_number, hodiny od čištění) a `threshold` (select, práh v hodinách); úkol ve frontě od prahu, „Hotovo“ hodiny vynuluje |
 | `laundry` | prádlo čeká: `name` a `entity` (input_boolean, `on` = čeká); úkol ve frontě s „Odložit“ a „Hotovo“ (vypne ho) |
 | `running` | spotřebiče, které se ukážou v „Teď běží“ s dobou běhu |
-| `covers` | žaluzie, skript posunu (`entity`, `pos`, `tilt`) a předvolby |
+| `covers` | žaluzie (entita, nebo `name` a `entity`), skript posunu (`entity`, `pos`, `tilt`), předvolby a `last_action` (senzor poslední akce, kdo žaluzií pohnul; detail za šipkou u nadpisu) |
 | `ventilation` | větrací režim a větráky |
 | `heating`, `cooling` | místnosti topení a klimatizace; `heating.resume` je tlačítko „zpět na plán“ |
 | `house_mode_entity`, `house_modes.summer` | v létě je Klimatizace nad Topením |

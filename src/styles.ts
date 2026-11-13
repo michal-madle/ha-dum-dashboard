@@ -72,6 +72,75 @@ export const styles = css`
     font-weight: 400;
     text-transform: uppercase;
   }
+  .chevron {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 -10px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 22px;
+    background: none;
+    color: var(--dd-secondary);
+    font: inherit;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .chevron:focus-visible {
+    outline: 2px solid var(--dd-accent);
+    outline-offset: -2px;
+  }
+  dd-sheet {
+    --hdk-sheet-bg: var(--dd-card);
+    --hdk-sheet-text: var(--dd-text);
+    --hdk-sheet-button: var(--dd-button);
+    --hdk-tile: var(--dd-el);
+  }
+  :host([data-light]) dd-sheet {
+    --hdk-sheet-backdrop: 35%;
+    --hdk-sheet-border: rgb(0 0 0 / 8%);
+    --hdk-sheet-grabber: rgb(60 60 67 / 30%);
+  }
+  .cover-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 8px 0;
+    border-top: 0.5px solid var(--dd-sep);
+  }
+  .cover-row:first-child {
+    border-top: 0;
+  }
+  .cover-row .main {
+    flex: 1;
+    min-width: 0;
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .cover-row small {
+    display: block;
+    color: var(--dd-secondary);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .cover-row small.warn {
+    color: var(--dd-warning);
+  }
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    gap: 6px;
+    flex: none;
+  }
+  @media (max-width: 359px) {
+    .presets {
+      grid-template-columns: repeat(3, 52px);
+      gap: 4px;
+    }
+  }
   .link {
     position: relative;
     min-height: 44px;

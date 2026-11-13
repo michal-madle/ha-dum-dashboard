@@ -26,7 +26,9 @@ for (const filter of config.filters) {
 }
 for (const item of config.laundry) states[item.entity] = entity("off");
 for (const item of config.running) states[item.entity] = entity("off");
-for (const id of config.covers.entities) states[id] = entity("closed", { current_position: 0, current_tilt_position: 0, friendly_name: id });
+const coverIds = config.covers.entities.map((item) => (typeof item === "string" ? item : item.entity));
+for (const id of coverIds) states[id] = entity("closed", { current_position: 0, current_tilt_position: 0, friendly_name: id });
+states[config.covers.last_action] = entity(ago(100), { polozky: Object.fromEntries(coverIds.map((id) => [id, { kdo: "evening", cas: ago(100), pos: 0, tilt: 0 }])) });
 states[config.ventilation.mode] = entity("off");
 for (const fan of config.ventilation.fans) states[fan.entity] = entity("off");
 const targets = [21, 19, 20, 20, 22.5, 8];
@@ -56,7 +58,7 @@ if (scenario === "summer") {
   states["climate.maxik_ac_maxik"] = entity("unavailable");
 }
 if (scenario === "day") {
-  for (const id of config.covers.entities) states[id] = entity("open", { current_position: 100, current_tilt_position: 97 });
+  for (const id of coverIds) states[id] = entity("open", { current_position: 100, current_tilt_position: 97 });
 }
 
 if (scenario === "restart") {

@@ -180,6 +180,57 @@ test.describe("ovládání", () => {
     expect(sent[0]).toEqual({ domain: "script", service: "zaluzie_posun", data: { entity: "cover.loznice_zaluzie_loznice", pos: 0, tilt: 0 } });
   });
 
+  test("detail žaluzií: šipka u nadpisu otevře list, u místnosti poslední akce (nepovedená oranžově) a předvolba jen pro ni jedním klepnutím", async ({ page }) => {
+    await open(page);
+    const before = await page.locator("ha-card").boundingBox();
+    await page.getByRole("button", { name: "Podrobnosti žaluzií" }).click();
+    const dialog = page.getByRole("dialog", { name: "Žaluzie" });
+    await expect(dialog).toBeVisible();
+    expect(await page.locator("ha-card").boundingBox()).toEqual(before);
+    const rows = page.locator('[data-part="covers-detail"] .cover-row');
+    await expect(rows).toHaveCount(4);
+    await expect(rows.nth(0)).toContainText("Ložnice");
+    await expect(rows.nth(0).locator("small")).toContainText(/^Večerní fáze \d\d:\d\d$/);
+    await expect(rows.nth(0).locator("small")).not.toHaveClass(/warn/);
+    // Maxík: nepovedená akce má přednost před poslední akcí.
+    await expect(rows.nth(1).locator("small")).toHaveClass(/warn/);
+    await expect(rows.nth(1).locator("small")).toContainText("Nedojela");
+    await expect(rows.nth(1).locator("small")).toContainText("žaluzie nedostupná");
+    // Tma svítí u zatažené žaluzie, Den ne.
+    const tileStates = await rows.nth(0).locator("dd-tile").evaluateAll((items) => items.map((item: any) => item.state));
+    expect(tileStates).toEqual(["idle", "idle", "on"]);
+    await rows.nth(3).locator("dd-tile").first().click();
+    expect(await calls(page)).toEqual([{ domain: "script", service: "zaluzie_posun", data: { entity: "cover.pracovna_zaluzie_pracovna", pos: 100, tilt: 100 } }]);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+  });
+
+  test("detail žaluzií: ruční pohyb a jiný den; 320 px bez vodorovného posouvání, axe tmavě i světle", async ({ page }) => {
+    for (const theme of ["dark", "light"] as const) {
+      await open(page, "day", theme, "cs", 320);
+      const yesterday = new Date(Date.now() - 26 * 3600000).toISOString();
+      await update(page, {
+        "sensor.zaluzie_posledni_akce": { attributes: { polozky: { "cover.loznice_zaluzie_loznice": { kdo: "rucne", cas: yesterday } } } },
+        "sensor.dum_nesplnene_akce": { state: "1", attributes: { polozky: [{ entita: "cover.mikulas_zaluzie_mikulas", akce: "x", duvod: "žaluzie nedostupná", cas: new Date().toISOString() }] } },
+      });
+      await page.getByRole("button", { name: "Podrobnosti žaluzií" }).click();
+      const rows = page.locator('[data-part="covers-detail"] .cover-row');
+      await expect(rows.nth(0).locator("small")).toContainText(/^Ručně \d/);
+      await expect(rows.nth(1).locator("small")).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+      // Text pod názvem nesmí vjet pod předvolby.
+      const overlap = await page.locator('[data-part="covers-detail"] .cover-row').evaluateAll((items) =>
+        items.filter((row) => {
+          const text = row.querySelector("small")?.getBoundingClientRect();
+          const presets = row.querySelector(".presets")!.getBoundingClientRect();
+          return text && [...row.querySelectorAll("small .joined-part, small")].some((el) => el.getBoundingClientRect().right > presets.left + 0.5);
+        }).length,
+      );
+      expect(overlap, theme).toBe(0);
+      expect(await axeViolations(page, ["page-has-heading-one"]), theme).toEqual([]);
+    }
+  });
+
   test("větrání: Větrací režim je první dlaždice, běžící větrák ukáže dobu, přepnutí jen dvojklepem nebo podržením", async ({ page }) => {
     await open(page);
     const list = await tiles(page, "ventilation");

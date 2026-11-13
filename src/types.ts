@@ -48,7 +48,16 @@ export interface Settings {
   /** input_boolean per machine: on = the laundry waits in it (yaml/packages/pradlo.yaml in ha-config). */
   laundry: Named[];
   running: Named[];
-  covers: { script: string; entities: string[]; presets: Preset[]; tolerance: number };
+  covers: {
+    script: string;
+    entities: string[];
+    /** Names of the blinds for the detail; without one the friendly name of the entity. */
+    names: Record<string, LocalizedText>;
+    /** sensor.zaluzie_posledni_akce: who moved each blind last, when and where to (attribute polozky). */
+    lastAction?: string;
+    presets: Preset[];
+    tolerance: number;
+  };
   ventilation: { mode?: string; fans: Named[] };
   heating: { resume?: string; rooms: Named[] };
   cooling: { rooms: Named[] };
