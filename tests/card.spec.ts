@@ -208,6 +208,8 @@ test.describe("ovládání", () => {
   test("detail žaluzií: ruční pohyb a jiný den; 320 px bez vodorovného posouvání, axe tmavě i světle", async ({ page }) => {
     for (const theme of ["dark", "light"] as const) {
       await open(page, "day", theme, "cs", 320);
+      // Axe measures the finished sheet, not its fade-in.
+      await page.emulateMedia({ reducedMotion: "reduce" });
       const yesterday = new Date(Date.now() - 26 * 3600000).toISOString();
       await update(page, {
         "sensor.zaluzie_posledni_akce": { attributes: { polozky: { "cover.loznice_zaluzie_loznice": { kdo: "rucne", cas: yesterday } } } },
@@ -304,6 +306,19 @@ test.describe("ovládání", () => {
       { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.obyvak_ac_obyvak", hvac_mode: "cool" } },
       { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.loznice_ac_loznice", hvac_mode: "cool" } },
       { domain: "climate", service: "set_preset_mode", data: { entity_id: "climate.loznice_ac_loznice", preset_mode: "none" } },
+    ]);
+  });
+
+  test("popup Klimatizace: síla větru a směr proudění; „Detail a historie“ odešle, zavře popup a otevře detail entity", async ({ page }) => {
+    await open(page, "summer");
+    await tile(page, "cooling", "Obývák").click();
+    await expect(page.locator("dd-climate h3")).toHaveText(["Režim", "Síla větru", "Směr proudění", "Vypnout za"]);
+    await page.locator("dd-climate dd-segmented").nth(0).getByRole("radio", { name: "Silně" }).click();
+    await page.getByRole("button", { name: "Detail a historie" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(await calls(page)).toEqual([
+      { domain: "climate", service: "set_fan_mode", data: { entity_id: "climate.obyvak_ac_obyvak", fan_mode: "high" } },
+      { moreInfo: "climate.obyvak_ac_obyvak" },
     ]);
   });
 

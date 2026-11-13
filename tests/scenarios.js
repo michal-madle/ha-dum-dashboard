@@ -15,7 +15,7 @@ const history = {};
 const entity = (state, attributes = {}, minutes = 600) => ({ state, attributes, last_changed: ago(minutes), last_updated: ago(minutes) });
 // The attributes the climate entities have in Home Assistant (ha-config/ha/entities.json): Tado CE and Samsung SmartThings.
 const TADO = { min_temp: 5, max_temp: 25, target_temp_step: 0.5, hvac_modes: ["heat", "off", "auto"], preset_modes: ["home", "away"], current_temperature: 21.6 };
-const AC = { min_temp: 16, max_temp: 30, hvac_modes: ["off", "cool", "dry", "fan_only", "auto", "heat"], preset_modes: ["none", "sleep", "quiet", "smart", "boost", "wind_free", "wind_free_sleep"], current_temperature: 23.4 };
+const AC = { min_temp: 16, max_temp: 30, hvac_modes: ["off", "cool", "dry", "fan_only", "auto", "heat"], preset_modes: ["none", "sleep", "quiet", "smart", "boost", "wind_free", "wind_free_sleep"], fan_modes: ["auto", "low", "medium", "high", "turbo"], swing_modes: ["off", "both", "vertical", "horizontal"], fan_mode: "auto", swing_mode: "off", current_temperature: 23.4 };
 const tado = (state, attributes) => entity(state, { ...TADO, ...attributes });
 const ac = (state, attributes) => entity(state, { ...AC, preset_mode: "none", ...attributes });
 

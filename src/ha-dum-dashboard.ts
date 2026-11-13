@@ -538,6 +538,11 @@ export class HaDumDashboard extends LitElement {
             .delayMs=${config.sendDelaySeconds * 1000}
             @hdk-select-rooms=${(event: CustomEvent<{ selected: string[] }>) => (this._climateSelected = event.detail.selected)}
             @hdk-error=${(event: CustomEvent<{ message: string }>) => (this._error = event.detail.message)}
+            @hdk-more-info=${async (event: CustomEvent<{ entityId: string }>) => {
+              // „Detail a historie“: the popup sends what waits, closes and the detail of Home Assistant opens.
+              await close();
+              this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: event.detail.entityId }, bubbles: true, composed: true }));
+            }}
           ></dd-climate>`
         : nothing}
     </dd-sheet>`;
