@@ -730,7 +730,7 @@ export class HaDumDashboard extends LitElement {
   /** The preset a blind did not arrive at (its target matches one), when it moved but stopped elsewhere. */
   private failedGoal(config: Settings, item: Failed): Preset | undefined {
     const target = item.cil as { pos?: unknown; tilt?: unknown } | undefined;
-    if (!item.entita.startsWith("cover.") || !/^nedojela/i.test(item.duvod ?? "")) return undefined;
+    if (!item.entita.startsWith("cover.") || !/^(nedojela|nepohnula)/i.test(item.duvod ?? "")) return undefined;
     return config.covers.presets.find((preset) => Math.abs(Number(target?.pos) - preset.position) <= config.covers.tolerance && Math.abs(Number(target?.tilt) - preset.tilt) <= config.covers.tolerance);
   }
 

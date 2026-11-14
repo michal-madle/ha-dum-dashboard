@@ -4191,7 +4191,7 @@ const ws = u`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   /** The preset a blind did not arrive at (its target matches one), when it moved but stopped elsewhere. */
   failedGoal(t, e) {
     const n = e.cil;
-    if (!(!e.entita.startsWith("cover.") || !/^nedojela/i.test(e.duvod ?? "")))
+    if (!(!e.entita.startsWith("cover.") || !/^(nedojela|nepohnula)/i.test(e.duvod ?? "")))
       return t.covers.presets.find((i) => Math.abs(Number(n?.pos) - i.position) <= t.covers.tolerance && Math.abs(Number(n?.tilt) - i.tilt) <= t.covers.tolerance);
   }
   /** A failed command of a blind can be sent again when the sensor kept its target. */
@@ -4590,4 +4590,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Fe(es()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.17.0 · 2026-11-14 08:45 UTC · po f08b543 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.17.1 · 2026-11-14 08:50 UTC · po 865fd54 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
