@@ -207,12 +207,17 @@ export class HaDumDashboard extends LitElement {
           .map(([id, entity]) => ({ id, name: typeof entity.attributes.friendly_name === "string" ? entity.attributes.friendly_name : id, version: String(entity.attributes.latest_version ?? "") }))
           .sort((a, b) => a.name.localeCompare(b.name))
       : [];
+    // What needs attention, each with its own „Odložit“ like the queue (uživatel 14. 11. 2026: „Dej moznost odlozit den
+    // vikend tyden mesic jako jinde“); what is snoozed is not here until its day.
+    const snoozed = this.snoozed(config);
     const attention = [
       // A weak battery the queue „Potřebuje tebe“ already shows is not said twice (uživatel 14. 11. 2026: „Q224 A“).
-      ...batteries.filter(({ item, level }) => level !== undefined && level < h.batteryLow && !config.batteries.some((queued) => queued.level === item.entity && readText(this.hass, queued.low) === "on")).map(({ item, level }) => `${this.name(item.name)} ${i18n.percent(Math.round(level!))}`),
-      ...connections.filter(({ state }) => state !== "on").map(({ item }) => `${this.name(item.name)} ${t.healthOffline.toLocaleLowerCase(i18n.language)}`),
-      ...system.filter(({ problem }) => problem).map(({ item }) => this.name(item.name)),
-    ];
+      ...batteries
+        .filter(({ item, level }) => level !== undefined && level < h.batteryLow && !config.batteries.some((queued) => queued.level === item.entity && readText(this.hass, queued.low) === "on"))
+        .map(({ item, level }) => ({ entity: item.entity, name: this.name(item.name), detail: t.battery(i18n.percent(Math.round(level!))) })),
+      ...connections.filter(({ state }) => state !== "on").map(({ item }) => ({ entity: item.entity, name: this.name(item.name), detail: t.healthOffline })),
+      ...system.filter(({ problem }) => problem).map(({ item, value }) => ({ entity: item.entity, name: this.name(item.name), detail: value })),
+    ].filter((item) => !snoozed.has(`health:${item.entity}`));
     return { batteries, connections, system, updates, attention };
   }
 
@@ -224,22 +229,28 @@ export class HaDumDashboard extends LitElement {
     const lowest = state.batteries.find(({ level }) => level !== undefined);
     const offline = state.connections.filter(({ state: value }) => value !== "on").length;
     const problems = state.system.filter(({ problem }) => problem).length;
+    // Orange only for what is not snoozed.
+    const open = (items: Named[]) => state.attention.some((item) => items.some((other) => other.entity === item.entity));
     const row = (part: HealthPart, title: string, detail: string, warn = false) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-health=${part} @click=${() => (this._detail = `health:${part}`)}>
       <span class="main">${title}<small class=${warn ? "warn" : ""}>${detail}</small></span>
       <span class="chevron-mark" aria-hidden="true">›</span>
     </button>`;
     return html`<h2><span>${t.health}</span></h2>
       <div class="group" data-part="health">
-        ${state.attention.length
-          ? html`<div class="row" data-row="attention"><span class="mark warn" aria-hidden="true">!</span><span class="main">${t.healthAttention}<small class="warn">${joined(state.attention)}</small></span></div>`
-          : nothing}
+        ${state.attention.map(
+          (item) => html`<div class="row" data-row="attention" data-entity=${item.entity}>
+            <span class="mark warn" aria-hidden="true">!</span>
+            <span class="main">${item.name}<small class="warn">${joined([t.healthAttention, item.detail])}</small></span>
+            ${this.snoozeButton(config, `health:${item.entity}`, i18n)}
+          </div>`,
+        )}
         ${h.batteries.length
           ? lowest
             ? row("batteries", t.healthBatteries, t.healthLowest(`${this.name(lowest.item.name)} ${i18n.percent(Math.round(lowest.level!))}`), lowest.level! < h.batteryLow)
             : row("batteries", t.healthBatteries, t.unavailable, true)
           : nothing}
-        ${h.connections.length ? row("connections", t.healthConnections, offline ? t.healthOfflineCount(offline) : t.healthAllOnline, offline > 0) : nothing}
-        ${h.system.length ? row("system", t.healthSystem, problems ? t.healthProblem : t.healthOk, problems > 0) : nothing}
+        ${h.connections.length ? row("connections", t.healthConnections, offline ? t.healthOfflineCount(offline) : t.healthAllOnline, open(h.connections)) : nothing}
+        ${h.system.length ? row("system", t.healthSystem, problems ? t.healthProblem : t.healthOk, open(h.system)) : nothing}
         ${h.updates ? row("updates", t.healthUpdates, state.updates.length ? t.healthUpdatesCount(state.updates.length) : t.healthUpToDate) : nothing}
       </div>`;
   }

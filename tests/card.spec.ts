@@ -494,8 +494,8 @@ test.describe("ovládání", () => {
     await open(page);
     const health = page.locator('[data-part="health"]');
     // Slabá baterie je ve frontě, ve „Vyžaduje pozornost“ znovu ne („Q224 A“); Okno Maxík 15 % ve frontě není.
-    await expect(health.locator('[data-row="attention"]')).toContainText("Okno Maxík 15 %");
-    await expect(health.locator('[data-row="attention"]')).not.toContainText("Okno Ložnice");
+    await expect(health.locator('[data-row="attention"]').filter({ hasText: "Baterie 15 %" })).toHaveCount(1);
+    await expect(health.locator('[data-row="attention"]').filter({ hasText: "Okno Ložnice" })).toHaveCount(0);
     await expect(health.locator('[data-health="batteries"]')).toContainText("Nejslabší Okno Ložnice 8 %");
     await expect(health.locator('[data-health="connections"]')).toContainText("Vše připojeno");
     await expect(health.locator('[data-health="system"]')).toContainText("V pořádku");
@@ -508,9 +508,19 @@ test.describe("ovládání", () => {
     // Odpojené čidlo a vadný disk jdou nahoru.
     await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" }, "sensor.madlovi_volume_1_volume_used": { state: "91" } });
     // Obsazení nad mezí 85 % („Q223 ano“).
-    await expect(health.locator('[data-row="attention"]')).toContainText("NAS obsazeno");
-    await expect(health.locator('[data-row="attention"]')).toContainText("Tado Maxík odpojeno");
-    await expect(health.locator('[data-row="attention"]')).toContainText("NAS disk 2 sektory");
+    await expect(health.locator('[data-row="attention"]').filter({ hasText: "NAS obsazeno" })).toHaveCount(1);
+    await expect(health.locator('[data-row="attention"][data-entity="binary_sensor.maxik_tado_ce_maxik_connection"]')).toContainText("Tado Maxík");
+    await expect(health.locator('[data-row="attention"][data-entity="binary_sensor.maxik_tado_ce_maxik_connection"]')).toContainText("Odpojeno");
+    // Odložit jako ve frontě: volba zavolá skript s klíčem health:<entita>; odložené zmizí a řádek Připojení už není oranžový.
+    await health.locator('[data-entity="binary_sensor.maxik_tado_ce_maxik_connection"]').getByRole("button", { name: "Odložit" }).click();
+    await page.getByRole("menuitem").first().click();
+    const sent = (await calls(page)).at(-1)!;
+    expect(sent.service).toBe("dum_odlozit");
+    expect(sent.data?.klic).toBe("health:binary_sensor.maxik_tado_ce_maxik_connection");
+    await update(page, { "sensor.dum_odlozeno": { state: "1", attributes: { polozky: [{ klic: "health:binary_sensor.maxik_tado_ce_maxik_connection", do: "2099-01-01" }] } } });
+    await expect(health.locator('[data-entity="binary_sensor.maxik_tado_ce_maxik_connection"]')).toHaveCount(0);
+    await expect(health.locator('[data-health="connections"] small')).not.toHaveClass(/warn/);
+    await expect(health.locator('[data-row="attention"]').filter({ hasText: "NAS disk 2 sektory" })).toHaveCount(1);
     await expect(health.locator('[data-health="connections"]')).toContainText("1 odpojeno");
     await health.locator('[data-health="updates"]').click();
     await page.locator('[data-part="health-detail"] .health-row').first().click();
