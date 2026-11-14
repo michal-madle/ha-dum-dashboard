@@ -8,7 +8,7 @@ Karta je třetí vedle [Klima Dashboard](https://github.com/michal-madle/ha-klim
 
 | Oddíl | Co |
 |---|---|
-| Potřebuje tebe | nepovedené akce automatik (u žaluzie „Nedojela do Tma“ a „Zkusit znovu“), slabé baterie, filtr klimatizace, prádlo čeká v pračce nebo sušičce, údržba spotřebičů po počtu cyklů; každý řádek má jednu akci („Hotovo“, „Odložit“ o den, na víkend, o týden, o měsíc) |
+| Potřebuje tebe | nepovedené akce automatik (u žaluzie „Nedojela do Tma“ a „Zkusit znovu“), slabé baterie, filtr klimatizace, únik vody (první, červeně), prádlo čeká v pračce nebo sušičce, údržba spotřebičů po počtu cyklů; každý řádek má jednu akci („Hotovo“, „Odložit“ o den, na víkend, o týden, o měsíc) |
 | Teď běží | spotřebiče, které nemají vlastní dlaždici, s dobou běhu (restart Home Assistantu ji nenuluje) |
 | Žaluzie | předvolby Den, Stín, Tma pro všechny žaluzie; šipka otevře detail s poslední akcí a předvolbami každé místnosti |
 | Větrání | Větrací režim a větráky |
@@ -47,6 +47,7 @@ Karta je třetí vedle [Klima Dashboard](https://github.com/michal-madle/ha-klim
 | `batteries` | čidla s baterií: `low` (binary_sensor, `on` = slabá), volitelně `level` a `type` |
 | `filters` | filtry klimatizací: `hours` (input_number, hodiny od čištění) a `threshold` (práh v hodinách) |
 | `laundry` | prádlo čeká: `entity` (input_boolean, `on` = čeká); „Hotovo“ ho vypne |
+| `leaks` | čidla úniku vody: `entity` (binary_sensor, `on` = voda); únik je první řádek „Potřebuje tebe“, dokud trvá |
 | `maintenance` | údržba spotřebičů: `task`, `counter` (cykly od údržby) a `every` (po kolika cyklech); „Hotovo“ počítadlo vynuluje |
 | `running` | spotřebiče pro „Teď běží“ |
 | `covers` | žaluzie, skript posunu (pole `entity`, `pos`, `tilt`), předvolby, tolerance a `last_action` (senzor poslední akce) |
@@ -67,7 +68,7 @@ npm ci
 npm test
 ```
 
-`npm test` kartu sestaví a pustí 32 testů v prohlížeči (Playwright, Chromium) na zkušební stránce [`tests/harness.html`](tests/harness.html) s náhradními daty Home Assistantu ([`tests/scenarios.js`](tests/scenarios.js)), včetně přístupnosti (axe-core) v tmavém i světlém režimu a šířek 320 až 430 px. `ha-dum-dashboard.js` v kořeni je výsledek sestavení, ručně se neupravuje a commituje se kvůli HACS.
+`npm test` kartu sestaví a pustí 33 testů v prohlížeči (Playwright, Chromium) na zkušební stránce [`tests/harness.html`](tests/harness.html) s náhradními daty Home Assistantu ([`tests/scenarios.js`](tests/scenarios.js)), včetně přístupnosti (axe-core) v tmavém i světlém režimu a šířek 320 až 430 px. `ha-dum-dashboard.js` v kořeni je výsledek sestavení, ručně se neupravuje a commituje se kvůli HACS.
 
 Spec a historie návrhu karty jsou v soukromém repozitáři autora; veřejně je popis konfigurace v příkladu.
 

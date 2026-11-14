@@ -58,6 +58,8 @@ export interface Settings {
   filters: Filter[];
   /** input_boolean per machine: on = the laundry waits in it (yaml/packages/pradlo.yaml in ha-config). */
   laundry: Named[];
+  /** Water leak sensors (binary_sensor, on = water): a leak is the first row of „Potřebuje tebe“ while it lasts. */
+  leaks: Named[];
   maintenance: Maintenance[];
   running: Named[];
   covers: {

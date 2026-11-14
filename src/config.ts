@@ -136,6 +136,7 @@ function normalize(raw: unknown): Settings {
     batteries,
     filters,
     laundry: named(raw.laundry, "laundry", ["input_boolean"]),
+    leaks: named(raw.leaks, "leaks", ["binary_sensor"]),
     maintenance,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {

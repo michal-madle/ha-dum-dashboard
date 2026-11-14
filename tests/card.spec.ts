@@ -519,7 +519,7 @@ test.describe("ovládání", () => {
     await health.locator('[data-health="batteries"]').click();
     const rows = page.locator('[data-part="health-detail"] .health-row');
     await expect(rows.first()).toContainText("Okno Ložnice");
-    await expect(rows).toHaveCount(7);
+    await expect(rows).toHaveCount(9);
     await page.locator("dd-sheet .close").last().click();
     // Odpojené čidlo a vadný disk jdou nahoru.
     await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" }, "sensor.madlovi_volume_1_volume_used": { state: "91" } });
@@ -617,4 +617,21 @@ test.describe("konfigurace, jazyky, mobil a přístupnost", () => {
       expect(await axeViolations(page, ["page-has-heading-one"]), theme).toEqual([]);
     }
   });
+});
+
+test("únik vody: první řádek „Potřebuje tebe“, červený, bez tlačítka; zmizí, když je čidlo zase suché", async ({ page }) => {
+  await open(page);
+  const leak = page.locator('[data-row="leak"]');
+  await expect(leak).toHaveCount(0);
+  // The dishwasher sensor reports water (uživatel 14. 11. 2026: „udelej nejaky alert kdyz zacne hlasit unik vody“).
+  await update(page, { "binary_sensor.kuchyne_mycka_unik_vody_unik_vody": { state: "on" } });
+  await expect(leak).toHaveCount(1);
+  await expect(leak).toContainText("Myčka");
+  await expect(leak).toContainText("Únik vody");
+  await expect(leak.locator("button")).toHaveCount(0);
+  // It is the first row of the queue and it is counted in the heading.
+  expect(await page.locator('[data-part="queue"] .row').first().getAttribute("data-row")).toBe("leak");
+  expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+  await update(page, { "binary_sensor.kuchyne_mycka_unik_vody_unik_vody": { state: "off" } });
+  await expect(leak).toHaveCount(0);
 });

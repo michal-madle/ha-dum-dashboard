@@ -12,6 +12,8 @@ export const en: typeof cs = {
   battery: (level) => (level ? `Battery ${level}` : "Low battery"),
   filter: (hours, threshold) => `Clean the filter · ${hours} of ${threshold}`,
   laundry: (since) => (since ? `Laundry waiting · since ${since}` : "Laundry waiting"),
+  /** A leak sensor reports water (the first row of „Potřebuje tebe“): "Únik vody · od 14:32". */
+  leak: (since) => (since ? `Water leak · since ${since}` : "Water leak"),
   cycles: (count, every) => `${count} of ${every} cycles`,
   running: "Running now",
   nothingRuns: "Nothing is running",
@@ -51,6 +53,8 @@ export const en: typeof cs = {
   logFinished: "Finished",
   logLaundryWaits: "Laundry waiting",
   logLaundryOut: "Laundry taken out",
+  logLeak: "Water leak",
+  logLeakOver: "Dry",
   climate: {
     rooms: "Rooms",
     temperature: "Target temperature",

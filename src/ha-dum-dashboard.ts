@@ -64,6 +64,7 @@ const ICON_SNOOZE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`;
 
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
+const ICON_LEAK = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3.5z" stroke-linejoin="round"></path></svg>`;
 
 const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
 
@@ -299,6 +300,7 @@ export class HaDumDashboard extends LitElement {
       ...config.cooling.rooms.map((item) => item.entity),
       ...config.running.map((item) => item.entity),
       ...config.laundry.map((item) => item.entity),
+      ...config.leaks.map((item) => item.entity),
       ...config.devices.flatMap((group) => group.entities.map((item) => item.entity)),
     ];
   }
@@ -381,6 +383,8 @@ export class HaDumDashboard extends LitElement {
     if (running) return `${this.name(running.name)} · ${state === "on" ? t.logRuns : t.logFinished}`;
     const laundry = config.laundry.find((item) => item.entity === entry.entity_id);
     if (laundry) return `${this.name(laundry.name)} · ${state === "on" ? t.logLaundryWaits : t.logLaundryOut}`;
+    const leak = config.leaks.find((item) => item.entity === entry.entity_id);
+    if (leak) return `${this.name(leak.name)} · ${state === "on" ? t.logLeak : t.logLeakOver}`;
     return `${this.logName(entry)} · ${this.logState(entry, state)}`;
   }
 
@@ -400,7 +404,7 @@ export class HaDumDashboard extends LitElement {
   /** „Sušička - konec cyklu“ under „Sušička · Doběhla“ says the name twice: the reason without it („Konec cyklu“). */
   private withoutName(reason: string, row: LogItem, config: Settings): string {
     const entity = row.entry.entity_id;
-    const item = [...config.running, ...config.laundry].find((other) => other.entity === entity);
+    const item = [...config.running, ...config.laundry, ...config.leaks].find((other) => other.entity === entity);
     const name = item ? this.name(item.name) : this.logName(row.entry);
     if (!reason.toLocaleLowerCase().startsWith(name.toLocaleLowerCase())) return reason;
     const rest = reason.slice(name.length).replace(/^[\s\-–—·:]+/, "");
@@ -428,7 +432,7 @@ export class HaDumDashboard extends LitElement {
     const id = entry.entity_id;
     if (id === config.ventilation.mode) return this.i18n.t.ventilationMode;
     if (config.covers.names[id] !== undefined) return this.name(config.covers.names[id]);
-    const named = [...config.ventilation.fans, ...config.heating.rooms, ...config.cooling.rooms, ...config.running, ...config.laundry, ...config.devices.flatMap((group) => group.entities)].find(
+    const named = [...config.ventilation.fans, ...config.heating.rooms, ...config.cooling.rooms, ...config.running, ...config.laundry, ...config.leaks, ...config.devices.flatMap((group) => group.entities)].find(
       (item) => item.entity === id,
     );
     return named ? this.name(named.name) : undefined;
@@ -608,7 +612,7 @@ export class HaDumDashboard extends LitElement {
   }
 
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length && !config.leaks.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
@@ -621,8 +625,20 @@ export class HaDumDashboard extends LitElement {
       const cycles = readNumber(this.hass, item.counter);
       return cycles !== undefined && cycles >= item.every && !snoozed.has(`maintenance:${item.counter}`) ? [{ item, cycles }] : [];
     });
-    const count = failed.length + low.length + dirty.length + waiting.length + due.length;
+    // Water where it should not be (uživatel 14. 11. 2026: „udelej nejaky alert kdyz zacne hlasit unik vody“): the first
+    // row, red, without a button: it goes away when the sensor is dry again.
+    const leaking = config.leaks.filter((item) => readText(this.hass, item.entity) === "on");
+    const count = leaking.length + failed.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
+      ...leaking.map((item) => {
+        const start = this.starts.of(this.hass, item.entity);
+        const today = start !== undefined && new Date(start).toDateString() === new Date(this._now).toDateString();
+        const since = start === undefined ? "" : today ? i18n.time(start) : `${i18n.day(start)} ${i18n.time(start)}`;
+        return html`<div class="row" data-row="leak" role="alert">
+          <span class="mark alert" aria-hidden="true">${ICON_LEAK}</span>
+          <span class="main">${this.name(item.name)}<small class="alert">${joinedText(t.leak(since))}</small></span>
+        </div>`;
+      }),
       ...failed.map((item) => {
         // The whole name of Home Assistant („Žaluzie Maxík“); without it the name from the detail of the blinds, never the ID.
         const configured = config.covers.names[item.entita];

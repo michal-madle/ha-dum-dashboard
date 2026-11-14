@@ -10,6 +10,8 @@ export const cs = {
   battery: (level: string | undefined) => (level ? `Baterie ${level}` : "Slabá baterie"),
   filter: (hours: string, threshold: string) => `Vyčistit filtr · ${hours} z ${threshold}`,
   laundry: (since: string) => (since ? `Prádlo čeká · od ${since}` : "Prádlo čeká"),
+  /** A leak sensor reports water (the first row of „Potřebuje tebe“): "Únik vody · od 14:32". */
+  leak: (since: string) => (since ? `Únik vody · od ${since}` : "Únik vody"),
   cycles: (count: number, every: number) => `${count} z ${every} cyklů`,
   running: "Teď běží",
   nothingRuns: "Nic neběží",
@@ -49,6 +51,8 @@ export const cs = {
   logFinished: "Doběhla",
   logLaundryWaits: "Prádlo čeká",
   logLaundryOut: "Prádlo vyndáno",
+  logLeak: "Únik vody",
+  logLeakOver: "Sucho",
   climate: {
     rooms: "Místnosti",
     temperature: "Cílová teplota",

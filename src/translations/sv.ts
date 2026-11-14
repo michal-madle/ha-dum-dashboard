@@ -12,6 +12,8 @@ export const sv: typeof cs = {
   battery: (level) => (level ? `Batteri ${level}` : "Svagt batteri"),
   filter: (hours, threshold) => `Rengör filtret · ${hours} av ${threshold}`,
   laundry: (since) => (since ? `Tvätt väntar · sedan ${since}` : "Tvätt väntar"),
+  /** A leak sensor reports water (the first row of „Potřebuje tebe“): "Únik vody · od 14:32". */
+  leak: (since) => (since ? `Vattenläcka · sedan ${since}` : "Vattenläcka"),
   cycles: (count, every) => `${count} av ${every} cykler`,
   running: "Körs nu",
   nothingRuns: "Inget körs",
@@ -51,6 +53,8 @@ export const sv: typeof cs = {
   logFinished: "Klar",
   logLaundryWaits: "Tvätten väntar",
   logLaundryOut: "Tvätten urtagen",
+  logLeak: "Vattenläcka",
+  logLeakOver: "Torrt",
   climate: {
     rooms: "Rum",
     temperature: "Måltemperatur",

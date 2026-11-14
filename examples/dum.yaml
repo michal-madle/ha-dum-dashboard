@@ -37,6 +37,14 @@ batteries:
     low: binary_sensor.garaz_teplomer_garaz_battery
     level: sensor.garaz_teplomer_garaz_battery
     type: sensor.garaz_teplomer_garaz_battery_type
+  - name: Únik vody Myčka
+    low: binary_sensor.kuchyne_mycka_unik_vody_baterie
+    level: sensor.kuchyne_mycka_unik_vody_baterie
+    type: sensor.kuchyne_mycka_unik_vody_typ_baterie
+  - name: Únik vody Pračka
+    low: binary_sensor.technicka_mistnost_pracka_unik_vody_baterie
+    level: sensor.technicka_mistnost_pracka_unik_vody_baterie
+    type: sensor.technicka_mistnost_pracka_unik_vody_typ_baterie
 filters:                            # filtr klimatizace: hodiny od čištění proti prahu klimatizace; Hotovo je vynuluje
   - name: Klimatizace Ložnice
     hours: input_number.loznice_ac_loznice_filtr_hodiny
@@ -64,6 +72,17 @@ laundry:                            # prádlo čeká (input_boolean, yaml/packag
       en: Dryer
       sv: Torktumlare
     entity: input_boolean.technicka_mistnost_susicka_pradlo_ceka
+leaks:                              # čidla úniku vody (binary_sensor, on = voda): únik je první řádek „Potřebuje tebe“, dokud trvá
+  - name:
+      cs: Myčka
+      en: Dishwasher
+      sv: Diskmaskin
+    entity: binary_sensor.kuchyne_mycka_unik_vody_unik_vody
+  - name:
+      cs: Pračka
+      en: Washing machine
+      sv: Tvättmaskin
+    entity: binary_sensor.technicka_mistnost_pracka_unik_vody_unik_vody
 maintenance:                        # údržba po počtu cyklů (counter, yaml/packages/udrzba.yaml); Hotovo počítadlo vynuluje
   - name:
       cs: Pračka
@@ -224,6 +243,10 @@ health:                             # Zdraví: baterie čidel (%), připojení (
       entity: sensor.garaz_garazova_vrata_battery
     - name: Teploměr Garáž
       entity: sensor.garaz_teplomer_garaz_battery
+    - name: Únik vody Myčka
+      entity: sensor.kuchyne_mycka_unik_vody_baterie
+    - name: Únik vody Pračka
+      entity: sensor.technicka_mistnost_pracka_unik_vody_baterie
   connections:
     - name: Tado bridge
       entity: binary_sensor.tado_ce_internet_bridge_connection

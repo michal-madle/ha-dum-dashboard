@@ -15,6 +15,8 @@ export const styles = css`
     --dd-accent: #0a84ff;
     --dd-warning: #ff9230;
     --dd-warning-bg: rgb(255 146 48 / 16%);
+    --dd-alert: #ff6961;
+    --dd-alert-bg: rgb(255 66 69 / 18%);
     --hdk-accent: var(--dd-accent);
     --hdk-secondary: var(--dd-secondary);
     --hdk-tile: var(--dd-card);
@@ -53,6 +55,8 @@ export const styles = css`
     --dd-accent: #0a6ed1;
     --dd-warning: #8f4a12;
     --dd-warning-bg: rgb(168 82 0 / 12%);
+    --dd-alert: #c4001a;
+    --dd-alert-bg: rgb(196 0 26 / 10%);
     --hdk-tile-on: #d8e8f8;
     --hdk-tile-on-text: #000000;
     --hdk-tile-on-sub: #0a5cb0;
@@ -378,6 +382,13 @@ export const styles = css`
   .mark.warn {
     background: var(--dd-warning-bg);
     color: var(--dd-warning);
+  }
+  .mark.alert {
+    background: var(--dd-alert-bg);
+    color: var(--dd-alert);
+  }
+  .row small.alert {
+    color: var(--dd-alert);
   }
   .mark svg {
     width: 24px;

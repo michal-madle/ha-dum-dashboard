@@ -30,6 +30,7 @@ for (const filter of config.filters) {
   states[filter.threshold] = entity("300");
 }
 for (const item of config.laundry) states[item.entity] = entity("off");
+for (const item of config.leaks ?? []) states[item.entity] = entity("off");
 for (const item of config.maintenance) states[item.counter] = entity("3");
 for (const item of config.running) states[item.entity] = entity("off");
 const coverIds = config.covers.entities.map((item) => (typeof item === "string" ? item : item.entity));
