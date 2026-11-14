@@ -80,7 +80,8 @@ export interface Settings {
     batteryLow: number;
     batteries: Named[];
     connections: Named[];
-    system: Named[];
+    /** A value above `max` is a problem (NAS obsazeno 85 %, teplota 60 °C; uživatel 14. 11. 2026: „Q223 ano“). */
+    system: (Named & { max?: number })[];
     updates: boolean;
   };
   guard: { holdMs: number; doubleTapMs: number; hintSeconds: number };

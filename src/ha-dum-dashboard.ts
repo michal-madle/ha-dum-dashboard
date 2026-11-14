@@ -71,7 +71,9 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | `health:${HealthPart}`;
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}`;
+  /** Kniha pravidel: each automation of Home Assistant with its description (loaded when opened). */
+  @state() private _rules?: { id: string; name: string; description: string; on: boolean }[] | "failed";
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
   @state() private _log?: LogEntry[];
   /** Position and tilt of each blind through today (recorder), to say the preset of a row of the journal. */
@@ -176,7 +178,7 @@ export class HaDumDashboard extends LitElement {
       ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderHealth(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)}`;
   }
 
   /* ---------- Zdraví ---------- */
@@ -196,7 +198,8 @@ export class HaDumDashboard extends LitElement {
       const value = !entity || isNoValue(entity.state) ? t.unavailable : binary ? (entity.state === "on" ? t.healthProblem : t.healthOk) : hass?.formatEntityState ? hass.formatEntityState(entity) : entity.state;
       // A binary sensor is a problem when on; a status (a NAS volume: normal, degraded, crashed …) when not normal.
       const status = !binary && item.entity.endsWith("_status") && entity !== undefined && !isNoValue(entity.state) && entity.state !== "normal";
-      return { item, value, problem: (binary && entity?.state === "on") || status };
+      const over = item.max !== undefined && entity !== undefined && Number.isFinite(Number(entity.state)) && Number(entity.state) > item.max;
+      return { item, value, problem: (binary && entity?.state === "on") || status || over };
     });
     const updates = h.updates
       ? Object.entries(this.hass?.states ?? {})
@@ -205,7 +208,8 @@ export class HaDumDashboard extends LitElement {
           .sort((a, b) => a.name.localeCompare(b.name))
       : [];
     const attention = [
-      ...batteries.filter(({ level }) => level !== undefined && level < h.batteryLow).map(({ item, level }) => `${this.name(item.name)} ${i18n.percent(Math.round(level!))}`),
+      // A weak battery the queue „Potřebuje tebe“ already shows is not said twice (uživatel 14. 11. 2026: „Q224 A“).
+      ...batteries.filter(({ item, level }) => level !== undefined && level < h.batteryLow && !config.batteries.some((queued) => queued.level === item.entity && readText(this.hass, queued.low) === "on")).map(({ item, level }) => `${this.name(item.name)} ${i18n.percent(Math.round(level!))}`),
       ...connections.filter(({ state }) => state !== "on").map(({ item }) => `${this.name(item.name)} ${t.healthOffline.toLocaleLowerCase(i18n.language)}`),
       ...system.filter(({ problem }) => problem).map(({ item }) => this.name(item.name)),
     ];
@@ -431,7 +435,62 @@ export class HaDumDashboard extends LitElement {
         <span class="main">${t.log}${detail ? html`<small>${detail}</small>` : nothing}</span>
         <span class="chevron-mark" aria-hidden="true">›</span>
       </button>
+      ${this.isAdmin
+        ? html`<button class="row link-row" type="button" aria-haspopup="dialog" data-row="rules" @click=${() => this.openRules()}>
+            <span class="main">${t.rules}</span>
+            <span class="chevron-mark" aria-hidden="true">›</span>
+          </button>`
+        : nothing}
     </div>`;
+  }
+
+  /* ---------- Kniha pravidel ---------- */
+
+  /** Only an administrator sees the rules (uživatel 13. 11. 2026: „Q213a“: z popisů automatizací, jen pro správce). */
+  private get isAdmin(): boolean {
+    return (this.hass as (HomeAssistant & { user?: { is_admin?: boolean } }) | undefined)?.user?.is_admin === true;
+  }
+
+  private async openRules(): Promise<void> {
+    this._detail = "rules";
+    const hass = this.hass;
+    if (!hass?.callWS) return;
+    const automations = Object.entries(hass.states).filter(([id]) => id.startsWith("automation."));
+    try {
+      const rules = await Promise.all(
+        automations.map(async ([id, entity]) => {
+          const answer = await hass.callWS<{ config?: { alias?: string; description?: string } }>({ type: "automation/config", entity_id: id }).catch(() => undefined);
+          const name = answer?.config?.alias ?? (typeof entity.attributes.friendly_name === "string" ? entity.attributes.friendly_name : id);
+          return { id, name, description: (answer?.config?.description ?? "").trim(), on: entity.state === "on" };
+        }),
+      );
+      this._rules = rules.sort((a, b) => a.name.localeCompare(b.name, this.i18n.language));
+    } catch {
+      this._rules = "failed";
+    }
+  }
+
+  private renderRules(i18n: I18n): TemplateResult | typeof nothing {
+    if (!this.isAdmin) return nothing;
+    const t = i18n.t;
+    const open = this._detail === "rules";
+    const rules = this._rules;
+    return html`<dd-sheet .open=${open} .heading=${t.rules} .sub=${Array.isArray(rules) ? t.rulesCount(rules.length) : ""} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
+      ${open
+        ? html`<div class="detail" data-part="rules-detail">
+            ${rules === "failed"
+              ? html`<p class="log-empty">${t.rulesFailed}</p>`
+              : rules === undefined
+                ? nothing
+                : rules.map(
+                    (rule) => html`<button type="button" class="rule" @click=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: rule.id } }))}>
+                      <span class="main">${rule.name}${rule.on ? nothing : html` <span class="rule-off">· ${t.off}</span>`}</span>
+                      <small>${rule.description || t.rulesNoDescription}</small>
+                    </button>`,
+                  )}
+          </div>`
+        : nothing}
+    </dd-sheet>`;
   }
 
   private openLog(): void {

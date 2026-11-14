@@ -160,7 +160,14 @@ function normalize(raw: unknown): Settings {
       batteryLow: number(health.battery_low, "health.battery_low", 20, 1, 99),
       batteries: named(health.batteries, "health.batteries", ["sensor"]),
       connections: named(health.connections, "health.connections", ["binary_sensor"]),
-      system: named(health.system, "health.system", ["sensor", "binary_sensor"]),
+      system: list(health.system, "health.system").map((item, index) => {
+        const at = `health.system[${index}]`;
+        if (!isRecord(item)) fail(`${at} must be a mapping with name and entity.`);
+        checkKeys(item, ["name", "entity", "max"], at);
+        const [base] = named([{ name: item.name, entity: item.entity }], at, ["sensor", "binary_sensor"]);
+        if (item.max !== undefined && (typeof item.max !== "number" || !Number.isFinite(item.max))) fail(`${at}.max must be a number.`);
+        return { ...base, max: item.max as number | undefined };
+      }),
       updates: health.updates === true,
     },
     sendDelaySeconds: number(raw.send_delay_seconds, "send_delay_seconds", 2, 0, 30),

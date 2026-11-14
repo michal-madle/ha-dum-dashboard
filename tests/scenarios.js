@@ -50,6 +50,13 @@ if (config.health) {
   states["update.madlovi_dsm_update"] = entity("on", { friendly_name: "madlovi Aktualizace DSM", latest_version: "7.2.2" });
   states["update.shelly_koupelna_update"] = entity("off", { friendly_name: "Shelly Koupelna" });
 }
+// Automations (Kniha pravidel): their configuration comes from automation/config.
+states["automation.vetrani_zapnuti"] = entity("on", { friendly_name: "Ventilation mode - on", id: "1" });
+states["automation.zaluzie_vecer"] = entity("off", { friendly_name: "Žaluzie večer", id: "2" });
+const automations = {
+  "automation.vetrani_zapnuti": { alias: "Ventilation mode - on", description: "Spustí časovač, zapne větráky a stojanový ventilátor." },
+  "automation.zaluzie_vecer": { alias: "Žaluzie večer" },
+};
 states[config.failed_actions] = entity("0", { polozky: [] });
 states[config.snoozed] = entity("0", { polozky: [] });
 
@@ -124,6 +131,8 @@ card.setConfig(config);
 let current = {
   states,
   themes: { darkMode: !light },
+  // &admin=0: a user who is not an administrator (no Kniha pravidel).
+  user: { is_admin: params.get("admin") !== "0" },
   language: lang,
   locale: { language: lang },
   callService: async (domain, service, data) => {
@@ -135,6 +144,7 @@ let current = {
   // The words of Home Assistant for a state (the real frontend translates every state).
   formatEntityState: (stateObj, state) => ({ closed: "Zavřeno", open: "Otevřeno", cool: "Chlazení", heat: "Topení", off: "Vypnuto", on: "Zapnuto", docked: "V doku", cleaning: "Uklízí" })[state ?? stateObj.state] ?? state ?? stateObj.state,
   callWS: async (message) => {
+    if (message.type === "automation/config") return { config: automations[message.entity_id] };
     if (message.type === "logbook/get_events") {
       test.logQueries.push(message);
       if (test.fail) throw new Error("offline");

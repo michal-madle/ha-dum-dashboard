@@ -183,6 +183,34 @@ export const styles = css`
     color: var(--dd-secondary);
     font-size: 15px;
   }
+  .rule {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 0;
+    border: 0;
+    border-top: 0.5px solid var(--dd-sep);
+    background: none;
+    color: var(--dd-text);
+    font: inherit;
+    font-size: 17px;
+    line-height: 22px;
+    text-align: start;
+    cursor: pointer;
+  }
+  .rule small {
+    display: block;
+    color: var(--dd-secondary);
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .rule-off {
+    color: var(--dd-secondary);
+  }
+  .rule:focus-visible {
+    outline: 2px solid var(--dd-accent);
+    outline-offset: -2px;
+  }
   .health-row {
     display: flex;
     align-items: center;

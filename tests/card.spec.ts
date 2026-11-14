@@ -174,7 +174,7 @@ test.describe("Co se stalo", () => {
     // Naposledy viděno před hodinou (toto zařízení).
     await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 3600000)));
     await open(page);
-    const row = page.locator('[data-part="log"] button');
+    const row = page.locator('[data-part="log"] button').first();
     await expect(row).toContainText("Co se stalo");
     await expect(row).toContainText("3 nové události od");
     const query = await page.evaluate(() => {
@@ -213,23 +213,40 @@ test.describe("Co se stalo", () => {
   test("naposledy viděno včera: počet je ode dneška („N událostí dnes“), ne „od“ včerejšího času", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("dum-dashboard.log-seen", String(Date.now() - 2 * 86400000)));
     await open(page);
-    await expect(page.locator('[data-part="log"] button')).toContainText("5 událostí dnes");
+    await expect(page.locator('[data-part="log"] button').first()).toContainText("5 událostí dnes");
+  });
+
+  test("Pravidla domu: jen pro správce; list automatizací podle jména s popisem z Home Assistantu, vypnutá řekne Vypnuto, klepnutí otevře detail", async ({ page }) => {
+    await open(page);
+    await page.locator('[data-row="rules"]').click();
+    const rules = page.locator('[data-part="rules-detail"] .rule');
+    await expect(rules).toHaveCount(2);
+    await expect(rules.nth(0)).toContainText("Spustí časovač, zapne větráky a stojanový ventilátor.");
+    await expect(rules.nth(1)).toContainText("Žaluzie večer · Vypnuto");
+    await expect(rules.nth(1)).toContainText("Bez popisu");
+    await rules.nth(0).click();
+    expect((await calls(page)).at(-1)).toEqual({ moreInfo: "automation.vetrani_zapnuti" });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto("/tests/harness.html?s=evening&lang=cs&admin=0");
+    await page.waitForFunction(() => (window as any).__test?.ready === true);
+    await expect(page.locator('[data-part="log"] button').first()).toBeVisible();
+    await expect(page.locator('[data-row="rules"]')).toHaveCount(0);
   });
 
   test("bez deníku řekne, že se nepodařil načíst; prázdný den „Dnes se nic nestalo.“", async ({ page }) => {
     await open(page);
     await page.evaluate(() => { (window as any).__test.logbook = []; });
-    await page.locator('[data-part="log"] button').click();
+    await page.locator('[data-part="log"] button').first().click();
     await expect(page.locator('[data-part="log-detail"]')).toHaveText("Dnes se nic nestalo.");
     await page.locator("dd-sheet .close").last().click();
     // Nepovedené obnovení nechá, co už bylo načtené.
     await page.evaluate(() => { (window as any).__test.fail = true; });
-    await page.locator('[data-part="log"] button').click();
+    await page.locator('[data-part="log"] button').first().click();
     await expect(page.locator('[data-part="log-detail"]')).toHaveText("Dnes se nic nestalo.");
     await page.locator("dd-sheet .close").last().click();
     // Deník, který se nenačetl nikdy, to řekne.
     await page.evaluate(() => { (window as any).__test.card._log = undefined; });
-    await page.locator('[data-part="log"] button').click();
+    await page.locator('[data-part="log"] button').first().click();
     await expect(page.locator('[data-part="log-detail"]')).toHaveText("Deník se nepodařilo načíst.");
   });
 });
@@ -476,7 +493,9 @@ test.describe("ovládání", () => {
   test("Zdraví: „Vyžaduje pozornost“ jen při problému; řádek na část se shrnutím otevře list; aktualizace z celého Home Assistantu", async ({ page }) => {
     await open(page);
     const health = page.locator('[data-part="health"]');
-    await expect(health.locator('[data-row="attention"]')).toContainText("Okno Ložnice 8 %");
+    // Slabá baterie je ve frontě, ve „Vyžaduje pozornost“ znovu ne („Q224 A“); Okno Maxík 15 % ve frontě není.
+    await expect(health.locator('[data-row="attention"]')).toContainText("Okno Maxík 15 %");
+    await expect(health.locator('[data-row="attention"]')).not.toContainText("Okno Ložnice");
     await expect(health.locator('[data-health="batteries"]')).toContainText("Nejslabší Okno Ložnice 8 %");
     await expect(health.locator('[data-health="connections"]')).toContainText("Vše připojeno");
     await expect(health.locator('[data-health="system"]')).toContainText("V pořádku");
@@ -487,7 +506,9 @@ test.describe("ovládání", () => {
     await expect(rows).toHaveCount(7);
     await page.locator("dd-sheet .close").last().click();
     // Odpojené čidlo a vadný disk jdou nahoru.
-    await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" } });
+    await update(page, { "binary_sensor.maxik_tado_ce_maxik_connection": { state: "off" }, "binary_sensor.madlovi_drive_2_exceeded_max_bad_sectors": { state: "on" }, "sensor.madlovi_volume_1_volume_used": { state: "91" } });
+    // Obsazení nad mezí 85 % („Q223 ano“).
+    await expect(health.locator('[data-row="attention"]')).toContainText("NAS obsazeno");
     await expect(health.locator('[data-row="attention"]')).toContainText("Tado Maxík odpojeno");
     await expect(health.locator('[data-row="attention"]')).toContainText("NAS disk 2 sektory");
     await expect(health.locator('[data-health="connections"]')).toContainText("1 odpojeno");

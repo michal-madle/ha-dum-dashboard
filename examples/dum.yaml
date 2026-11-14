@@ -209,7 +209,7 @@ devices:                            # další oddíly dlaždic, každý druh vla
         entity: vacuum.roborock_s5_ea9e_robot_cleaner
       - name: Přízemí
         entity: vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner
-health:                             # Zdraví: baterie čidel (%), připojení (on = připojeno), systém (hodnota, nebo binary_sensor: on = problém), aktualizace
+health:                             # Zdraví: baterie čidel (%), připojení (on = připojeno), systém (hodnota s volitelnou mezí max, stav svazku jiný než normal, nebo binary_sensor: on = problém), aktualizace
   battery_low: 20                   # pod touto hodnotou (%) je baterie ve „Vyžaduje pozornost“
   batteries:
     - name: Okno Ložnice
@@ -246,8 +246,10 @@ health:                             # Zdraví: baterie čidel (%), připojení (
       entity: sensor.madlovi_volume_1_status
     - name: NAS obsazeno
       entity: sensor.madlovi_volume_1_volume_used
+      max: 85                       # nad touto hodnotou je to problém
     - name: NAS teplota
       entity: sensor.madlovi_temperature
+      max: 60
     - name: NAS disk 1 sektory
       entity: binary_sensor.madlovi_drive_1_exceeded_max_bad_sectors
     - name: NAS disk 1 životnost
