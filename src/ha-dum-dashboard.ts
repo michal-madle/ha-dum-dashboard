@@ -54,6 +54,12 @@ const ICON_BATTERY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 /** Zkusit znovu: a circular arrow (uživatel 14. 11. 2026: „Misto zkusit znovy dej ikonu“). */
 const ICON_RETRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>`;
 
+/** Hotovo: a checkmark (SF Symbols „checkmark“). */
+const ICON_DONE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>`;
+
+/** Odložit: a clock with its hands (as snoozing in Mail and Gmail). */
+const ICON_SNOOZE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>`;
+
 const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`;
 
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
@@ -244,7 +250,7 @@ export class HaDumDashboard extends LitElement {
           (item) => html`<div class="row" data-row="attention" data-entity=${item.entity}>
             <span class="mark warn" aria-hidden="true">!</span>
             <span class="main">${item.name}<small class="warn">${joined([t.healthAttention, item.detail])}</small></span>
-            ${this.snoozeButton(config, `health:${item.entity}`, i18n)}
+            ${this.snoozeButton(config, `health:${item.entity}`, i18n, item.name)}
           </div>`,
         )}
         ${h.batteries.length
@@ -615,7 +621,7 @@ export class HaDumDashboard extends LitElement {
         // „Hotovo“ always (a blind stopped on purpose is no task; uživatel 14. 11. 2026: „nejde se toho zbavit“), and for
         // a blind with its target also „Zkusit znovu“.
         const done = config.clearFailed
-          ? html`<button class="button small" type="button" aria-label=${`${t.done}: ${name}`} @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
+          ? this.iconButton(ICON_DONE, t.done, name, () => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita }))
           : nothing;
         return html`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
@@ -635,26 +641,26 @@ export class HaDumDashboard extends LitElement {
         return html`<div class="row" data-row="battery">
           <span class="mark">${ICON_BATTERY}</span>
           <span class="main">${this.name(battery.name)}<small>${detail}</small></span>
-          ${this.snoozeButton(config, `battery:${battery.low}`, i18n)}
+          ${this.snoozeButton(config, `battery:${battery.low}`, i18n, this.name(battery.name))}
         </div>`;
       }),
       ...dirty.map(({ filter, hours, threshold }) => {
         const h = (value: number) => `${i18n.whole(Math.floor(value))} h`;
-        return html`<div class="row two" data-row="filter">
+        return html`<div class="row" data-row="filter">
           <span class="mark">${ICON_FILTER}</span>
           <span class="main">${this.name(filter.name)}<small>${joinedText(t.filter(h(hours), h(threshold)))}</small></span>
           <span class="actions">
-            ${this.snoozeButton(config, `filter:${filter.hours}`, i18n)}
-            <button class="button" type="button" @click=${() => this.call("input_number", "set_value", { entity_id: filter.hours, value: 0 })}>${t.done}</button>
+            ${this.snoozeButton(config, `filter:${filter.hours}`, i18n, this.name(filter.name))}
+            ${this.iconButton(ICON_DONE, t.done, this.name(filter.name), () => this.call("input_number", "set_value", { entity_id: filter.hours, value: 0 }))}
           </span>
         </div>`;
       }),
-      ...due.map(({ item, cycles }) => html`<div class="row two" data-row="maintenance">
+      ...due.map(({ item, cycles }) => html`<div class="row" data-row="maintenance">
         <span class="mark">${ICON_MAINTENANCE}</span>
         <span class="main">${this.name(item.name)}<small>${joined([this.name(item.task), t.cycles(cycles, item.every)])}</small></span>
         <span class="actions">
-          ${this.snoozeButton(config, `maintenance:${item.counter}`, i18n)}
-          <button class="button" type="button" @click=${() => this.call("counter", "reset", { entity_id: item.counter })}>${t.done}</button>
+          ${this.snoozeButton(config, `maintenance:${item.counter}`, i18n, this.name(item.name))}
+          ${this.iconButton(ICON_DONE, t.done, this.name(item.name), () => this.call("counter", "reset", { entity_id: item.counter }))}
         </span>
       </div>`),
       ...waiting.map((item) => {
@@ -665,7 +671,7 @@ export class HaDumDashboard extends LitElement {
         return html`<div class="row" data-row="laundry">
           <span class="mark">${ICON_LAUNDRY}</span>
           <span class="main">${this.name(item.name)}<small>${joinedText(t.laundry(since))}</small></span>
-          <button class="button" type="button" @click=${() => this.call("input_boolean", "turn_off", { entity_id: item.entity })}>${t.done}</button>
+          ${this.iconButton(ICON_DONE, t.done, this.name(item.name), () => this.call("input_boolean", "turn_off", { entity_id: item.entity }))}
         </div>`;
       }),
     ];
@@ -704,7 +710,15 @@ export class HaDumDashboard extends LitElement {
   }
 
   /** "Odložit" with its menu (a day, to the weekend, a week, a month; without a time, it is no alarm). The menu only covers what is under it. */
-  private snoozeButton(config: Settings, key: string, i18n: I18n): TemplateResult | typeof nothing {
+  /**
+   * A 44 px round button with an icon (uživatel 14. 11. 2026: „Hotovo i odložit udělej taky jako ikony. Vymysli jasne a
+   * profi ikony“): its word is the tooltip and, with the name of the item, what a screen reader says.
+   */
+  private iconButton(icon: TemplateResult, word: string, name: string, run: () => void, extra = ""): TemplateResult {
+    return html`<button class="button icon ${extra}" type="button" title=${word} aria-label=${`${word}: ${name}`} @click=${run}>${icon}</button>`;
+  }
+
+  private snoozeButton(config: Settings, key: string, i18n: I18n, name: string): TemplateResult | typeof nothing {
     if (!config.snoozed || !config.snoozeScript) return nothing;
     const t = i18n.t;
     const now = new Date(this._now);
@@ -718,7 +732,7 @@ export class HaDumDashboard extends LitElement {
       this.call("script", config.snoozeScript!.split(".")[1], { klic: key, do: this.day(until) });
     };
     return html`<span class="snooze">
-      <button class="button" type="button" aria-haspopup="menu" aria-expanded=${open ? "true" : "false"} @click=${() => (this._menu = open ? undefined : key)}>${t.snooze}</button>
+      <button class="button icon" type="button" title=${t.snooze} aria-label=${`${t.snooze}: ${name}`} aria-haspopup="menu" aria-expanded=${open ? "true" : "false"} @click=${() => (this._menu = open ? undefined : key)}>${ICON_SNOOZE}</button>
       ${open
         ? html`<div class="menu" role="menu">
             ${choices.map(([label, until]) => html`<button type="button" role="menuitem" @click=${() => choose(until)}><span>${label}</span><span class="until">${i18n.day(until.getTime())}</span></button>`)}

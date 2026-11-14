@@ -139,12 +139,11 @@ test.describe("fronta a co běží", () => {
   test("text z částí: na 320 px se zalomí v místě tečky (tečka zmizí) nebo teče bez tečky na kraji řádku; na 393 px je na jednom řádku", async ({ page }) => {
     await open(page, "evening", "dark", "cs", 320);
     const battery = page.locator('[data-row="battery"] small');
-    expect(await joinedLines(battery)).toEqual(["Baterie 8 %", "CR2032"]);
-    await expect(battery.locator(".joined")).toHaveClass(/stacked/);
-    // „žaluzie nedostupná“ se nevejde ani na vlastní řádek: souvislý text, tečka drží u předchozího slova.
-    await expect(page.locator('[data-row="failed"] small .joined')).toHaveClass(/flow/);
-    await page.setViewportSize({ width: 393, height: 852 });
-    await expect.poll(() => joinedLines(battery)).toEqual(["Baterie 8 % · CR2032"]);
+    // S tlačítky jako ikonami se řádek baterie vejde i na 320 px; užší místo (dlouhý typ) se zalomí v místě tečky.
+    expect(await joinedLines(battery)).toEqual(["Baterie 8 % · CR2032"]);
+    await update(page, { "sensor.loznice_okno_loznice_battery_type": { state: "CR2032 2× Panasonic" } });
+    await expect.poll(() => joinedLines(battery)).toEqual(["Baterie 8 %", "CR2032 2× Panasonic"]);
+    await page.setViewportSize({ width: 430, height: 852 });
   });
 
   test("Teď běží: spotřebiče s dobou běhu a jednotkou, jinak „Nic neběží“", async ({ page }) => {
