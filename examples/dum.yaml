@@ -13,6 +13,10 @@ batteries:
     low: binary_sensor.loznice_okno_loznice_battery
     level: sensor.loznice_okno_loznice_battery
     type: sensor.loznice_okno_loznice_battery_type
+  - name: Okno Pracovna
+    low: binary_sensor.pracovna_okno_pracovna_battery
+    level: sensor.pracovna_okno_pracovna_battery
+    type: sensor.pracovna_okno_pracovna_battery_type
   - name: Okno Maxík
     low: binary_sensor.maxik_okno_maxik_battery
     level: sensor.maxik_okno_maxik_battery
@@ -21,10 +25,6 @@ batteries:
     low: binary_sensor.mikulas_okno_mikulas_battery
     level: sensor.mikulas_okno_mikulas_battery
     type: sensor.mikulas_okno_mikulas_battery_type
-  - name: Okno Pracovna
-    low: binary_sensor.pracovna_okno_pracovna_battery
-    level: sensor.pracovna_okno_pracovna_battery
-    type: sensor.pracovna_okno_pracovna_battery_type
   - name: Dveře Zahrada
     low: binary_sensor.obyvak_dvere_zahrada_battery
     level: sensor.obyvak_dvere_zahrada_battery
@@ -38,21 +38,21 @@ batteries:
     level: sensor.garaz_teplomer_garaz_battery
     type: sensor.garaz_teplomer_garaz_battery_type
 filters:                            # filtr klimatizace: hodiny od čištění proti prahu klimatizace; Hotovo je vynuluje
-  - name: Klimatizace Obývák
-    hours: input_number.obyvak_ac_obyvak_filtr_hodiny
-    threshold: select.obyvak_ac_obyvak_dust_filter_alarm_threshold
   - name: Klimatizace Ložnice
     hours: input_number.loznice_ac_loznice_filtr_hodiny
     threshold: select.loznice_ac_loznice_dust_filter_alarm_threshold
+  - name: Klimatizace Pracovna
+    hours: input_number.pracovna_ac_pracovna_filtr_hodiny
+    threshold: select.pracovna_ac_pracovna_dust_filter_alarm_threshold
   - name: Klimatizace Maxík
     hours: input_number.maxik_ac_maxik_filtr_hodiny
     threshold: select.maxik_ac_maxik_dust_filter_alarm_threshold
   - name: Klimatizace Mikuláš
     hours: input_number.mikulas_ac_mikulas_filtr_hodiny
     threshold: select.mikulas_ac_mikulas_dust_filter_alarm_threshold
-  - name: Klimatizace Pracovna
-    hours: input_number.pracovna_ac_pracovna_filtr_hodiny
-    threshold: select.pracovna_ac_pracovna_dust_filter_alarm_threshold
+  - name: Klimatizace Obývák
+    hours: input_number.obyvak_ac_obyvak_filtr_hodiny
+    threshold: select.obyvak_ac_obyvak_dust_filter_alarm_threshold
 laundry:                            # prádlo čeká (input_boolean, yaml/packages/pradlo.yaml); Hotovo ho vypne
   - name:
       cs: Pračka
@@ -118,12 +118,12 @@ covers:
   entities:                         # entita, nebo name a entity (jméno v detailu)
     - name: Ložnice
       entity: cover.loznice_zaluzie_loznice
+    - name: Pracovna
+      entity: cover.pracovna_zaluzie_pracovna
     - name: Maxík
       entity: cover.maxik_zaluzie_maxik
     - name: Mikuláš
       entity: cover.mikulas_zaluzie_mikulas
-    - name: Pracovna
-      entity: cover.pracovna_zaluzie_pracovna
   presets:
     - name:
         cs: Den
@@ -146,43 +146,41 @@ covers:
 ventilation:
   mode: input_boolean.ventilation_mode
   fans:
-    - name: Koupelna přízemí
-      entity: switch.koupelna_vetrak_koupelna_prizemi
     - name: Koupelna patro
       entity: switch.koupelna_vetrak_koupelna_patro
-    - name: Koupelna ložnice
-      entity: switch.koupelna_vetrak_koupelna_loznice
     - name: Záchod patro
       entity: switch.koupelna_vetrak_zachod_patro
+    - name: Koupelna ložnice
+      entity: switch.koupelna_vetrak_koupelna_loznice
+    - name: Koupelna přízemí
+      entity: switch.koupelna_vetrak_koupelna_prizemi
     - name: Stojanový ventilátor
       entity: fan.zhimi_za5_a22b_fan
 heating:
   resume: button.tado_ce_hub_resume_all_schedules
   rooms:
-    - name: Obývák
-      entity: climate.obyvak_tado_ce_obyvak
     - name: Ložnice
       entity: climate.loznice_tado_ce_loznice
+    - name: Pracovna
+      entity: climate.pracovna_tado_ce_pracovna
     - name: Maxík
       entity: climate.maxik_tado_ce_maxik
     - name: Mikuláš
       entity: climate.mikulas_tado_ce_mikulas
-    - name: Pracovna
-      entity: climate.pracovna_tado_ce_pracovna
-    - name: Garáž
-      entity: climate.garaz_tado_ce_garaz
+    - name: Obývák
+      entity: climate.obyvak_tado_ce_obyvak
 cooling:
   rooms:
-    - name: Obývák
-      entity: climate.obyvak_ac_obyvak
     - name: Ložnice
       entity: climate.loznice_ac_loznice
+    - name: Pracovna
+      entity: climate.pracovna_ac_pracovna
     - name: Maxík
       entity: climate.maxik_ac_maxik
     - name: Mikuláš
       entity: climate.mikulas_ac_mikulas
-    - name: Pracovna
-      entity: climate.pracovna_ac_pracovna
+    - name: Obývák
+      entity: climate.obyvak_ac_obyvak
 devices:                            # další oddíly dlaždic, každý druh vlastní (dvojklep nebo podržení: světlo, vypínač, větrák přepne; vysavač spustí úklid nebo pošle do doku)
   - name:
       cs: Světla
@@ -214,12 +212,12 @@ health:                             # Zdraví: baterie čidel (%), připojení (
   batteries:
     - name: Okno Ložnice
       entity: sensor.loznice_okno_loznice_battery
+    - name: Okno Pracovna
+      entity: sensor.pracovna_okno_pracovna_battery
     - name: Okno Maxík
       entity: sensor.maxik_okno_maxik_battery
     - name: Okno Mikuláš
       entity: sensor.mikulas_okno_mikulas_battery
-    - name: Okno Pracovna
-      entity: sensor.pracovna_okno_pracovna_battery
     - name: Dveře Zahrada
       entity: sensor.obyvak_dvere_zahrada_battery
     - name: Garážová vrata
@@ -229,18 +227,16 @@ health:                             # Zdraví: baterie čidel (%), připojení (
   connections:
     - name: Tado bridge
       entity: binary_sensor.tado_ce_internet_bridge_connection
-    - name: Tado Obývák
-      entity: binary_sensor.obyvak_tado_ce_obyvak_connection_ru01
     - name: Tado Ložnice
       entity: binary_sensor.loznice_tado_ce_loznice_connection
+    - name: Tado Pracovna
+      entity: binary_sensor.pracovna_tado_ce_pracovna_connection
     - name: Tado Maxík
       entity: binary_sensor.maxik_tado_ce_maxik_connection
     - name: Tado Mikuláš
       entity: binary_sensor.mikulas_tado_ce_mikulas_connection
-    - name: Tado Pracovna
-      entity: binary_sensor.pracovna_tado_ce_pracovna_connection
-    - name: Tado Garáž
-      entity: binary_sensor.garaz_tado_ce_garaz_connection
+    - name: Tado Obývák
+      entity: binary_sensor.obyvak_tado_ce_obyvak_connection_ru01
   system:
     - name: NAS svazek
       entity: sensor.madlovi_volume_1_status
