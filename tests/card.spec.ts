@@ -37,7 +37,10 @@ test.describe("fronta a co běží", () => {
     await expect(rows.nth(0)).toContainText("Nedojela do Tma");
     await expect(rows.nth(0)).not.toContainText("40 %");
     await rows.nth(0).getByRole("button", { name: "Zkusit znovu" }).click();
-    expect(await calls(page)).toEqual([{ domain: "script", service: "zaluzie_posun", data: { entity: "cover.maxik_zaluzie_maxik", pos: 0, tilt: 0 } }]);
+    // Zastavená žaluzie: „Hotovo“ ji z fronty smaže bez opakování.
+    await rows.nth(0).getByRole("button", { name: "Hotovo" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "script", service: "dum_nesplnene_smazat", data: { entita: "cover.maxik_zaluzie_maxik" } });
+    expect((await calls(page))[0]).toEqual({ domain: "script", service: "zaluzie_posun", data: { entity: "cover.maxik_zaluzie_maxik", pos: 0, tilt: 0 } });
   });
 
   test("akce bez cíle má „Hotovo“, které smaže jen tu položku; prázdná fronta řekne, že nic nečeká", async ({ page }) => {

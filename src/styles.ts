@@ -66,6 +66,10 @@ export const styles = css`
     --hdk-seg-text: #000000;
   }
   ha-card {
+    /* Never wider than the screen: whatever does not fit wraps inside (overflow-wrap) or is clipped, the page never scrolls sideways. */
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: clip;
     padding: 4px 16px 20px;
     background: var(--dd-page);
     border: 0;
@@ -329,6 +333,7 @@ export const styles = css`
   .row .main {
     flex: 1;
     min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 17px;
     line-height: 22px;
   }
@@ -352,6 +357,8 @@ export const styles = css`
   }
   .row small {
     display: block;
+    /* A long reason wraps, never pushes the card wider than the screen (iPhone). */
+    overflow-wrap: anywhere;
     color: var(--dd-secondary);
     font-size: 13px;
     line-height: 18px;
@@ -431,6 +438,18 @@ export const styles = css`
     padding: 0 12px;
     font-size: 15px;
     line-height: 20px;
+  }
+  /* An icon button (Zkusit znovu): a 44 px circle. */
+  .button.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+  .button.icon svg {
+    width: 22px;
+    height: 22px;
   }
   .button.primary {
     background: #0a6ed1;

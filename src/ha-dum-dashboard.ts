@@ -51,6 +51,9 @@ interface Failed {
 
 const ICON_BATTERY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2" stroke-linecap="round"></path><rect x="5" y="10" width="3" height="4" fill="currentColor" stroke="none"></rect></svg>`;
 
+/** Zkusit znovu: a circular arrow (uživatel 14. 11. 2026: „Misto zkusit znovy dej ikonu“). */
+const ICON_RETRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>`;
+
 const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`;
 
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
@@ -608,14 +611,21 @@ export class HaDumDashboard extends LitElement {
         const reason = goal ? t.notArrivedTo(this.name(goal.name)) : item.duvod || item.akce;
         const detail = joined([reason ? reason.charAt(0).toLocaleUpperCase(i18n.language) + reason.slice(1) : undefined, Number.isFinite(time) ? i18n.time(time) : undefined].filter(Boolean));
         const retry = this.retryOf(config, item);
+        const name = typeof friendly === "string" ? friendly : item.entita;
+        // „Hotovo“ always (a blind stopped on purpose is no task; uživatel 14. 11. 2026: „nejde se toho zbavit“), and for
+        // a blind with its target also „Zkusit znovu“.
+        const done = config.clearFailed
+          ? html`<button class="button small" type="button" aria-label=${`${t.done}: ${name}`} @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
+          : nothing;
         return html`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
-          <span class="main">${typeof friendly === "string" ? friendly : item.entita}<small>${detail}</small></span>
+          <span class="main">${name}<small>${detail}</small></span>
           ${retry
-            ? html`<button class="button small ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" aria-label=${`${t.retry}: ${typeof friendly === "string" ? friendly : item.entita}`} aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${t.retry}</button>`
-            : config.clearFailed
-              ? html`<button class="button" type="button" @click=${() => this.call("script", config.clearFailed!.split(".")[1], { entita: item.entita })}>${t.done}</button>`
-              : nothing}
+            ? html`<span class="actions">
+                <button class="button icon ${this.pending.has(`retry:${item.entita}`) ? "pending" : ""}" type="button" title=${t.retry} aria-label=${`${t.retry}: ${name}`} aria-busy=${this.pending.has(`retry:${item.entita}`) ? "true" : nothing} @click=${retry}>${ICON_RETRY}</button>
+                ${done}
+              </span>`
+            : done}
         </div>`;
       }),
       ...low.map((battery) => {
