@@ -199,7 +199,7 @@ test.describe("Co se stalo", () => {
     const moment = sheet.locator(".log-row").filter({ hasText: "Větrací režim · Zapnuto" });
     await expect(moment).toHaveCount(1);
     await expect(moment.locator("small")).toHaveText("Aplikace");
-    await expect(moment.locator(".log-members")).toHaveText(["Větrání · Zapnuto: Koupelna přízemí, Koupelna patro", "Žaluzie · Otevřeno: Mikuláš"]);
+    await expect(moment.locator(".log-members")).toHaveText(["Větrání · Zapnuto: Koupelna patro, Koupelna přízemí", "Žaluzie · Otevřeno: Mikuláš"]);
     // Bez záznamu polohy stav slovem.
     await expect(sheet.locator(".log-row").filter({ hasText: "Žaluzie Maxík" })).toContainText("Žaluzie Maxík · Zavřeno");
     // Hromadná akce je jeden řádek se seznamem menším písmem; důvod z pohybu žaluzie.
@@ -313,14 +313,22 @@ test.describe("ovládání", () => {
     await expect(rows.nth(0)).toContainText("Ložnice");
     await expect(rows.nth(0).locator("small")).toContainText(/^Večerní fáze\s\d\d:\d\d$/);
     await expect(rows.nth(0).locator("small")).not.toHaveClass(/warn/);
+    // Pořadí místností v celém Home Assistantu: Ložnice, Pracovna, Maxík, Mikuláš.
+    expect(await rows.evaluateAll((items) => items.map((item) => item.getAttribute("data-cover")))).toEqual([
+      "cover.loznice_zaluzie_loznice",
+      "cover.pracovna_zaluzie_pracovna",
+      "cover.maxik_zaluzie_maxik",
+      "cover.mikulas_zaluzie_mikulas",
+    ]);
     // Maxík: nepovedená akce má přednost před poslední akcí.
-    await expect(rows.nth(1).locator("small")).toHaveClass(/warn/);
-    await expect(rows.nth(1).locator("small")).toContainText("Nedojela");
-    await expect(rows.nth(1).locator("small")).toContainText("žaluzie nedostupná");
+    const maxik = page.locator('[data-cover="cover.maxik_zaluzie_maxik"] small');
+    await expect(maxik).toHaveClass(/warn/);
+    await expect(maxik).toContainText("Nedojela");
+    await expect(maxik).toContainText("žaluzie nedostupná");
     // Tma svítí u zatažené žaluzie, Den ne.
     const tileStates = await rows.nth(0).locator("dd-tile").evaluateAll((items) => items.map((item: any) => item.state));
     expect(tileStates).toEqual(["idle", "idle", "on"]);
-    await rows.nth(3).locator("dd-tile").first().click();
+    await page.locator('[data-cover="cover.pracovna_zaluzie_pracovna"] dd-tile').first().click();
     expect(await calls(page)).toEqual([{ domain: "script", service: "zaluzie_posun", data: { entity: "cover.pracovna_zaluzie_pracovna", pos: 100, tilt: 100 } }]);
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
@@ -357,8 +365,8 @@ test.describe("ovládání", () => {
   test("větrání: Větrací režim je první dlaždice, běžící větrák ukáže dobu, přepnutí jen dvojklepem nebo podržením", async ({ page }) => {
     await open(page);
     const list = await tiles(page, "ventilation");
-    expect(list.map((item) => item.name)).toEqual(["Větrací režim", "Koupelna přízemí", "Koupelna patro", "Koupelna ložnice", "Záchod patro", "Stojanový ventilátor"]);
-    expect(list[4]).toEqual({ name: "Záchod patro", text: "Běží 8 min", state: "on" });
+    expect(list.map((item) => item.name)).toEqual(["Větrací režim", "Koupelna patro", "Záchod patro", "Koupelna ložnice", "Koupelna přízemí", "Stojanový ventilátor"]);
+    expect(list[2]).toEqual({ name: "Záchod patro", text: "Běží 8 min", state: "on" });
     expect(list[0]).toEqual({ name: "Větrací režim", text: "Vypnuto", state: "off" });
     await tile(page, "ventilation", "Větrací režim").click();
     expect(await calls(page)).toEqual([]);
@@ -378,9 +386,12 @@ test.describe("ovládání", () => {
   test("topení: plán, ručně a vypnuto vypadají různě; „Zpět na plán“ je chráněný odkaz jen při ručním přepisu", async ({ page }) => {
     await open(page);
     const list = await tiles(page, "heating");
-    expect(list[0]).toEqual({ name: "Obývák", text: "Plán · 21°", state: "idle" });
-    expect(list[4]).toEqual({ name: "Pracovna", text: "Ručně · 22,5°", state: "on" });
-    expect(list[5]).toEqual({ name: "Garáž", text: "Vypnuto", state: "off" });
+    expect(list.map((item) => item.name)).toEqual(["Ložnice", "Pracovna", "Maxík", "Mikuláš", "Obývák"]);
+    const byName = (name: string) => list.find((item) => item.name === name);
+    expect(byName("Obývák")).toEqual({ name: "Obývák", text: "Plán · 21°", state: "idle" });
+    expect(byName("Pracovna")).toEqual({ name: "Pracovna", text: "Ručně · 22,5°", state: "on" });
+    await update(page, { "climate.maxik_tado_ce_maxik": { state: "off" } });
+    expect((await tiles(page, "heating")).find((item) => item.name === "Maxík")).toEqual({ name: "Maxík", text: "Vypnuto", state: "off" });
     const link = page.locator('[data-link="resume"]');
     await expect(link).toHaveText("1 ručně · Zpět na plán");
     await link.click();
@@ -396,13 +407,12 @@ test.describe("ovládání", () => {
   test("klimatizace: režim a celé stupně, WindFree, nedostupná; „Vypnout vše“ vypne jen běžící", async ({ page }) => {
     await open(page, "summer");
     const list = await tiles(page, "cooling");
-    expect(list.slice(0, 3)).toEqual([
-      { name: "Obývák", text: "Chlazení · 22°", state: "on" },
-      { name: "Ložnice", text: "WindFree · 24°", state: "on" },
-      { name: "Maxík", text: "Nedostupné", state: "off" },
-    ]);
+    expect(list.map((item) => item.name)).toEqual(["Ložnice", "Pracovna", "Maxík", "Mikuláš", "Obývák"]);
+    expect(list.find((item) => item.name === "Obývák")).toEqual({ name: "Obývák", text: "Chlazení · 22°", state: "on" });
+    expect(list.find((item) => item.name === "Ložnice")).toEqual({ name: "Ložnice", text: "WindFree · 24°", state: "on" });
+    expect(list.find((item) => item.name === "Maxík")).toEqual({ name: "Maxík", text: "Nedostupné", state: "off" });
     await page.locator('[data-link="alloff"]').dblclick();
-    expect(await calls(page)).toEqual([{ domain: "climate", service: "turn_off", data: { entity_id: ["climate.obyvak_ac_obyvak", "climate.loznice_ac_loznice"] } }]);
+    expect(await calls(page)).toEqual([{ domain: "climate", service: "turn_off", data: { entity_id: ["climate.loznice_ac_loznice", "climate.obyvak_ac_obyvak"] } }]);
     await open(page, "day");
     await expect(page.locator('[data-link="alloff"]')).toHaveCount(0);
   });
@@ -416,7 +426,7 @@ test.describe("ovládání", () => {
     expect(await selected()).toEqual(["Obývák"]);
     await expect(page.locator("dd-climate .big")).toHaveText("22°");
     await page.locator("dd-climate .rooms dd-tile").filter({ hasText: "Ložnice" }).click();
-    expect(await selected()).toEqual(["Obývák", "Ložnice"]);
+    expect(await selected()).toEqual(["Ložnice", "Obývák"]);
     await expect(page.locator("dd-climate .big")).toHaveText("22–24°");
     await page.locator("dd-climate .modes dd-tile").filter({ hasText: "Chlazení" }).click();
     await expect(page.locator("dd-climate .busy")).toBeVisible();
@@ -424,9 +434,9 @@ test.describe("ovládání", () => {
     await page.getByRole("button", { name: "Zavřít" }).click();
     await expect(dialog).toHaveCount(0);
     expect(await calls(page)).toEqual([
-      { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.obyvak_ac_obyvak", hvac_mode: "cool" } },
       { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.loznice_ac_loznice", hvac_mode: "cool" } },
       { domain: "climate", service: "set_preset_mode", data: { entity_id: "climate.loznice_ac_loznice", preset_mode: "none" } },
+      { domain: "climate", service: "set_hvac_mode", data: { entity_id: "climate.obyvak_ac_obyvak", hvac_mode: "cool" } },
     ]);
   });
 

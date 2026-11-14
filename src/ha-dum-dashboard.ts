@@ -406,6 +406,22 @@ export class HaDumDashboard extends LitElement {
     return rest ? rest.charAt(0).toLocaleUpperCase() + rest.slice(1) : reason;
   }
 
+  /** Where an entity is in the configuration (its section and its place in it), for the order of lists. */
+  private configIndex(config: Settings, id: string): number {
+    const lists = [
+      config.covers.entities,
+      [config.ventilation.mode ?? "", ...config.ventilation.fans.map((item) => item.entity)],
+      config.heating.rooms.map((item) => item.entity),
+      config.cooling.rooms.map((item) => item.entity),
+      ...config.devices.map((group) => group.entities.map((item) => item.entity)),
+    ];
+    for (const list of lists) {
+      const at = list.indexOf(id);
+      if (at >= 0) return at;
+    }
+    return 999;
+  }
+
   /** The name the card uses for an entity (Větrací režim, the room of a blind or a fan), else Home Assistant's. */
   private shortName(config: Settings, entry: LogEntry): string | undefined {
     const id = entry.entity_id;
@@ -550,7 +566,10 @@ export class HaDumDashboard extends LitElement {
       list.map((row) => {
         const head = row.head;
         const reason = this.withoutName(this.coverReason(config, head, i18n), head, config);
-        const names = (items: LogItem[]) => {
+        const names = (unsorted: LogItem[]) => {
+          // In the order of the configuration (the rooms always in one order across Home Assistant, uživatel 14. 11. 2026:
+          // „Poradi mistnosti musi byt vsude pres cely HA stejne: Ložnice, Pracovna, Maxík, Mikuláš, Obývák, Garáž.“).
+          const items = [...unsorted].sort((a, b) => this.configIndex(config, a.entry.entity_id) - this.configIndex(config, b.entry.entity_id));
           const short = items.map((item) => this.shortName(config, item.entry));
           return (short.every((name) => name !== undefined) ? (short as string[]) : shortNames(items.map((item) => this.logName(item.entry)))).join(", ");
         };

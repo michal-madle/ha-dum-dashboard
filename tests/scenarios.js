@@ -37,8 +37,8 @@ for (const id of coverIds) states[id] = entity("closed", { current_position: 0, 
 states[config.covers.last_action] = entity(ago(100), { polozky: Object.fromEntries(coverIds.map((id) => [id, { kdo: "evening", cas: ago(100), pos: 0, tilt: 0 }])) });
 states[config.ventilation.mode] = entity("off");
 for (const fan of config.ventilation.fans) states[fan.entity] = entity("off");
-const targets = [21, 19, 20, 20, 22.5, 8];
-config.heating.rooms.forEach((room, index) => (states[room.entity] = tado("auto", { temperature: targets[index] })));
+const targets = { obyvak: 21, loznice: 19, maxik: 20, mikulas: 20, pracovna: 22.5, garaz: 8 };
+for (const room of config.heating.rooms) states[room.entity] = tado("auto", { temperature: targets[room.entity.split(".")[1].split("_")[0]] ?? 20 });
 for (const room of config.cooling.rooms) states[room.entity] = ac("off", { temperature: 22 });
 for (const group of config.devices ?? []) for (const item of group.entities) states[item.entity] = entity(item.entity.startsWith("vacuum.") ? "docked" : "off");
 states["switch.kuchyne_osvetleni_kuchyne"] = entity("on");
@@ -104,7 +104,7 @@ if (light) {
 const nowSec = Date.now() / 1000;
 const logbook = [
   // Bulk: the phase closes two blinds; the end position comes without a reason (the device reports it).
-  { entity_id: "cover.loznice_zaluzie_loznice", state: "closed", name: "Žaluzie Ložnice", when: nowSec - 600 },
+  { entity_id: "cover.loznice_zaluzie_loznice", state: "closed", name: "Žaluzie Ložnice", when: nowSec - 585 },
   { entity_id: "cover.pracovna_zaluzie_pracovna", state: "closing", name: "Žaluzie Pracovna", when: nowSec - 630, context_name: "Večerní fáze" },
   { entity_id: "cover.pracovna_zaluzie_pracovna", state: "closed", name: "Žaluzie Pracovna", when: nowSec - 590 },
   { entity_id: "climate.obyvak_ac_obyvak", state: "heat", name: "Klimatizace Obývák", when: nowSec - 7200, context_user_id: "u1" },
