@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import type { PropertyValues, TemplateResult } from "lit";
+import { modeOf } from "ha-dashboard-kit/climate";
 import { pickText } from "ha-dashboard-kit/config";
 import type { LocalizedText } from "ha-dashboard-kit/config";
 import { hintStyles } from "ha-dashboard-kit/controls";
@@ -1057,14 +1058,18 @@ export class HaDumDashboard extends LitElement {
   private renderHeating(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
     if (!config.heating.rooms.length) return nothing;
     const t = i18n.t;
-    const manual = config.heating.rooms.filter((room) => readText(this.hass, room.entity) === "heat").length;
+    // Tado cannot be switched off for a time, so that is a manual target of 5 °C: it reads and looks as Vypnuto everywhere
+    // (uživatel 14. 11. 2026: „Vizual Tado nastavené na 5°C musí být totožný s vypnutým stavem“; `modeOf` of the kit).
+    const modeOfRoom = (room: Named) => modeOf("heating", entityState(this.hass, room.entity));
+    const overridden = (room: Named) => ["manual", "boost"].includes(modeOfRoom(room) ?? "");
+    const manual = config.heating.rooms.filter(overridden).length;
     return html`<h2>
         <span>${t.heating}</span>
         ${manual && config.heating.resume
           ? this.link("resume", html`<span class="count">${t.manualCount(manual)} · </span>${t.resume}`, () =>
               this.send(
                 "resume",
-                { entities: config.heating.rooms.map((room) => room.entity), done: () => !config.heating.rooms.some((room) => readText(this.hass, room.entity) === "heat") },
+                { entities: config.heating.rooms.map((room) => room.entity), done: () => !config.heating.rooms.some(overridden) },
                 "button",
                 "press",
                 { entity_id: config.heating.resume },
@@ -1074,9 +1079,9 @@ export class HaDumDashboard extends LitElement {
       </h2>
       <div class="tiles" data-part="heating">
         ${config.heating.rooms.map((room) => {
-          const mode = readText(this.hass, room.entity);
-          const text = mode === undefined ? t.unavailable : mode === "off" ? t.off : [mode === "auto" ? t.schedule : t.manual, this.target(room.entity, i18n, true)].filter(Boolean).join(" · ");
-          const tileState: TileState = mode === undefined || mode === "off" ? "off" : mode === "auto" ? "idle" : "on";
+          const mode = modeOfRoom(room);
+          const text = mode === undefined ? t.unavailable : mode === "off" ? t.off : [mode === "plan" ? t.schedule : t.manual, this.target(room.entity, i18n, true)].filter(Boolean).join(" · ");
+          const tileState: TileState = mode === undefined || mode === "off" ? "off" : mode === "plan" ? "idle" : "on";
           return this.openTile("heating", room, text, tileState, mode === undefined);
         })}
       </div>`;

@@ -392,6 +392,10 @@ test.describe("ovládání", () => {
     expect(byName("Pracovna")).toEqual({ name: "Pracovna", text: "Ručně · 22,5°", state: "on" });
     await update(page, { "climate.maxik_tado_ce_maxik": { state: "off" } });
     expect((await tiles(page, "heating")).find((item) => item.name === "Maxík")).toEqual({ name: "Maxík", text: "Vypnuto", state: "off" });
+    // Vypnuto for a limited time is a manual target of 5 °C at Tado: it looks exactly like Vypnuto and is not counted as Ručně
+    // (uživatel 14. 11. 2026: „Vizual Tado nastavené na 5°C musí být totožný s vypnutým stavem“; pravidlo kitu pro všechny karty).
+    await update(page, { "climate.maxik_tado_ce_maxik": { state: "heat", attributes: { temperature: 5 } } });
+    expect((await tiles(page, "heating")).find((item) => item.name === "Maxík")).toEqual({ name: "Maxík", text: "Vypnuto", state: "off" });
     const link = page.locator('[data-link="resume"]');
     await expect(link).toHaveText("1 ručně · Zpět na plán");
     await link.click();

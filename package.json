@@ -2,7 +2,7 @@
   "name": "ha-dum-dashboard",
   "description": "Dům Dashboard: Lovelace card for Home Assistant (house control centre)",
   "license": "MIT",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "test": "npm run build && playwright test"
   },
   "dependencies": {
-    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#1d1d83b",
+    "ha-dashboard-kit": "git+https://github.com/michal-madle/ha-dashboard-kit.git#c2203405f8ef4d19b0b6084d81e5d411ac6974cb",
     "lit": "^3.3.1"
   },
   "devDependencies": {
