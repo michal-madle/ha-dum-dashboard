@@ -473,7 +473,7 @@ const os = (n, t, e) => {
   return i._$AI(n), i;
 };
 const Vt = globalThis;
-class U extends dt {
+class B extends dt {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
@@ -495,9 +495,9 @@ class U extends dt {
     return ut;
   }
 }
-U._$litElement$ = !0, U.finalized = !0, Vt.litElementHydrateSupport?.({ LitElement: U });
+B._$litElement$ = !0, B.finalized = !0, Vt.litElementHydrateSupport?.({ LitElement: B });
 const as = Vt.litElementPolyfillSupport;
-as?.({ LitElement: U });
+as?.({ LitElement: B });
 (Vt.litElementVersions ??= []).push("4.2.2");
 const ze = /* @__PURE__ */ Symbol.for(""), rs = (n) => {
   if (n?.r === ze) return n?._$litStatic$;
@@ -537,14 +537,14 @@ const ds = { attribute: !0, type: String, converter: Et, reflect: !1, hasChanged
   }
   throw Error("Unsupported decorator location: " + s);
 };
-function g(n) {
+function f(n) {
   return (t, e) => typeof e == "object" ? hs(n, t, e) : ((s, i, o) => {
     const a = i.hasOwnProperty(o);
     return i.constructor.createProperty(o, s), a ? Object.getOwnPropertyDescriptor(i, o) : void 0;
   })(n, t, e);
 }
 function S(n) {
-  return g({ ...n, state: !0, attribute: !1 });
+  return f({ ...n, state: !0, attribute: !1 });
 }
 function ht(n, t = {}) {
   return n.length < 2 ? p`${n[0] ?? m}` : p`<span class="joined ${t.whole ? "whole" : ""}">${n.map(
@@ -728,7 +728,7 @@ var As = Object.defineProperty, V = (n, t, e, s) => {
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && As(t, e, i), i;
 };
-const Ss = ["next", "30", "60", "180", "forever"], Ms = [0, 60, 180, 480], Qt = class Qt extends U {
+const Ss = ["next", "30", "60", "180", "forever"], Ms = [0, 60, 180, 480], Qt = class Qt extends B {
   constructor() {
     super(...arguments), this.system = "heating", this.rooms = [], this.selected = [], this.prefix = "hdk", this.delayMs = 2e3, this.draft = {}, this.busy = !1, this.error = "";
   }
@@ -795,14 +795,14 @@ const Ss = ["next", "30", "60", "180", "forever"], Ms = [0, 60, 180, 480], Qt = 
   render() {
     const t = this.texts, e = this.i18n;
     if (!t || !e) return m;
-    const s = this.hass, i = s?.states[this.selected[0]], { min: o, max: a, step: r } = gs(this.system, i), l = ms(s, this.selected), c = [...new Set(l.map((y) => y.value))], h = fs(this.system, s, this.selected), d = this.draft.mode ?? h, u = this.draft.temperature === void 0 && c.length > 1, v = this.draft.temperature ?? (d === "boost" ? 25 : c[0]), $ = d === "off" || d === "fan_only", f = $ && d !== void 0 ? t.modes[d] : u ? `${this.degrees(Math.min(...c)).replace(/°$/, "")}–${this.degrees(Math.max(...c))}` : v !== void 0 ? this.degrees(v) : "––", k = this.selected.flatMap((y) => {
-      const q = rt(s?.states[y]?.attributes.current_temperature);
-      return q === void 0 ? [] : [{ id: y, text: `${e.one(q)} °C` }];
-    }), b = this.system === "heating" && this.selected.length === 1 && s?.states[this.selected[0]]?.attributes.hvac_action === "heating", w = u ? t.targets(l.map((y) => `${this.name(y.entity)} ${this.degrees(y.value)}`).join(" · ")) : k.length ? t.now(this.selected.length === 1 ? `${k[0].text}${b ? ` · ${t.heats}` : ""}` : k.map((y) => `${this.name(y.id)} ${y.text}`).join(" · ")) : "", O = this.system === "heating" ? us.filter((y) => y !== "boost" || Ft(s)) : Gt.filter((y) => this.selected.some((q) => bs(s?.states[q]).includes(y))), j = this.draft.mode === void 0 && h === void 0 && this.selected.length > 1, _ = this.system === "cooling" && (d === "off" || d === "fan_only");
+    const s = this.hass, i = s?.states[this.selected[0]], { min: o, max: a, step: r } = gs(this.system, i), l = ms(s, this.selected), c = [...new Set(l.map((y) => y.value))], h = fs(this.system, s, this.selected), d = this.draft.mode ?? h, u = this.draft.temperature === void 0 && c.length > 1, v = this.draft.temperature ?? (d === "boost" ? 25 : c[0]), $ = d === "off" || d === "fan_only", g = $ && d !== void 0 ? t.modes[d] : u ? `${this.degrees(Math.min(...c)).replace(/°$/, "")}–${this.degrees(Math.max(...c))}` : v !== void 0 ? this.degrees(v) : "––", k = this.selected.flatMap((y) => {
+      const K = rt(s?.states[y]?.attributes.current_temperature);
+      return K === void 0 ? [] : [{ id: y, text: `${e.one(K)} °C` }];
+    }), b = this.system === "heating" && this.selected.length === 1 && s?.states[this.selected[0]]?.attributes.hvac_action === "heating", w = u ? t.targets(l.map((y) => `${this.name(y.entity)} ${this.degrees(y.value)}`).join(" · ")) : k.length ? t.now(this.selected.length === 1 ? `${k[0].text}${b ? ` · ${t.heats}` : ""}` : k.map((y) => `${this.name(y.id)} ${y.text}`).join(" · ")) : "", O = this.system === "heating" ? us.filter((y) => y !== "boost" || Ft(s)) : Gt.filter((y) => this.selected.some((K) => bs(s?.states[K]).includes(y))), F = this.draft.mode === void 0 && h === void 0 && this.selected.length > 1, _ = this.system === "cooling" && (d === "off" || d === "fan_only");
     return p`
       <div class="rooms" role="group" aria-label=${t.rooms}>
         ${this.rooms.map((y) => {
-      const q = s?.states[y.entity], ft = zt(this.system, q), gt = this.selected.includes(y.entity);
+      const K = s?.states[y.entity], ft = zt(this.system, K), gt = this.selected.includes(y.entity);
       return xe(this.prefix, {
         name: y.name,
         text: this.roomText(y.entity),
@@ -814,7 +814,7 @@ const Ss = ["next", "30", "60", "180", "forever"], Ms = [0, 60, 180, 480], Qt = 
     })}
       </div>
       <div class="target">
-        <div class="big ${$ ? "word" : ""}" aria-live="polite">${f}</div>
+        <div class="big ${$ ? "word" : ""}" aria-live="polite">${g}</div>
         <div class="sub">${w}</div>
         ${this.busy ? p`<span class="busy" role="status" aria-label=${t.sending}
               ><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 2.5a7.5 7.5 0 1 1-7.5 7.5"></path></svg
@@ -856,8 +856,8 @@ const Ss = ["next", "30", "60", "180", "forever"], Ms = [0, 60, 180, 480], Qt = 
       })
     )}
           </div>`}
-      ${j ? p`<div class="note">${xt(t.mixedModes(this.selected.map((y) => `${this.name(y)} ${t.modes[ct(this.system, s?.states[y]) ?? "off"] ?? ""}`).join(" · ")))}</div>` : m}
-      ${(u || j) && !Object.keys(this.draft).length ? p`<div class="note">${t.firstChange}</div>` : m}
+      ${F ? p`<div class="note">${xt(t.mixedModes(this.selected.map((y) => `${this.name(y)} ${t.modes[ct(this.system, s?.states[y]) ?? "off"] ?? ""}`).join(" · ")))}</div>` : m}
+      ${(u || F) && !Object.keys(this.draft).length ? p`<div class="note">${t.firstChange}</div>` : m}
       ${this.system === "heating" ? this.renderManualFor(d) : [this.renderAttribute("fan"), this.renderAttribute("swing"), this.renderOffAfter(d)]}
       ${this.error ? p`<div class="error" role="alert">${this.error}</div>` : m}
       ${this.selected.length === 1 ? p`<button
@@ -1016,28 +1016,28 @@ Qt.styles = [Oe, Kt, W`
   `];
 let L = Qt;
 V([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], L.prototype, "hass");
 V([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], L.prototype, "i18n");
 V([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], L.prototype, "texts");
 V([
-  g()
+  f()
 ], L.prototype, "system");
 V([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], L.prototype, "rooms");
 V([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], L.prototype, "selected");
 V([
-  g()
+  f()
 ], L.prototype, "prefix");
 V([
-  g({ type: Number })
+  f({ type: Number })
 ], L.prototype, "delayMs");
 V([
   S()
@@ -1113,7 +1113,7 @@ var Ts = Object.defineProperty, mt = (n, t, e, s) => {
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && Ts(t, e, i), i;
 };
-const te = class te extends U {
+const te = class te extends B {
   constructor() {
     super(...arguments), this.fraction = 0, this.size = 40, this.stroke = 6, this.num = "", this.unit = "", this.label = "";
   }
@@ -1183,25 +1183,25 @@ te.styles = W`
       line-height: 1;
     }
   `;
-let Z = te;
+let X = te;
 mt([
-  g({ type: Number })
-], Z.prototype, "fraction");
+  f({ type: Number })
+], X.prototype, "fraction");
 mt([
-  g({ type: Number })
-], Z.prototype, "size");
+  f({ type: Number })
+], X.prototype, "size");
 mt([
-  g({ type: Number })
-], Z.prototype, "stroke");
+  f({ type: Number })
+], X.prototype, "stroke");
 mt([
-  g()
-], Z.prototype, "num");
+  f()
+], X.prototype, "num");
 mt([
-  g()
-], Z.prototype, "unit");
+  f()
+], X.prototype, "unit");
 mt([
-  g()
-], Z.prototype, "label");
+  f()
+], X.prototype, "label");
 class Pt {
   /** `times` is read at every press, so changed properties apply at once. */
   constructor(t) {
@@ -1336,14 +1336,14 @@ const Lt = W`
     }
   }
 `;
-var Ns = Object.defineProperty, F = (n, t, e, s) => {
+var Ns = Object.defineProperty, j = (n, t, e, s) => {
   for (var i = void 0, o = n.length - 1, a; o >= 0; o--)
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && Ns(t, e, i), i;
 };
-const ee = class ee extends U {
+const ee = class ee extends B {
   constructor() {
-    super(...arguments), this.options = [], this.value = "", this.label = "", this.disabled = !1, this.compact = !1, this.wrap = !1, this.guarded = !1, this.holdMs = 550, this.doubleTapMs = 400, this.hintSeconds = 3, this.hint = "Press and hold, drag, or tap twice.", this._dx = 0, this._dragging = !1, this.hints = new Xt(this), this.nudgeIndex = 0, this.gesture = new Pt(() => ({ holdMs: this.holdMs, doubleTapMs: this.doubleTapMs })), this.swallowClick = !1;
+    super(...arguments), this.options = [], this.value = "", this.label = "", this.disabled = !1, this.pending = !1, this.compact = !1, this.wrap = !1, this.guarded = !1, this.holdMs = 550, this.doubleTapMs = 400, this.hintSeconds = 3, this.hint = "Press and hold, drag, or tap twice.", this._dx = 0, this._dragging = !1, this.hints = new Xt(this), this.nudgeIndex = 0, this.gesture = new Pt(() => ({ holdMs: this.holdMs, doubleTapMs: this.doubleTapMs })), this.swallowClick = !1;
   }
   disconnectedCallback() {
     super.disconnectedCallback(), this.gesture.dispose(), this.hints.dispose();
@@ -1353,6 +1353,7 @@ const ee = class ee extends U {
     return p`<div
         class="track ${this.compact ? "compact" : ""} ${this.guarded ? "guarded" : ""} ${this._dragging ? "dragging" : ""} ${this.options.some((r) => r.detail) || this.wrap ? "tall" : ""} ${this.wrap ? "wrap" : ""} ${this.disabled ? "off" : ""}"
         role="radiogroup"
+        aria-busy=${this.pending ? "true" : m}
         aria-label=${this.label}
         style="--n:${Math.max(1, this.options.length)};--i:${Math.max(0, t)};--dx:${a}px"
         @keydown=${this.onKey}
@@ -1495,6 +1496,21 @@ ee.styles = [
       .track.dragging .thumb {
         transition: none;
       }
+      :host([pending]) .thumb {
+        animation: hdk-seg-pending 1.3s ease-in-out infinite alternate;
+      }
+      @keyframes hdk-seg-pending {
+        to {
+          opacity: 0.45;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        :host([pending]) .thumb {
+          animation: none;
+          outline: 1.5px dashed var(--hdk-accent, #0a84ff);
+          outline-offset: -1.5px;
+        }
+      }
       .thumb[hidden] {
         display: none;
       }
@@ -1563,43 +1579,46 @@ ee.styles = [
     `
 ];
 let T = ee;
-F([
-  g({ attribute: !1 })
+j([
+  f({ attribute: !1 })
 ], T.prototype, "options");
-F([
-  g()
+j([
+  f()
 ], T.prototype, "value");
-F([
-  g()
+j([
+  f()
 ], T.prototype, "label");
-F([
-  g({ type: Boolean })
+j([
+  f({ type: Boolean })
 ], T.prototype, "disabled");
-F([
-  g({ type: Boolean })
+j([
+  f({ type: Boolean, reflect: !0 })
+], T.prototype, "pending");
+j([
+  f({ type: Boolean })
 ], T.prototype, "compact");
-F([
-  g({ type: Boolean })
+j([
+  f({ type: Boolean })
 ], T.prototype, "wrap");
-F([
-  g({ type: Boolean })
+j([
+  f({ type: Boolean })
 ], T.prototype, "guarded");
-F([
-  g({ type: Number })
+j([
+  f({ type: Number })
 ], T.prototype, "holdMs");
-F([
-  g({ type: Number })
+j([
+  f({ type: Number })
 ], T.prototype, "doubleTapMs");
-F([
-  g({ type: Number })
+j([
+  f({ type: Number })
 ], T.prototype, "hintSeconds");
-F([
-  g()
+j([
+  f()
 ], T.prototype, "hint");
-F([
+j([
   S()
 ], T.prototype, "_dx");
-F([
+j([
   S()
 ], T.prototype, "_dragging");
 var zs = Object.defineProperty, lt = (n, t, e, s) => {
@@ -1607,7 +1626,7 @@ var zs = Object.defineProperty, lt = (n, t, e, s) => {
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && zs(t, e, i), i;
 };
-const Os = 100, Ds = 0.6, Ps = 6, se = class se extends U {
+const Os = 100, Ds = 0.6, Ps = 6, se = class se extends B {
   constructor() {
     super(...arguments), this.open = !1, this.heading = "", this.sub = "", this.closeLabel = "Close", this.wide = !1, this.dragY = 0, this.dragging = !1, this.touchOnSlider = !1, this.keydown = (t) => {
       if (t.key === "Escape") {
@@ -1842,19 +1861,19 @@ se.styles = [Oe, W`
   `];
 let Y = se;
 lt([
-  g({ type: Boolean, reflect: !0 })
+  f({ type: Boolean, reflect: !0 })
 ], Y.prototype, "open");
 lt([
-  g()
+  f()
 ], Y.prototype, "heading");
 lt([
-  g()
+  f()
 ], Y.prototype, "sub");
 lt([
-  g()
+  f()
 ], Y.prototype, "closeLabel");
 lt([
-  g({ type: Boolean })
+  f({ type: Boolean })
 ], Y.prototype, "wide");
 lt([
   S()
@@ -1862,12 +1881,12 @@ lt([
 lt([
   S()
 ], Y.prototype, "dragging");
-var Ls = Object.defineProperty, R = (n, t, e, s) => {
+var Ls = Object.defineProperty, U = (n, t, e, s) => {
   for (var i = void 0, o = n.length - 1, a; o >= 0; o--)
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && Ls(t, e, i), i;
 };
-const ne = class ne extends U {
+const ne = class ne extends B {
   constructor() {
     super(...arguments), this.min = 0, this.max = 100, this.step = 1, this.tickStep = 0, this.value = 0, this.label = "", this.valueText = "", this.minLabel = "", this.maxLabel = "", this.disabled = !1, this.mixed = !1, this.marks = [];
   }
@@ -2020,53 +2039,53 @@ ne.styles = W`
     }
   `;
 let N = ne;
-R([
-  g({ type: Number })
+U([
+  f({ type: Number })
 ], N.prototype, "min");
-R([
-  g({ type: Number })
+U([
+  f({ type: Number })
 ], N.prototype, "max");
-R([
-  g({ type: Number })
+U([
+  f({ type: Number })
 ], N.prototype, "step");
-R([
-  g({ type: Number })
+U([
+  f({ type: Number })
 ], N.prototype, "tickStep");
-R([
-  g({ type: Number })
+U([
+  f({ type: Number })
 ], N.prototype, "value");
-R([
-  g()
+U([
+  f()
 ], N.prototype, "label");
-R([
-  g()
+U([
+  f()
 ], N.prototype, "valueText");
-R([
-  g()
+U([
+  f()
 ], N.prototype, "minLabel");
-R([
-  g()
+U([
+  f()
 ], N.prototype, "maxLabel");
-R([
-  g({ type: Boolean })
+U([
+  f({ type: Boolean })
 ], N.prototype, "disabled");
-R([
-  g({ type: Boolean, reflect: !0 })
+U([
+  f({ type: Boolean, reflect: !0 })
 ], N.prototype, "mixed");
-R([
-  g({ attribute: !1 })
+U([
+  f({ attribute: !1 })
 ], N.prototype, "marks");
-R([
+U([
   S()
 ], N.prototype, "_drag");
-var js = Object.defineProperty, X = (n, t, e, s) => {
+var js = Object.defineProperty, q = (n, t, e, s) => {
   for (var i = void 0, o = n.length - 1, a; o >= 0; o--)
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && js(t, e, i), i;
 };
-const ie = class ie extends U {
+const ie = class ie extends B {
   constructor() {
-    super(...arguments), this.checked = !1, this.disabled = !1, this.label = "", this.guarded = !1, this.holdMs = 550, this.doubleTapMs = 400, this.hintSeconds = 3, this.hintPlacement = "above", this.hint = "Press and hold, or tap twice.", this.hints = new Xt(this), this.gesture = new Pt(() => ({ holdMs: this.holdMs, doubleTapMs: this.doubleTapMs })), this.release = () => {
+    super(...arguments), this.checked = !1, this.disabled = !1, this.pending = !1, this.label = "", this.guarded = !1, this.holdMs = 550, this.doubleTapMs = 400, this.hintSeconds = 3, this.hintPlacement = "above", this.hint = "Press and hold, or tap twice.", this.hints = new Xt(this), this.gesture = new Pt(() => ({ holdMs: this.holdMs, doubleTapMs: this.doubleTapMs })), this.release = () => {
       this.gesture.release();
     };
   }
@@ -2079,6 +2098,7 @@ const ie = class ie extends U {
         role="switch"
         class=${this.hints.nudge ? "nudge" : ""}
         aria-checked=${this.checked ? "true" : "false"}
+        aria-busy=${this.pending ? "true" : m}
         aria-label=${this.label}
         ?disabled=${this.disabled}
         @click=${this.onClick}
@@ -2139,6 +2159,21 @@ ie.styles = [
       button[aria-checked="true"] {
         background: var(--hdk-accent, #0a84ff);
       }
+      :host([pending]) button {
+        animation: hdk-switch-pending 1.3s ease-in-out infinite alternate;
+      }
+      @keyframes hdk-switch-pending {
+        to {
+          opacity: 0.5;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        :host([pending]) button {
+          animation: none;
+          outline: 1.5px dashed var(--hdk-accent, #0a84ff);
+          outline-offset: 2px;
+        }
+      }
       /* Invisible extension of the touch target to 44 px. */
       button::after {
         content: "";
@@ -2197,40 +2232,43 @@ ie.styles = [
       }
     `
 ];
-let B = ie;
-X([
-  g({ type: Boolean })
-], B.prototype, "checked");
-X([
-  g({ type: Boolean })
-], B.prototype, "disabled");
-X([
-  g()
-], B.prototype, "label");
-X([
-  g({ type: Boolean })
-], B.prototype, "guarded");
-X([
-  g({ type: Number })
-], B.prototype, "holdMs");
-X([
-  g({ type: Number })
-], B.prototype, "doubleTapMs");
-X([
-  g({ type: Number })
-], B.prototype, "hintSeconds");
-X([
-  g()
-], B.prototype, "hintPlacement");
-X([
-  g()
-], B.prototype, "hint");
+let R = ie;
+q([
+  f({ type: Boolean })
+], R.prototype, "checked");
+q([
+  f({ type: Boolean })
+], R.prototype, "disabled");
+q([
+  f({ type: Boolean, reflect: !0 })
+], R.prototype, "pending");
+q([
+  f()
+], R.prototype, "label");
+q([
+  f({ type: Boolean })
+], R.prototype, "guarded");
+q([
+  f({ type: Number })
+], R.prototype, "holdMs");
+q([
+  f({ type: Number })
+], R.prototype, "doubleTapMs");
+q([
+  f({ type: Number })
+], R.prototype, "hintSeconds");
+q([
+  f()
+], R.prototype, "hintPlacement");
+q([
+  f()
+], R.prototype, "hint");
 var Fs = Object.defineProperty, z = (n, t, e, s) => {
   for (var i = void 0, o = n.length - 1, a; o >= 0; o--)
     (a = n[o]) && (i = a(t, e, i) || i);
   return i && Fs(t, e, i), i;
 };
-const oe = class oe extends U {
+const oe = class oe extends B {
   constructor() {
     super(...arguments), this.name = "", this.text = "", this.state = "idle", this.kind = "toggle", this.centered = !1, this.disabled = !1, this.pending = !1, this.label = "", this.guarded = !1, this.holdMs = 550, this.doubleTapMs = 400, this.hintSeconds = 3, this.hint = "Press and hold, or tap twice.", this.hintAlign = "center", this.hints = new Xt(this), this.gesture = new Pt(() => ({ holdMs: this.holdMs, doubleTapMs: this.doubleTapMs })), this.release = () => {
       this.gesture.release();
@@ -2443,59 +2481,59 @@ oe.styles = [
 ];
 let A = oe;
 z([
-  g()
+  f()
 ], A.prototype, "name");
 z([
-  g()
+  f()
 ], A.prototype, "text");
 z([
-  g({ reflect: !0 })
+  f({ reflect: !0 })
 ], A.prototype, "state");
 z([
-  g()
+  f()
 ], A.prototype, "kind");
 z([
-  g({ type: Number })
+  f({ type: Number })
 ], A.prototype, "count");
 z([
-  g({ type: Boolean, reflect: !0 })
+  f({ type: Boolean, reflect: !0 })
 ], A.prototype, "centered");
 z([
-  g({ type: Boolean })
+  f({ type: Boolean })
 ], A.prototype, "disabled");
 z([
-  g({ type: Boolean, reflect: !0 })
+  f({ type: Boolean, reflect: !0 })
 ], A.prototype, "pending");
 z([
-  g({ type: Boolean })
+  f({ type: Boolean })
 ], A.prototype, "pressed");
 z([
-  g()
+  f()
 ], A.prototype, "label");
 z([
-  g({ type: Boolean })
+  f({ type: Boolean })
 ], A.prototype, "guarded");
 z([
-  g({ type: Number })
+  f({ type: Number })
 ], A.prototype, "holdMs");
 z([
-  g({ type: Number })
+  f({ type: Number })
 ], A.prototype, "doubleTapMs");
 z([
-  g({ type: Number })
+  f({ type: Number })
 ], A.prototype, "hintSeconds");
 z([
-  g()
+  f()
 ], A.prototype, "hint");
 z([
-  g()
+  f()
 ], A.prototype, "hintAlign");
 function Rs(n) {
   const t = [
-    [`${n}-switch`, B],
+    [`${n}-switch`, R],
     [`${n}-segmented`, T],
     [`${n}-slider`, N],
-    [`${n}-ring`, Z],
+    [`${n}-ring`, X],
     [`${n}-tile`, A],
     [`${n}-sheet`, Y]
   ];
@@ -2688,10 +2726,10 @@ const Zs = [
 function Q(n, t) {
   return n == null ? [] : (Array.isArray(n) || x(`"${t}" must be a list.`), n);
 }
-function K(n, t, e, s, i) {
+function G(n, t, e, s, i) {
   return n == null ? e : ((typeof n != "number" || !Number.isFinite(n) || n < s || n > i) && x(`${t} must be a number from ${s} to ${i}.`), n);
 }
-function G(n, t, e) {
+function Z(n, t, e) {
   return Q(n, t).map((s, i) => {
     const o = `${t}[${i}]`;
     H(s) || x(`${o} must be a mapping with name and entity.`), D(s, ["name", "entity"], o);
@@ -2703,11 +2741,11 @@ function Xs(n) {
   H(n) || x("the configuration must be a mapping of keys.");
   const t = nt(n.covers, "covers");
   D(t, ["script", "entities", "last_action", "presets", "tolerance"], "covers");
-  const e = {}, s = Q(t.entities, "covers.entities").map((f, k) => {
+  const e = {}, s = Q(t.entities, "covers.entities").map((g, k) => {
     const b = `covers.entities[${k}]`;
-    if (!H(f)) return M(f, b, { domain: "cover" }) ?? x(`${b} is missing.`);
-    D(f, ["name", "entity"], b);
-    const w = M(f.entity, `${b}.entity`, { domain: "cover" }) ?? x(`${b}.entity is missing.`), O = J(f.name, `${b}.name`);
+    if (!H(g)) return M(g, b, { domain: "cover" }) ?? x(`${b} is missing.`);
+    D(g, ["name", "entity"], b);
+    const w = M(g.entity, `${b}.entity`, { domain: "cover" }) ?? x(`${b}.entity is missing.`), O = J(g.name, `${b}.name`);
     return O !== void 0 && (e[w] = O), w;
   }), i = nt(n.ventilation, "ventilation");
   D(i, ["mode", "fans"], "ventilation");
@@ -2719,41 +2757,41 @@ function Xs(n) {
   D(r, ["hold_ms", "double_tap_ms", "hint_seconds"], "guard");
   const l = nt(n.house_modes, "house_modes");
   D(l, ["winter", "summer"], "house_modes");
-  const c = Q(t.presets, "covers.presets").map((f, k) => {
+  const c = Q(t.presets, "covers.presets").map((g, k) => {
     const b = `covers.presets[${k}]`;
-    return H(f) || x(`${b} must be a mapping with name, position and tilt.`), D(f, ["name", "position", "tilt"], b), {
-      name: J(f.name, `${b}.name`) ?? x(`${b}.name is missing.`),
-      position: K(f.position, `${b}.position`, 0, 0, 100),
-      tilt: K(f.tilt, `${b}.tilt`, 0, 0, 100)
+    return H(g) || x(`${b} must be a mapping with name, position and tilt.`), D(g, ["name", "position", "tilt"], b), {
+      name: J(g.name, `${b}.name`) ?? x(`${b}.name is missing.`),
+      position: G(g.position, `${b}.position`, 0, 0, 100),
+      tilt: G(g.tilt, `${b}.tilt`, 0, 0, 100)
     };
-  }), h = Q(n.batteries, "batteries").map((f, k) => {
+  }), h = Q(n.batteries, "batteries").map((g, k) => {
     const b = `batteries[${k}]`;
-    return H(f) || x(`${b} must be a mapping with name and low.`), D(f, ["name", "low", "level", "type"], b), {
-      name: J(f.name, `${b}.name`) ?? x(`${b}.name is missing.`),
-      low: M(f.low, `${b}.low`, { domain: "binary_sensor" }) ?? x(`${b}.low is missing.`),
-      level: M(f.level, `${b}.level`, { domain: "sensor" }),
-      type: M(f.type, `${b}.type`, { domain: "sensor" })
+    return H(g) || x(`${b} must be a mapping with name and low.`), D(g, ["name", "low", "level", "type"], b), {
+      name: J(g.name, `${b}.name`) ?? x(`${b}.name is missing.`),
+      low: M(g.low, `${b}.low`, { domain: "binary_sensor" }) ?? x(`${b}.low is missing.`),
+      level: M(g.level, `${b}.level`, { domain: "sensor" }),
+      type: M(g.type, `${b}.type`, { domain: "sensor" })
     };
-  }), d = Q(n.filters, "filters").map((f, k) => {
+  }), d = Q(n.filters, "filters").map((g, k) => {
     const b = `filters[${k}]`;
-    return H(f) || x(`${b} must be a mapping with name, hours and threshold.`), D(f, ["name", "hours", "threshold"], b), {
-      name: J(f.name, `${b}.name`) ?? x(`${b}.name is missing.`),
-      hours: M(f.hours, `${b}.hours`, { domain: "input_number" }) ?? x(`${b}.hours is missing.`),
-      threshold: M(f.threshold, `${b}.threshold`, { domain: "select" }) ?? x(`${b}.threshold is missing.`)
+    return H(g) || x(`${b} must be a mapping with name, hours and threshold.`), D(g, ["name", "hours", "threshold"], b), {
+      name: J(g.name, `${b}.name`) ?? x(`${b}.name is missing.`),
+      hours: M(g.hours, `${b}.hours`, { domain: "input_number" }) ?? x(`${b}.hours is missing.`),
+      threshold: M(g.threshold, `${b}.threshold`, { domain: "select" }) ?? x(`${b}.threshold is missing.`)
     };
-  }), u = Q(n.maintenance, "maintenance").map((f, k) => {
+  }), u = Q(n.maintenance, "maintenance").map((g, k) => {
     const b = `maintenance[${k}]`;
-    return H(f) || x(`${b} must be a mapping with name, task, counter and every.`), D(f, ["name", "task", "counter", "every"], b), {
-      name: J(f.name, `${b}.name`) ?? x(`${b}.name is missing.`),
-      task: J(f.task, `${b}.task`) ?? x(`${b}.task is missing.`),
-      counter: M(f.counter, `${b}.counter`, { domain: "counter" }) ?? x(`${b}.counter is missing.`),
-      every: K(f.every, `${b}.every`, 30, 1, 1e3)
+    return H(g) || x(`${b} must be a mapping with name, task, counter and every.`), D(g, ["name", "task", "counter", "every"], b), {
+      name: J(g.name, `${b}.name`) ?? x(`${b}.name is missing.`),
+      task: J(g.task, `${b}.task`) ?? x(`${b}.task is missing.`),
+      counter: M(g.counter, `${b}.counter`, { domain: "counter" }) ?? x(`${b}.counter is missing.`),
+      every: G(g.every, `${b}.every`, 30, 1, 1e3)
     };
-  }), v = Q(n.devices, "devices").map((f, k) => {
+  }), v = Q(n.devices, "devices").map((g, k) => {
     const b = `devices[${k}]`;
-    return H(f) || x(`${b} must be a mapping with name and entities.`), D(f, ["name", "entities"], b), {
-      name: J(f.name, `${b}.name`) ?? x(`${b}.name is missing.`),
-      entities: G(f.entities, `${b}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"])
+    return H(g) || x(`${b} must be a mapping with name and entities.`), D(g, ["name", "entities"], b), {
+      name: J(g.name, `${b}.name`) ?? x(`${b}.name is missing.`),
+      entities: Z(g.entities, `${b}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"])
     };
   }), $ = nt(n.health, "health");
   return D($, ["battery_low", "batteries", "connections", "system", "updates"], "health"), $.updates !== void 0 && typeof $.updates != "boolean" && x("health.updates must be true or false."), {
@@ -2766,44 +2804,44 @@ function Xs(n) {
     snoozeScript: M(n.snooze_script, "snooze_script", { domain: "script" }),
     batteries: h,
     filters: d,
-    laundry: G(n.laundry, "laundry", ["input_boolean"]),
+    laundry: Z(n.laundry, "laundry", ["input_boolean"]),
     maintenance: u,
-    running: G(n.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
+    running: Z(n.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
       script: M(t.script, "covers.script", { domain: "script" }) ?? "script.zaluzie_posun",
       entities: s,
       names: e,
       lastAction: M(t.last_action, "covers.last_action", { domain: "sensor" }),
       presets: c.length ? c : Zs,
-      tolerance: K(t.tolerance, "covers.tolerance", 5, 0, 20)
+      tolerance: G(t.tolerance, "covers.tolerance", 5, 0, 20)
     },
     ventilation: {
       mode: M(i.mode, "ventilation.mode", { domain: "input_boolean" }),
-      fans: G(i.fans, "ventilation.fans", ["switch", "fan"])
+      fans: Z(i.fans, "ventilation.fans", ["switch", "fan"])
     },
     heating: {
       resume: M(o.resume, "heating.resume", { domain: "button" }),
-      rooms: G(o.rooms, "heating.rooms", ["climate"])
+      rooms: Z(o.rooms, "heating.rooms", ["climate"])
     },
-    cooling: { rooms: G(a.rooms, "cooling.rooms", ["climate"]) },
+    cooling: { rooms: Z(a.rooms, "cooling.rooms", ["climate"]) },
     devices: v,
     health: {
-      batteryLow: K($.battery_low, "health.battery_low", 20, 1, 99),
-      batteries: G($.batteries, "health.batteries", ["sensor"]),
-      connections: G($.connections, "health.connections", ["binary_sensor"]),
-      system: Q($.system, "health.system").map((f, k) => {
+      batteryLow: G($.battery_low, "health.battery_low", 20, 1, 99),
+      batteries: Z($.batteries, "health.batteries", ["sensor"]),
+      connections: Z($.connections, "health.connections", ["binary_sensor"]),
+      system: Q($.system, "health.system").map((g, k) => {
         const b = `health.system[${k}]`;
-        H(f) || x(`${b} must be a mapping with name and entity.`), D(f, ["name", "entity", "max"], b);
-        const [w] = G([{ name: f.name, entity: f.entity }], b, ["sensor", "binary_sensor"]);
-        return f.max !== void 0 && (typeof f.max != "number" || !Number.isFinite(f.max)) && x(`${b}.max must be a number.`), { ...w, max: f.max };
+        H(g) || x(`${b} must be a mapping with name and entity.`), D(g, ["name", "entity", "max"], b);
+        const [w] = Z([{ name: g.name, entity: g.entity }], b, ["sensor", "binary_sensor"]);
+        return g.max !== void 0 && (typeof g.max != "number" || !Number.isFinite(g.max)) && x(`${b}.max must be a number.`), { ...w, max: g.max };
       }),
       updates: $.updates === !0
     },
-    sendDelaySeconds: K(n.send_delay_seconds, "send_delay_seconds", 2, 0, 30),
+    sendDelaySeconds: G(n.send_delay_seconds, "send_delay_seconds", 2, 0, 30),
     guard: {
-      holdMs: K(r.hold_ms, "guard.hold_ms", 550, 200, 3e3),
-      doubleTapMs: K(r.double_tap_ms, "guard.double_tap_ms", 400, 150, 1500),
-      hintSeconds: K(r.hint_seconds, "guard.hint_seconds", 3, 1, 10)
+      holdMs: G(r.hold_ms, "guard.hold_ms", 550, 200, 3e3),
+      doubleTapMs: G(r.double_tap_ms, "guard.double_tap_ms", 400, 150, 1500),
+      hintSeconds: G(r.hint_seconds, "guard.hint_seconds", 3, 1, 10)
     }
   };
 }
@@ -2856,12 +2894,12 @@ function rn(n, t) {
   return (/* @__PURE__ */ new Date("January 1, 2023 22:00:00")).toLocaleString(e).includes("10");
 }
 function ln(n, t, e, s, i, o) {
-  const a = an(e), r = s === "system" ? void 0 : s === "none" ? "en-US" : nn[s] ?? a, l = s === "none" ? { useGrouping: !1 } : {}, c = new Intl.NumberFormat(r, { minimumFractionDigits: 1, maximumFractionDigits: 1, ...l }), h = new Intl.NumberFormat(r, { minimumFractionDigits: 2, maximumFractionDigits: 2, ...l }), d = new Intl.NumberFormat(r, { maximumFractionDigits: 1, ...l }), u = new Intl.NumberFormat(r, { maximumFractionDigits: 0, ...l }), v = rn(i, a), $ = v ? "h12" : "h23", f = new Intl.DateTimeFormat(a, { hour: v ? "numeric" : "2-digit", minute: "2-digit", hourCycle: $ }), k = new Intl.DateTimeFormat(a, v ? { hour: "numeric", hourCycle: $ } : { hour: "2-digit", minute: "2-digit", hourCycle: $ }), b = o === "system" ? void 0 : a, w = new Intl.DateTimeFormat(b, { day: "numeric", month: "numeric" }), O = (_) => {
+  const a = an(e), r = s === "system" ? void 0 : s === "none" ? "en-US" : nn[s] ?? a, l = s === "none" ? { useGrouping: !1 } : {}, c = new Intl.NumberFormat(r, { minimumFractionDigits: 1, maximumFractionDigits: 1, ...l }), h = new Intl.NumberFormat(r, { minimumFractionDigits: 2, maximumFractionDigits: 2, ...l }), d = new Intl.NumberFormat(r, { maximumFractionDigits: 1, ...l }), u = new Intl.NumberFormat(r, { maximumFractionDigits: 0, ...l }), v = rn(i, a), $ = v ? "h12" : "h23", g = new Intl.DateTimeFormat(a, { hour: v ? "numeric" : "2-digit", minute: "2-digit", hourCycle: $ }), k = new Intl.DateTimeFormat(a, v ? { hour: "numeric", hourCycle: $ } : { hour: "2-digit", minute: "2-digit", hourCycle: $ }), b = o === "system" ? void 0 : a, w = new Intl.DateTimeFormat(b, { day: "numeric", month: "numeric" }), O = (_) => {
     if (!["DMY", "MDY", "YMD"].includes(o))
       return w.format(_);
-    const y = w.formatToParts(_), q = y.find((bt) => bt.type === "literal")?.value ?? "/", ft = y[y.length - 1], gt = ft?.type === "literal" ? ft.value : "", re = y.find((bt) => bt.type === "day")?.value ?? "", le = y.find((bt) => bt.type === "month")?.value ?? "";
-    return o === "DMY" ? `${re}${q}${le}${gt}` : `${le}${q}${re}${gt}`;
-  }, j = sn.has(a.toLowerCase().split("-")[0]) ? " " : "";
+    const y = w.formatToParts(_), K = y.find((bt) => bt.type === "literal")?.value ?? "/", ft = y[y.length - 1], gt = ft?.type === "literal" ? ft.value : "", re = y.find((bt) => bt.type === "day")?.value ?? "", le = y.find((bt) => bt.type === "month")?.value ?? "";
+    return o === "DMY" ? `${re}${K}${le}${gt}` : `${le}${K}${re}${gt}`;
+  }, F = sn.has(a.toLowerCase().split("-")[0]) ? " " : "";
   return {
     language: t,
     locale: a,
@@ -2871,8 +2909,8 @@ function ln(n, t, e, s, i, o) {
     half: (_) => d.format(Math.round(_ * 2) / 2),
     tick: (_) => d.format(_),
     whole: (_) => u.format(_),
-    percent: (_) => `${_}${j}%`,
-    time: (_) => f.format(_),
+    percent: (_) => `${_}${F}%`,
+    time: (_) => g.format(_),
     hour: (_) => k.format(_),
     day: O
   };
@@ -2907,7 +2945,7 @@ const dn = {
   logFailed: "Deník se nepodařilo načíst.",
   rules: "Pravidla domu",
   rulesCount: (n) => `${n} ${n === 1 || n < 5 ? "automatizace" : "automatizací"}`,
-  rulesNoDescription: "Bez popisu",
+  rulesLoading: "Načítám…",
   rulesFailed: "Pravidla se nepodařilo načíst.",
   health: "Zdraví",
   healthAttention: "Vyžaduje pozornost",
@@ -3005,7 +3043,7 @@ const dn = {
   logFailed: "The logbook could not be loaded.",
   rules: "House rules",
   rulesCount: (n) => `${n} ${n === 1 ? "automation" : "automations"}`,
-  rulesNoDescription: "No description",
+  rulesLoading: "Loading…",
   rulesFailed: "The rules could not be loaded.",
   health: "Health",
   healthAttention: "Needs attention",
@@ -3103,7 +3141,7 @@ const dn = {
   logFailed: "Loggboken kunde inte läsas in.",
   rules: "Husets regler",
   rulesCount: (n) => `${n} ${n === 1 ? "automation" : "automationer"}`,
-  rulesNoDescription: "Ingen beskrivning",
+  rulesLoading: "Läser in…",
   rulesFailed: "Reglerna kunde inte läsas in.",
   health: "Hälsa",
   healthAttention: "Kräver uppmärksamhet",
@@ -3358,7 +3396,9 @@ const pn = W`
     font-size: 15px;
   }
   .rule {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
     min-height: 44px;
     padding: 8px 0;
@@ -3371,6 +3411,14 @@ const pn = W`
     line-height: 22px;
     text-align: start;
     cursor: pointer;
+  }
+  .rule .main {
+    flex: 1;
+    min-width: 0;
+  }
+  .rule:active,
+  .link-row:active {
+    background: var(--dd-sep);
   }
   .rule small {
     display: block;
@@ -3731,7 +3779,7 @@ function xn(n) {
   } catch {
   }
 }
-const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2" stroke-linecap="round"></path><rect x="5" y="10" width="3" height="4" fill="currentColor" stroke="none"></rect></svg>`, kn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`, _n = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`, An = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`, ae = class ae extends U {
+const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2" stroke-linecap="round"></path><rect x="5" y="10" width="3" height="4" fill="currentColor" stroke="none"></rect></svg>`, kn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`, _n = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`, An = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`, ae = class ae extends B {
   constructor() {
     super(...arguments), this._error = "", this._now = Date.now(), this.coverHistory = {}, this._seen = $n(), this.pending = new Gs(() => this.requestUpdate()), this._climateSelected = [], this._fit = "", this.starts = new Ks(() => this.requestUpdate()), this.gesture = new Pt(() => ({
       holdMs: this._config?.guard.holdMs ?? 550,
@@ -3781,8 +3829,8 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   /** The state of each part of Zdraví: what needs attention first, then one summary line per part. */
   healthState(t, e) {
     const s = e.t, i = t.health, o = i.batteries.map((h) => ({ item: h, level: yt(this.hass, h.entity) })).sort((h, d) => (h.level ?? -1) - (d.level ?? -1)), a = i.connections.map((h) => ({ item: h, state: C(this.hass, h.entity) })), r = i.system.map((h) => {
-      const d = E(this.hass, h.entity), u = h.entity.startsWith("binary_sensor."), v = this.hass, $ = !d || it(d.state) ? s.unavailable : u ? d.state === "on" ? s.healthProblem : s.healthOk : v?.formatEntityState ? v.formatEntityState(d) : d.state, f = !u && h.entity.endsWith("_status") && d !== void 0 && !it(d.state) && d.state !== "normal", k = h.max !== void 0 && d !== void 0 && Number.isFinite(Number(d.state)) && Number(d.state) > h.max;
-      return { item: h, value: $, problem: u && d?.state === "on" || f || k };
+      const d = E(this.hass, h.entity), u = h.entity.startsWith("binary_sensor."), v = this.hass, $ = !d || it(d.state) ? s.unavailable : u ? d.state === "on" ? s.healthProblem : s.healthOk : v?.formatEntityState ? v.formatEntityState(d) : d.state, g = !u && h.entity.endsWith("_status") && d !== void 0 && !it(d.state) && d.state !== "normal", k = h.max !== void 0 && d !== void 0 && Number.isFinite(Number(d.state)) && Number(d.state) > h.max;
+      return { item: h, value: $, problem: u && d?.state === "on" || g || k };
     }), l = i.updates ? Object.entries(this.hass?.states ?? {}).filter(([h, d]) => h.startsWith("update.") && d.state === "on").map(([h, d]) => ({ id: h, name: typeof d.attributes.friendly_name == "string" ? d.attributes.friendly_name : h, version: String(d.attributes.latest_version ?? "") })).sort((h, d) => h.name.localeCompare(d.name)) : [], c = [
       // A weak battery the queue „Potřebuje tebe“ already shows is not said twice (uživatel 14. 11. 2026: „Q224 A“).
       ...o.filter(({ item: h, level: d }) => d !== void 0 && d < i.batteryLow && !t.batteries.some((u) => u.level === h.entity && C(this.hass, u.low) === "on")).map(({ item: h, level: d }) => `${this.name(h.name)} ${e.percent(Math.round(d))}`),
@@ -3956,16 +4004,19 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     this._detail = "rules";
     const t = this.hass;
     if (!t?.callWS) return;
-    const e = Object.entries(t.states).filter(([s]) => s.startsWith("automation."));
+    const e = Object.entries(t.states).filter(([i]) => i.startsWith("automation."));
+    this._rules = void 0;
+    let s = 0;
     try {
-      const s = await Promise.all(
-        e.map(async ([i, o]) => {
-          const a = await t.callWS({ type: "automation/config", entity_id: i }).catch(() => {
-          }), r = a?.config?.alias ?? (typeof o.attributes.friendly_name == "string" ? o.attributes.friendly_name : i);
-          return { id: i, name: r, description: (a?.config?.description ?? "").trim(), on: o.state === "on" };
+      const i = await Promise.all(
+        e.map(async ([o, a]) => {
+          const r = await t.callWS({ type: "automation/config", entity_id: o }).catch(() => {
+            s += 1;
+          }), l = r?.config?.alias ?? (typeof a.attributes.friendly_name == "string" ? a.attributes.friendly_name : o);
+          return { id: o, name: l, description: (r?.config?.description ?? "").trim(), on: a.state === "on" };
         })
       );
-      this._rules = s.sort((i, o) => i.name.localeCompare(o.name, this.i18n.language));
+      this._rules = e.length && s === e.length ? "failed" : i.sort((o, a) => o.name.localeCompare(a.name, this.i18n.language));
     } catch {
       this._rules = "failed";
     }
@@ -3975,10 +4026,10 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     const e = t.t, s = this._detail === "rules", i = this._rules;
     return p`<dd-sheet .open=${s} .heading=${e.rules} .sub=${Array.isArray(i) ? e.rulesCount(i.length) : ""} .closeLabel=${e.close} @hdk-close=${() => this._detail = void 0}>
       ${s ? p`<div class="detail" data-part="rules-detail">
-            ${i === "failed" ? p`<p class="log-empty">${e.rulesFailed}</p>` : i === void 0 ? m : i.map(
+            ${i === "failed" ? p`<p class="log-empty">${e.rulesFailed}</p>` : i === void 0 ? p`<p class="log-empty">${e.rulesLoading}</p>` : i.map(
       (o) => p`<button type="button" class="rule" @click=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: !0, composed: !0, detail: { entityId: o.id } }))}>
-                      <span class="main">${o.name}${o.on ? m : p` <span class="rule-off">· ${e.off}</span>`}</span>
-                      <small>${o.description || e.rulesNoDescription}</small>
+                      <span class="main">${o.name}${o.on ? m : p` <span class="rule-off">· ${e.off}</span>`}${o.description ? p`<small>${o.description}</small>` : m}</span>
+                      <span class="chevron-mark" aria-hidden="true">›</span>
                     </button>`
     )}
           </div>` : m}
@@ -4000,10 +4051,10 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
       ...Object.fromEntries(t.devices.map((h, d) => [`devices-${d}`, this.name(h.name)]))
     }, c = (h) => h.map((d) => {
       const u = d.head, v = this.withoutName(this.coverReason(t, u, e), u, t), $ = (w) => {
-        const O = w.map((j) => this.shortName(t, j.entry));
-        return (O.every((j) => j !== void 0) ? O : vn(w.map((j) => this.logName(j.entry)))).join(", ");
-      }, f = u.kind ? d.groups.find((w) => w.kind === u.kind && w.state === u.state) : void 0, k = f ? `${l[u.kind] ?? ""} · ${this.logState(u.entry, u.state)}` : this.logTitle(t, u.entry, u.state, e), b = d.groups.map((w) => {
-        if (w === f) return $([u, ...w.items]);
+        const O = w.map((F) => this.shortName(t, F.entry));
+        return (O.every((F) => F !== void 0) ? O : vn(w.map((F) => this.logName(F.entry)))).join(", ");
+      }, g = u.kind ? d.groups.find((w) => w.kind === u.kind && w.state === u.state) : void 0, k = g ? `${l[u.kind] ?? ""} · ${this.logState(u.entry, u.state)}` : this.logTitle(t, u.entry, u.state, e), b = d.groups.map((w) => {
+        if (w === g) return $([u, ...w.items]);
         const O = this.logState(w.items[0].entry, w.state);
         return w.kind ? `${l[w.kind] ?? ""} · ${O}: ${$(w.items)}` : `${this.logName(w.items[0].entry)} · ${O}`;
       });
@@ -4029,26 +4080,26 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
       return v !== void 0 && v >= u.every && !o.has(`maintenance:${u.counter}`) ? [{ item: u, cycles: v }] : [];
     }), h = i.length + a.length + r.length + l.length + c.length, d = [
       ...i.map((u) => {
-        const v = t.covers.names[u.entita], $ = E(this.hass, u.entita)?.attributes.friendly_name, f = typeof $ == "string" ? $ : v !== void 0 ? this.name(v) : void 0, k = u.cas ? Date.parse(u.cas) : NaN, b = this.failedGoal(t, u), w = b ? s.notArrivedTo(this.name(b.name)) : u.duvod || u.akce, O = ht([w ? w.charAt(0).toLocaleUpperCase(e.language) + w.slice(1) : void 0, Number.isFinite(k) ? e.time(k) : void 0].filter(Boolean)), j = this.retryOf(t, u);
+        const v = t.covers.names[u.entita], $ = E(this.hass, u.entita)?.attributes.friendly_name, g = typeof $ == "string" ? $ : v !== void 0 ? this.name(v) : void 0, k = u.cas ? Date.parse(u.cas) : NaN, b = this.failedGoal(t, u), w = b ? s.notArrivedTo(this.name(b.name)) : u.duvod || u.akce, O = ht([w ? w.charAt(0).toLocaleUpperCase(e.language) + w.slice(1) : void 0, Number.isFinite(k) ? e.time(k) : void 0].filter(Boolean)), F = this.retryOf(t, u);
         return p`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
-          <span class="main">${typeof f == "string" ? f : u.entita}<small>${O}</small></span>
-          ${j ? p`<button class="button small ${this.pending.has(`retry:${u.entita}`) ? "pending" : ""}" type="button" aria-label=${`${s.retry}: ${typeof f == "string" ? f : u.entita}`} aria-busy=${this.pending.has(`retry:${u.entita}`) ? "true" : m} @click=${j}>${s.retry}</button>` : t.clearFailed ? p`<button class="button" type="button" @click=${() => this.call("script", t.clearFailed.split(".")[1], { entita: u.entita })}>${s.done}</button>` : m}
+          <span class="main">${typeof g == "string" ? g : u.entita}<small>${O}</small></span>
+          ${F ? p`<button class="button small ${this.pending.has(`retry:${u.entita}`) ? "pending" : ""}" type="button" aria-label=${`${s.retry}: ${typeof g == "string" ? g : u.entita}`} aria-busy=${this.pending.has(`retry:${u.entita}`) ? "true" : m} @click=${F}>${s.retry}</button>` : t.clearFailed ? p`<button class="button" type="button" @click=${() => this.call("script", t.clearFailed.split(".")[1], { entita: u.entita })}>${s.done}</button>` : m}
         </div>`;
       }),
       ...a.map((u) => {
-        const v = yt(this.hass, u.level), $ = C(this.hass, u.type), f = ht([s.battery(v === void 0 ? void 0 : e.percent(Math.round(v))), $].filter(Boolean));
+        const v = yt(this.hass, u.level), $ = C(this.hass, u.type), g = ht([s.battery(v === void 0 ? void 0 : e.percent(Math.round(v))), $].filter(Boolean));
         return p`<div class="row" data-row="battery">
           <span class="mark">${wn}</span>
-          <span class="main">${this.name(u.name)}<small>${f}</small></span>
+          <span class="main">${this.name(u.name)}<small>${g}</small></span>
           ${this.snoozeButton(t, `battery:${u.low}`, e)}
         </div>`;
       }),
       ...r.map(({ filter: u, hours: v, threshold: $ }) => {
-        const f = (k) => `${e.whole(Math.floor(k))} h`;
+        const g = (k) => `${e.whole(Math.floor(k))} h`;
         return p`<div class="row two" data-row="filter">
           <span class="mark">${kn}</span>
-          <span class="main">${this.name(u.name)}<small>${xt(s.filter(f(v), f($)))}</small></span>
+          <span class="main">${this.name(u.name)}<small>${xt(s.filter(g(v), g($)))}</small></span>
           <span class="actions">
             ${this.snoozeButton(t, `filter:${u.hours}`, e)}
             <button class="button" type="button" @click=${() => this.call("input_number", "set_value", { entity_id: u.hours, value: 0 })}>${s.done}</button>
@@ -4064,10 +4115,10 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
         </span>
       </div>`),
       ...l.map((u) => {
-        const v = this.starts.of(this.hass, u.entity), $ = v !== void 0 && new Date(v).toDateString() === new Date(this._now).toDateString(), f = v === void 0 ? "" : $ ? e.time(v) : e.day(v);
+        const v = this.starts.of(this.hass, u.entity), $ = v !== void 0 && new Date(v).toDateString() === new Date(this._now).toDateString(), g = v === void 0 ? "" : $ ? e.time(v) : e.day(v);
         return p`<div class="row" data-row="laundry">
           <span class="mark">${_n}</span>
-          <span class="main">${this.name(u.name)}<small>${xt(s.laundry(f))}</small></span>
+          <span class="main">${this.name(u.name)}<small>${xt(s.laundry(g))}</small></span>
           <button class="button" type="button" @click=${() => this.call("input_boolean", "turn_off", { entity_id: u.entity })}>${s.done}</button>
         </div>`;
       })
@@ -4294,7 +4345,7 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
             ${i.entities.map((a, r) => {
         const l = E(this.hass, a.entity), c = !l || it(l.state);
         if (a.entity.startsWith("vacuum.")) {
-          const d = l?.state === "cleaning", u = this.hass, v = l && u?.formatEntityState ? u.formatEntityState(l) : l?.state ?? "", $ = c ? s.unavailable : d ? [v, this.duration(a.entity, e)].filter(Boolean).join(" · ") : v, f = `vacuum:${a.entity}`;
+          const d = l?.state === "cleaning", u = this.hass, v = l && u?.formatEntityState ? u.formatEntityState(l) : l?.state ?? "", $ = c ? s.unavailable : d ? [v, this.duration(a.entity, e)].filter(Boolean).join(" · ") : v, g = `vacuum:${a.entity}`;
           return p`<dd-tile
                   kind="action"
                   guarded
@@ -4308,8 +4359,8 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
                   .holdMs=${t.guard.holdMs}
                   .doubleTapMs=${t.guard.doubleTapMs}
                   .hintSeconds=${t.guard.hintSeconds}
-                  .pending=${this.pending.has(f)}
-                  @hdk-press=${() => d ? this.send(f, { entities: [a.entity], done: () => ["returning", "docked"].includes(C(this.hass, a.entity) ?? "") }, "vacuum", "return_to_base", { entity_id: a.entity }) : this.send(f, { entities: [a.entity], done: () => C(this.hass, a.entity) === "cleaning" }, "vacuum", "start", { entity_id: a.entity })}
+                  .pending=${this.pending.has(g)}
+                  @hdk-press=${() => d ? this.send(g, { entities: [a.entity], done: () => ["returning", "docked"].includes(C(this.hass, a.entity) ?? "") }, "vacuum", "return_to_base", { entity_id: a.entity }) : this.send(g, { entities: [a.entity], done: () => C(this.hass, a.entity) === "cleaning" }, "vacuum", "start", { entity_id: a.entity })}
                 ></dd-tile>`;
         }
         const h = l?.state === "on";
@@ -4466,7 +4517,7 @@ const wn = p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 ae.styles = [Lt, Kt, pn];
 let P = ae;
 I([
-  g({ attribute: !1 })
+  f({ attribute: !1 })
 ], P.prototype, "hass");
 I([
   S()
@@ -4511,4 +4562,4 @@ window.customCards.some((n) => n.type === "ha-dum-dashboard") || window.customCa
   description: Fe(tn()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.15.0 · 2026-11-14 04:41 UTC · po c6388e7 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.15.1 · 2026-11-14 04:43 UTC · po f084038 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

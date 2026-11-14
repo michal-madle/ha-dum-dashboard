@@ -30,7 +30,7 @@ export const en: typeof cs = {
   logFailed: "The logbook could not be loaded.",
   rules: "House rules",
   rulesCount: (count) => `${count} ${count === 1 ? "automation" : "automations"}`,
-  rulesNoDescription: "No description",
+  rulesLoading: "Loading…",
   rulesFailed: "The rules could not be loaded.",
   health: "Health",
   healthAttention: "Needs attention",

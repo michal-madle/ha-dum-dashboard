@@ -223,7 +223,7 @@ test.describe("Co se stalo", () => {
     await expect(rules).toHaveCount(2);
     await expect(rules.nth(0)).toContainText("Spustí časovač, zapne větráky a stojanový ventilátor.");
     await expect(rules.nth(1)).toContainText("Žaluzie večer · Vypnuto");
-    await expect(rules.nth(1)).toContainText("Bez popisu");
+    await expect(rules.nth(1).locator("small")).toHaveCount(0);
     await rules.nth(0).click();
     expect((await calls(page)).at(-1)).toEqual({ moreInfo: "automation.vetrani_zapnuti" });
     await page.setViewportSize({ width: 393, height: 852 });

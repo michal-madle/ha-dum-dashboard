@@ -30,7 +30,7 @@ export const sv: typeof cs = {
   logFailed: "Loggboken kunde inte läsas in.",
   rules: "Husets regler",
   rulesCount: (count) => `${count} ${count === 1 ? "automation" : "automationer"}`,
-  rulesNoDescription: "Ingen beskrivning",
+  rulesLoading: "Läser in…",
   rulesFailed: "Reglerna kunde inte läsas in.",
   health: "Hälsa",
   healthAttention: "Kräver uppmärksamhet",

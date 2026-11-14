@@ -28,7 +28,7 @@ export const cs = {
   logFailed: "Deník se nepodařilo načíst.",
   rules: "Pravidla domu",
   rulesCount: (count: number) => `${count} ${count === 1 ? "automatizace" : count < 5 ? "automatizace" : "automatizací"}`,
-  rulesNoDescription: "Bez popisu",
+  rulesLoading: "Načítám…",
   rulesFailed: "Pravidla se nepodařilo načíst.",
   health: "Zdraví",
   healthAttention: "Vyžaduje pozornost",

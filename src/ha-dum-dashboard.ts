@@ -456,15 +456,21 @@ export class HaDumDashboard extends LitElement {
     const hass = this.hass;
     if (!hass?.callWS) return;
     const automations = Object.entries(hass.states).filter(([id]) => id.startsWith("automation."));
+    this._rules = undefined;
+    let failures = 0;
     try {
       const rules = await Promise.all(
         automations.map(async ([id, entity]) => {
-          const answer = await hass.callWS<{ config?: { alias?: string; description?: string } }>({ type: "automation/config", entity_id: id }).catch(() => undefined);
+          const answer = await hass.callWS<{ config?: { alias?: string; description?: string } }>({ type: "automation/config", entity_id: id }).catch(() => {
+            failures += 1;
+            return undefined;
+          });
           const name = answer?.config?.alias ?? (typeof entity.attributes.friendly_name === "string" ? entity.attributes.friendly_name : id);
           return { id, name, description: (answer?.config?.description ?? "").trim(), on: entity.state === "on" };
         }),
       );
-      this._rules = rules.sort((a, b) => a.name.localeCompare(b.name, this.i18n.language));
+      // Nothing came back: the rules could not be loaded (not „all without a description“).
+      this._rules = automations.length && failures === automations.length ? "failed" : rules.sort((a, b) => a.name.localeCompare(b.name, this.i18n.language));
     } catch {
       this._rules = "failed";
     }
@@ -481,11 +487,11 @@ export class HaDumDashboard extends LitElement {
             ${rules === "failed"
               ? html`<p class="log-empty">${t.rulesFailed}</p>`
               : rules === undefined
-                ? nothing
+                ? html`<p class="log-empty">${t.rulesLoading}</p>`
                 : rules.map(
                     (rule) => html`<button type="button" class="rule" @click=${() => this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId: rule.id } }))}>
-                      <span class="main">${rule.name}${rule.on ? nothing : html` <span class="rule-off">· ${t.off}</span>`}</span>
-                      <small>${rule.description || t.rulesNoDescription}</small>
+                      <span class="main">${rule.name}${rule.on ? nothing : html` <span class="rule-off">· ${t.off}</span>`}${rule.description ? html`<small>${rule.description}</small>` : nothing}</span>
+                      <span class="chevron-mark" aria-hidden="true">›</span>
                     </button>`,
                   )}
           </div>`

@@ -184,7 +184,9 @@ export const styles = css`
     font-size: 15px;
   }
   .rule {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
     min-height: 44px;
     padding: 8px 0;
@@ -197,6 +199,14 @@ export const styles = css`
     line-height: 22px;
     text-align: start;
     cursor: pointer;
+  }
+  .rule .main {
+    flex: 1;
+    min-width: 0;
+  }
+  .rule:active,
+  .link-row:active {
+    background: var(--dd-sep);
   }
   .rule small {
     display: block;
