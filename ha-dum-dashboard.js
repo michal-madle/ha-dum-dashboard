@@ -35,7 +35,7 @@ const Te = (s) => new Ee(typeof s == "string" ? s : s + "", void 0, Vt), V = (s,
   for (const n of t.cssRules) e += n.cssText;
   return Te(e);
 })(s) : s;
-const { is: We, defineProperty: Ye, getOwnPropertyDescriptor: qe, getOwnPropertyNames: Ke, getOwnPropertySymbols: Ge, getPrototypeOf: Ze } = Object, Lt = globalThis, pe = Lt.trustedTypes, Xe = pe ? pe.emptyScript : "", Je = Lt.reactiveElementPolyfillSupport, wt = (s, t) => s, Nt = { toAttribute(s, t) {
+const { is: We, defineProperty: Ye, getOwnPropertyDescriptor: qe, getOwnPropertyNames: Ke, getOwnPropertySymbols: Ge, getPrototypeOf: Ze } = Object, Lt = globalThis, pe = Lt.trustedTypes, Xe = pe ? pe.emptyScript : "", Qe = Lt.reactiveElementPolyfillSupport, wt = (s, t) => s, Nt = { toAttribute(s, t) {
   switch (t) {
     case Boolean:
       s = s ? Xe : null;
@@ -246,8 +246,8 @@ let ct = class extends HTMLElement {
   firstUpdated(t) {
   }
 };
-ct.elementStyles = [], ct.shadowRootOptions = { mode: "open" }, ct[wt("elementProperties")] = /* @__PURE__ */ new Map(), ct[wt("finalized")] = /* @__PURE__ */ new Map(), Je?.({ ReactiveElement: ct }), (Lt.reactiveElementVersions ??= []).push("2.1.2");
-const Yt = globalThis, fe = (s) => s, zt = Yt.trustedTypes, ge = zt ? zt.createPolicy("lit-html", { createHTML: (s) => s }) : void 0, Ne = "$lit$", et = `lit$${Math.random().toFixed(9).slice(2)}$`, ze = "?" + et, Qe = `<${ze}>`, lt = document, kt = () => lt.createComment(""), _t = (s) => s === null || typeof s != "object" && typeof s != "function", qt = Array.isArray, tn = (s) => qt(s) || typeof s?.[Symbol.iterator] == "function", Ut = `[ 	
+ct.elementStyles = [], ct.shadowRootOptions = { mode: "open" }, ct[wt("elementProperties")] = /* @__PURE__ */ new Map(), ct[wt("finalized")] = /* @__PURE__ */ new Map(), Qe?.({ ReactiveElement: ct }), (Lt.reactiveElementVersions ??= []).push("2.1.2");
+const Yt = globalThis, fe = (s) => s, zt = Yt.trustedTypes, ge = zt ? zt.createPolicy("lit-html", { createHTML: (s) => s }) : void 0, Ne = "$lit$", et = `lit$${Math.random().toFixed(9).slice(2)}$`, ze = "?" + et, Je = `<${ze}>`, lt = document, kt = () => lt.createComment(""), _t = (s) => s === null || typeof s != "object" && typeof s != "function", qt = Array.isArray, tn = (s) => qt(s) || typeof s?.[Symbol.iterator] == "function", Ut = `[ 	
 \f\r]`, $t = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, be = /-->/g, ve = />/g, st = RegExp(`>|${Ut}(?:([^\\s"'>=/]+)(${Ut}*=${Ut}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), ye = /'/g, $e = /"/g, Oe = /^(?:script|style|textarea|title)$/i, en = (s) => (t, ...e) => ({ _$litType$: s, strings: t, values: e }), c = en(1), mt = /* @__PURE__ */ Symbol.for("lit-noChange"), f = /* @__PURE__ */ Symbol.for("lit-nothing"), xe = /* @__PURE__ */ new WeakMap(), at = lt.createTreeWalker(lt, 129);
 function De(s, t) {
@@ -262,7 +262,7 @@ const nn = (s, t) => {
     let h, u, l = -1, m = 0;
     for (; m < d.length && (a.lastIndex = m, u = a.exec(d), u !== null); ) m = a.lastIndex, a === $t ? u[1] === "!--" ? a = be : u[1] !== void 0 ? a = ve : u[2] !== void 0 ? (Oe.test(u[2]) && (i = RegExp("</" + u[2], "g")), a = st) : u[3] !== void 0 && (a = st) : a === st ? u[0] === ">" ? (a = i ?? $t, l = -1) : u[1] === void 0 ? l = -2 : (l = a.lastIndex - u[2].length, h = u[1], a = u[3] === void 0 ? st : u[3] === '"' ? $e : ye) : a === $e || a === ye ? a = st : a === be || a === ve ? a = $t : (a = st, i = void 0);
     const p = a === st && s[r + 1].startsWith("/>") ? " " : "";
-    o += a === $t ? d + Qe : l >= 0 ? (n.push(h), d.slice(0, l) + Ne + d.slice(l) + et + p) : d + et + (l === -2 ? r : p);
+    o += a === $t ? d + Je : l >= 0 ? (n.push(h), d.slice(0, l) + Ne + d.slice(l) + et + p) : d + et + (l === -2 ? r : p);
   }
   return [De(s, o + (s[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), n];
 };
@@ -636,8 +636,8 @@ const Xt = V`
     font-feature-settings: "tnum" 1;
     -webkit-font-smoothing: antialiased;
   }
-`, Fe = 25, Dt = 5, je = 21, Jt = ["off", "cool", "wind_free", "heat", "fan_only", "dry", "auto", "sleep"], bn = ["plan", "manual", "boost", "off"];
-function Qt(s) {
+`, Fe = 25, Dt = 5, je = 21, Qt = ["off", "cool", "wind_free", "heat", "fan_only", "dry", "auto", "sleep"], bn = ["plan", "manual", "boost", "off"];
+function Jt(s) {
   return s === void 0 || s === "" || s === "unavailable" || s === "unknown";
 }
 function nt(s) {
@@ -649,7 +649,7 @@ function dt(s) {
 }
 function rt(s, t) {
   const e = t?.state;
-  if (!t || Qt(e)) return;
+  if (!t || Jt(e)) return;
   if (s === "heating") {
     if (e === "auto") return "plan";
     if (e === "off") return "off";
@@ -660,7 +660,7 @@ function rt(s, t) {
     return;
   }
   const n = String(t.attributes.preset_mode ?? "");
-  return e === "off" ? "off" : e === "cool" && n === "wind_free" ? "wind_free" : n === "sleep" ? "sleep" : e === "heat_cool" ? "auto" : Jt.includes(e) ? e : void 0;
+  return e === "off" ? "off" : e === "cool" && n === "wind_free" ? "wind_free" : n === "sleep" ? "sleep" : e === "heat_cool" ? "auto" : Qt.includes(e) ? e : void 0;
 }
 function Pt(s, t) {
   const e = rt(s, t);
@@ -687,7 +687,7 @@ function xn(s, t) {
 }
 function wn(s) {
   const t = nt(s?.attributes.hvac_modes), e = nt(s?.attributes.preset_modes);
-  return Jt.filter((n) => n === "wind_free" ? t.includes("cool") && e.includes("wind_free") : n === "sleep" ? e.includes("sleep") : n === "auto" ? t.includes("auto") || t.includes("heat_cool") : t.includes(n));
+  return Qt.filter((n) => n === "wind_free" ? t.includes("cool") && e.includes("wind_free") : n === "sleep" ? e.includes("sleep") : n === "auto" ? t.includes("auto") || t.includes("heat_cool") : t.includes(n));
 }
 function kn(s, t, e) {
   const n = t.map((i) => nt(s?.states[i]?.attributes[e])).filter((i) => i.length);
@@ -723,13 +723,13 @@ function Sn(s, t, e) {
   const n = [], i = { entity_id: s }, o = nt(t?.attributes.hvac_modes), a = nt(t?.attributes.preset_modes), r = String(t?.attributes.preset_mode ?? ""), d = e.mode;
   if (d !== void 0) {
     const h = (l) => n.push({ domain: "climate", service: "set_hvac_mode", data: { ...i, hvac_mode: l } }), u = (l) => n.push({ domain: "climate", service: "set_preset_mode", data: { ...i, preset_mode: l } });
-    d === "wind_free" ? (h("cool"), u("wind_free")) : d === "sleep" ? ((t?.state === "off" || Qt(t?.state)) && h("cool"), u("sleep")) : (h(d === "auto" ? o.includes("auto") ? "auto" : "heat_cool" : d), d !== "off" && (r === "wind_free" || r === "sleep") && a.includes("none") && u("none"));
+    d === "wind_free" ? (h("cool"), u("wind_free")) : d === "sleep" ? ((t?.state === "off" || Jt(t?.state)) && h("cool"), u("sleep")) : (h(d === "auto" ? o.includes("auto") ? "auto" : "heat_cool" : d), d !== "off" && (r === "wind_free" || r === "sleep") && a.includes("none") && u("none"));
   }
   return e.temperature !== void 0 && d !== "off" && n.push({ domain: "climate", service: "set_temperature", data: { ...i, temperature: Math.round(e.temperature) } }), e.fan !== void 0 && nt(t?.attributes.fan_modes).includes(e.fan) && n.push({ domain: "climate", service: "set_fan_mode", data: { ...i, fan_mode: e.fan } }), e.swing !== void 0 && nt(t?.attributes.swing_modes).includes(e.swing) && n.push({ domain: "climate", service: "set_swing_mode", data: { ...i, swing_mode: e.swing } }), n;
 }
 function Mn(s, t) {
   const e = t.mode;
-  return e === void 0 ? s?.state : e === "wind_free" || e === "sleep" && (s?.state === "off" || Qt(s?.state)) ? "cool" : e === "sleep" ? s?.state : e === "auto" ? nt(s?.attributes.hvac_modes).includes("auto") ? "auto" : "heat_cool" : e;
+  return e === void 0 ? s?.state : e === "wind_free" || e === "sleep" && (s?.state === "off" || Jt(s?.state)) ? "cool" : e === "sleep" ? s?.state : e === "auto" ? nt(s?.attributes.hvac_modes).includes("auto") ? "auto" : "heat_cool" : e;
 }
 function Cn(s, t, e) {
   const n = Math.round(t * 60), i = [{ delay: { hours: Math.floor(n / 3600), minutes: Math.floor(n % 3600 / 60), seconds: n % 60 } }];
@@ -810,7 +810,7 @@ const Tn = ["next", "30", "60", "180", "forever"], Nn = [0, 60, 180, 480], ne = 
     const n = this.hass, i = n?.states[this.selected[0]], { min: o, max: a, step: r } = xn(this.system, i), d = yn(n, this.selected), h = [...new Set(d.map(($) => $.value))], u = $n(this.system, n, this.selected), l = this.draft.mode ?? u, m = this.draft.temperature === void 0 && h.length > 1, p = h[0], v = this.draft.temperature ?? (l === "boost" ? 25 : l === "manual" && p !== void 0 && p <= Dt ? je : p), b = l === "off" || l === "fan_only", w = b && l !== void 0 ? t.modes[l] : m ? `${this.degrees(Math.min(...h)).replace(/°$/, "")}–${this.degrees(Math.max(...h))}` : v !== void 0 ? this.degrees(v) : "––", y = this.selected.flatMap(($) => {
       const Z = dt(n?.states[$]?.attributes.current_temperature);
       return Z === void 0 ? [] : [{ id: $, text: `${e.one(Z)} °C` }];
-    }), _ = this.system === "heating" && this.selected.length === 1 && n?.states[this.selected[0]]?.attributes.hvac_action === "heating", T = m ? t.targets(d.map(($) => `${this.name($.entity)} ${this.degrees($.value)}`).join(" · ")) : y.length ? t.now(this.selected.length === 1 ? `${y[0].text}${_ ? ` · ${t.heats}` : ""}` : y.map(($) => `${this.name($.id)} ${$.text}`).join(" · ")) : "", G = this.system === "heating" ? bn.filter(($) => $ !== "boost" || Bt(n)) : Jt.filter(($) => this.selected.some((Z) => wn(n?.states[Z]).includes($))), k = this.draft.mode === void 0 && u === void 0 && this.selected.length > 1, j = this.system === "cooling" && (l === "off" || l === "fan_only");
+    }), _ = this.system === "heating" && this.selected.length === 1 && n?.states[this.selected[0]]?.attributes.hvac_action === "heating", T = m ? t.targets(d.map(($) => `${this.name($.entity)} ${this.degrees($.value)}`).join(" · ")) : y.length ? t.now(this.selected.length === 1 ? `${y[0].text}${_ ? ` · ${t.heats}` : ""}` : y.map(($) => `${this.name($.id)} ${$.text}`).join(" · ")) : "", G = this.system === "heating" ? bn.filter(($) => $ !== "boost" || Bt(n)) : Qt.filter(($) => this.selected.some((Z) => wn(n?.states[Z]).includes($))), k = this.draft.mode === void 0 && u === void 0 && this.selected.length > 1, j = this.system === "cooling" && (l === "off" || l === "fan_only");
     return c`
       <div class="rooms" role="group" aria-label=${t.rooms}>
         ${this.rooms.map(($) => {
@@ -1196,25 +1196,25 @@ se.styles = V`
       line-height: 1;
     }
   `;
-let J = se;
+let Q = se;
 gt([
   g({ type: Number })
-], J.prototype, "fraction");
+], Q.prototype, "fraction");
 gt([
   g({ type: Number })
-], J.prototype, "size");
+], Q.prototype, "size");
 gt([
   g({ type: Number })
-], J.prototype, "stroke");
+], Q.prototype, "stroke");
 gt([
   g()
-], J.prototype, "num");
+], Q.prototype, "num");
 gt([
   g()
-], J.prototype, "unit");
+], Q.prototype, "unit");
 gt([
   g()
-], J.prototype, "label");
+], Q.prototype, "label");
 class jt {
   /** `times` is read at every press, so changed properties apply at once. */
   constructor(t) {
@@ -2563,7 +2563,7 @@ function Hn(s) {
     [`${s}-switch`, R],
     [`${s}-segmented`, E],
     [`${s}-slider`, z],
-    [`${s}-ring`, J],
+    [`${s}-ring`, Q],
     [`${s}-tile`, S],
     [`${s}-sheet`, q]
   ];
@@ -2603,7 +2603,7 @@ function Yn(s, t) {
   if (s != null)
     return (typeof s != "string" || !s.trim()) && x(`${t} must be a non-empty text.`), s.trim();
 }
-function Q(s, t) {
+function J(s, t) {
   if (s != null) {
     if (typeof s == "string" && s.trim())
       return s.trim();
@@ -2658,7 +2658,7 @@ function Xn(s) {
   }
   return t;
 }
-class Jn {
+class Qn {
   constructor(t, e = Date.now) {
     this.onChange = t, this.now = e, this.known = /* @__PURE__ */ new Map(), this.wanted = /* @__PURE__ */ new Map(), this.pending = /* @__PURE__ */ new Map(), this.scheduled = !1;
   }
@@ -2701,7 +2701,7 @@ class Jn {
     this.onChange();
   }
 }
-class Qn {
+class Jn {
   /** `changed` is called whenever a control starts or stops pulsing (the card re-renders). */
   constructor(t, e = 5e3) {
     this.changed = t, this.stallMs = e, this.watches = /* @__PURE__ */ new Map();
@@ -2763,7 +2763,7 @@ function Y(s, t, e) {
   return tt(s, t).map((n, i) => {
     const o = `${t}[${i}]`;
     H(n) || x(`${o} must be a mapping with name and entity.`), D(n, ["name", "entity"], o);
-    const a = Q(n.name, `${o}.name`) ?? x(`${o}.name is missing.`), r = C(n.entity, `${o}.entity`, { example: `${e[0]}.example` }) ?? x(`${o}.entity is missing.`);
+    const a = J(n.name, `${o}.name`) ?? x(`${o}.name is missing.`), r = C(n.entity, `${o}.entity`, { example: `${e[0]}.example` }) ?? x(`${o}.entity is missing.`);
     return e.includes(r.split(".")[0]) || x(`${o}.entity must be one of ${e.join(", ")}, not ${r}.`), { name: a, entity: r };
   });
 }
@@ -2775,7 +2775,7 @@ function es(s) {
     const y = `covers.entities[${w}]`;
     if (!H(b)) return C(b, y, { domain: "cover" }) ?? x(`${y} is missing.`);
     D(b, ["name", "entity"], y);
-    const _ = C(b.entity, `${y}.entity`, { domain: "cover" }) ?? x(`${y}.entity is missing.`), T = Q(b.name, `${y}.name`);
+    const _ = C(b.entity, `${y}.entity`, { domain: "cover" }) ?? x(`${y}.entity is missing.`), T = J(b.name, `${y}.name`);
     return T !== void 0 && (e[_] = T), _;
   }), i = it(s.ventilation, "ventilation");
   D(i, ["mode", "fans"], "ventilation");
@@ -2790,14 +2790,14 @@ function es(s) {
   const h = tt(t.presets, "covers.presets").map((b, w) => {
     const y = `covers.presets[${w}]`;
     return H(b) || x(`${y} must be a mapping with name, position and tilt.`), D(b, ["name", "position", "tilt"], y), {
-      name: Q(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
+      name: J(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
       position: X(b.position, `${y}.position`, 0, 0, 100),
       tilt: X(b.tilt, `${y}.tilt`, 0, 0, 100)
     };
   }), u = tt(s.batteries, "batteries").map((b, w) => {
     const y = `batteries[${w}]`;
     return H(b) || x(`${y} must be a mapping with name and low.`), D(b, ["name", "low", "level", "type"], y), {
-      name: Q(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
+      name: J(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
       low: C(b.low, `${y}.low`, { domain: "binary_sensor" }) ?? x(`${y}.low is missing.`),
       level: C(b.level, `${y}.level`, { domain: "sensor" }),
       type: C(b.type, `${y}.type`, { domain: "sensor" })
@@ -2805,22 +2805,22 @@ function es(s) {
   }), l = tt(s.filters, "filters").map((b, w) => {
     const y = `filters[${w}]`;
     return H(b) || x(`${y} must be a mapping with name, hours and threshold.`), D(b, ["name", "hours", "threshold"], y), {
-      name: Q(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
+      name: J(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
       hours: C(b.hours, `${y}.hours`, { domain: "input_number" }) ?? x(`${y}.hours is missing.`),
       threshold: C(b.threshold, `${y}.threshold`, { domain: "select" }) ?? x(`${y}.threshold is missing.`)
     };
   }), m = tt(s.maintenance, "maintenance").map((b, w) => {
     const y = `maintenance[${w}]`;
     return H(b) || x(`${y} must be a mapping with name, task, counter and every.`), D(b, ["name", "task", "counter", "every"], y), {
-      name: Q(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
-      task: Q(b.task, `${y}.task`) ?? x(`${y}.task is missing.`),
+      name: J(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
+      task: J(b.task, `${y}.task`) ?? x(`${y}.task is missing.`),
       counter: C(b.counter, `${y}.counter`, { domain: "counter" }) ?? x(`${y}.counter is missing.`),
       every: X(b.every, `${y}.every`, 30, 1, 1e3)
     };
   }), p = tt(s.devices, "devices").map((b, w) => {
     const y = `devices[${w}]`;
     return H(b) || x(`${y} must be a mapping with name and entities.`), D(b, ["name", "entities"], y), {
-      name: Q(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
+      name: J(b.name, `${y}.name`) ?? x(`${y}.name is missing.`),
       entities: Y(b.entities, `${y}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"])
     };
   }), v = it(s.health, "health");
@@ -3300,9 +3300,10 @@ const gs = V`
     --hdk-track-compact: #3a3a3c;
     --hdk-bar: rgb(255 255 255 / 14%);
     --hdk-tick: rgb(255 255 255 / 28%);
-    --hdk-seg-thumb: #ffffff;
+    /* Selected segment: grey #636366 with white text in the dark, white with black in the light (uživatel 16. 11. 2026: „Q289 dark V4, light V0“). */
+    --hdk-seg-thumb: #636366;
     --hdk-seg-text: #ebebf5;
-    --hdk-seg-selected: #000000;
+    --hdk-seg-selected: #ffffff;
     --hdk-bubble: #3a3a3c;
     --hdk-bubble-text: #ffffff;
     color: var(--dd-text);
@@ -3332,6 +3333,8 @@ const gs = V`
     --hdk-tile-badge: rgb(60 60 67 / 14%);
     --hdk-track: #f2f2f7;
     --hdk-track-compact: #e5e5ea;
+    --hdk-seg-thumb: #ffffff;
+    --hdk-seg-selected: #000000;
     --hdk-bar: rgb(60 60 67 / 18%);
     --hdk-tick: rgb(60 60 67 / 30%);
     --hdk-seg-text: #000000;
@@ -3866,7 +3869,7 @@ function _s(s) {
 }
 const As = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2" stroke-linecap="round"></path><rect x="5" y="10" width="3" height="4" fill="currentColor" stroke="none"></rect></svg>`, Ss = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>`, Ct = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>`, Ms = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>`, Cs = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5"></rect><path d="M8 8v8M12 8v8M16 8v8"></path></svg>`, Es = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`, Ts = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3.5z" stroke-linejoin="round"></path></svg>`, Ns = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`, de = class de extends B {
   constructor() {
-    super(...arguments), this._error = "", this._now = Date.now(), this.coverHistory = {}, this._seen = ks(), this.pending = new Qn(() => this.requestUpdate()), this._climateSelected = [], this._fit = "", this.starts = new Jn(() => this.requestUpdate()), this.gesture = new jt(() => ({
+    super(...arguments), this._error = "", this._now = Date.now(), this.coverHistory = {}, this._seen = ks(), this.pending = new Jn(() => this.requestUpdate()), this._climateSelected = [], this._fit = "", this.starts = new Qn(() => this.requestUpdate()), this.gesture = new jt(() => ({
       holdMs: this._config?.guard.holdMs ?? 550,
       doubleTapMs: this._config?.guard.doubleTapMs ?? 400
     })), this.closeMenu = (t) => {
@@ -4688,4 +4691,4 @@ window.customCards.some((s) => s.type === "ha-dum-dashboard") || window.customCa
   description: Ie(is()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.20.0 · 2026-11-14 20:56 UTC · po 5df3daa ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.20.1 · 2026-11-16 08:56 UTC · po 5da55ce ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
