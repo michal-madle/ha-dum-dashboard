@@ -200,7 +200,7 @@ cooling:
       entity: climate.mikulas_ac_mikulas
     - name: Obývák
       entity: climate.obyvak_ac_obyvak
-devices:                            # další oddíly dlaždic, každý druh vlastní (dvojklep nebo podržení: světlo, vypínač, větrák přepne; vysavač spustí úklid nebo pošle do doku)
+devices:                            # další oddíly dlaždic, každý druh vlastní (dvojklep nebo podržení přepne vypínač, větrák a světlo bez jasu; světlo s jasem nebo barvou a vysavač otevřou klepnutím popup)
   - name:
       cs: Světla
       en: Lights
@@ -210,6 +210,7 @@ devices:                            # další oddíly dlaždic, každý druh vla
         entity: switch.kuchyne_osvetleni_kuchyne
       - name: Lampa pracovna
         entity: light.yeelink_bslamp2_cd35_light
+        startup_brightness: input_number.lampa_pracovna_jas_po_zapnuti   # jas po zapnutí (0 = neměnit); nastaví ho automatizace Home Assistantu
   - name:
       cs: Zásuvky
       en: Sockets
@@ -222,7 +223,7 @@ devices:                            # další oddíly dlaždic, každý druh vla
       en: Vacuums
       sv: Dammsugare
     entities:
-      - name: Patro
+      - name: Patro                 # vysavač: volitelně map: entita kamery nebo obrázku s mapou (camera.… / image.…)
         entity: vacuum.roborock_s5_ea9e_robot_cleaner
       - name: Přízemí
         entity: vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner

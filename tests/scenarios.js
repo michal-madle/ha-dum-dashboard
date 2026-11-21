@@ -43,7 +43,18 @@ for (const room of config.heating.rooms) states[room.entity] = tado("auto", { te
 for (const room of config.cooling.rooms) states[room.entity] = ac("off", { temperature: 22 });
 for (const group of config.devices ?? []) for (const item of group.entities) states[item.entity] = entity(item.entity.startsWith("vacuum.") ? "docked" : "off");
 states["switch.kuchyne_osvetleni_kuchyne"] = entity("on");
-states["vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner"] = entity("cleaning", {}, 12);
+// The lamp and the vacuums with the attributes they have in Home Assistant (xiaomi_miot; ha-config/ha/entities.json).
+states["light.yeelink_bslamp2_cd35_light"] = entity("off", { supported_color_modes: ["color_temp", "hs"], min_color_temp_kelvin: 1700, max_color_temp_kelvin: 6500, friendly_name: "Mi Bedside Lamp 2 Light" });
+states["input_number.lampa_pracovna_jas_po_zapnuti"] = entity("40", { min: 0, max: 100, step: 5 });
+const VACUUM = { fan_speed_list: ["Silent", "Basic", "Strong", "Full Speed"], fan_speed: "Basic", battery_level: 100, clean_area: 42, clean_time: 38 };
+states["vacuum.roborock_s5_ea9e_robot_cleaner"] = entity("docked", VACUUM);
+states["vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner"] = entity("cleaning", { ...VACUUM, battery_level: 64, fan_speed: "Strong" }, 12);
+// A map for the upper floor: in Home Assistant a camera (Xiaomi Cloud Map Extractor) or an image entity.
+const patro = config.devices?.flatMap((group) => group.entities).find((item) => item.entity === "vacuum.roborock_s5_ea9e_robot_cleaner");
+if (patro) patro.map = "camera.roborock_patro_mapa";
+states["camera.roborock_patro_mapa"] = entity("idle", {
+  entity_picture: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220"><rect width="320" height="220" fill="#2c2c2e"/><path d="M30 30h160v80h100v90H30z" fill="#3a6ea5"/><circle cx="120" cy="150" r="8" fill="#fff"/></svg>'),
+});
 if (config.health) {
   config.health.batteries.forEach((item, index) => (states[item.entity] = entity(String([90, 15, 64, 77, 100, 55, 81][index] ?? 80))));
   for (const item of config.health.connections) states[item.entity] = entity("on");

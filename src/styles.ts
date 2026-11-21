@@ -151,6 +151,77 @@ export const styles = css`
     color: var(--dd-secondary);
     font-size: 24px;
   }
+  /* Popup of a light or a vacuum (CURRENT_SPEC.md, Popupy zařízení): rows of settings, each a name and value over a slider. */
+  .device-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .setting {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .setting-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 17px;
+    line-height: 22px;
+  }
+  .setting-value {
+    color: var(--dd-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  /* A setting that does not change the light now (Jas po zapnutí) stands apart from the live ones. */
+  .setting.apart {
+    padding-top: 16px;
+    border-top: 0.5px solid var(--dd-sep);
+  }
+  .swatch {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 20%);
+    vertical-align: middle;
+  }
+  .setting small {
+    color: var(--dd-secondary);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .vacuum-map {
+    display: block;
+    width: 100%;
+    max-height: 360px;
+    margin: 0;
+    object-fit: contain;
+    border-radius: 12px;
+    background: var(--dd-card);
+  }
+  .vacuum-map.empty {
+    display: grid;
+    place-items: center;
+    min-height: 120px;
+    color: var(--dd-secondary);
+    font-size: 15px;
+  }
+  .vacuum-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
   .detail h3 {
     margin: 16px 0 4px;
     color: var(--dd-secondary);

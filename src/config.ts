@@ -1,6 +1,6 @@
 import { checkKeys, entityId, fail, isRecord, languageSetting, localizedText, section, text, withCardName } from "ha-dashboard-kit/config";
 import type { LocalizedText } from "ha-dashboard-kit/config";
-import type { Battery, Filter, Maintenance, Named, Preset, Settings } from "./types";
+import type { Device, Battery, Filter, Maintenance, Named, Preset, Settings } from "./types";
 
 /*
  * The YAML of the card (CURRENT_SPEC.md, Konfigurace). The rules are the kit's: every key is optional, a key without a
@@ -117,7 +117,20 @@ function normalize(raw: unknown): Settings {
     checkKeys(item, ["name", "entities"], at);
     return {
       name: localizedText(item.name, `${at}.name`) ?? fail(`${at}.name is missing.`),
-      entities: named(item.entities, `${at}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"]),
+      entities: list(item.entities, `${at}.entities`).map((entry, place): Device => {
+        const where = `${at}.entities[${place}]`;
+        if (!isRecord(entry)) fail(`${where} must be a mapping with name and entity.`);
+        checkKeys(entry, ["name", "entity", "startup_brightness", "map"], where);
+        const [device] = named([{ name: entry.name, entity: entry.entity }], `${at}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"]);
+        const domain = device.entity.split(".")[0];
+        // Uživatel 21. 11. 2026: „Při spuštění potřebuji nastavit konkrétní jas“ (light) and „kartu vysavačů s mapou“ (vacuum).
+        if (entry.startup_brightness != null && domain !== "light") fail(`${where}.startup_brightness is only for a light.`);
+        if (entry.map != null && domain !== "vacuum") fail(`${where}.map is only for a vacuum.`);
+        const startupBrightness = entityId(entry.startup_brightness, `${where}.startup_brightness`, { domain: "input_number" });
+        const map = entityId(entry.map, `${where}.map`, { example: "camera.example" });
+        if (map && !["camera", "image"].includes(map.split(".")[0])) fail(`${where}.map must be a camera or an image, not ${map}.`);
+        return { ...device, ...(startupBrightness ? { startupBrightness } : {}), ...(map ? { map } : {}) };
+      }),
     };
   });
 

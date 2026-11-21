@@ -8,6 +8,14 @@ export interface Named {
   entity: string;
 }
 
+/** A device of the sections Světla, Zásuvky, Vysavače … with what its popup needs. */
+export interface Device extends Named {
+  /** A light: the input_number with the brightness after switching on (0 = unchanged); shown in the popup. */
+  startupBrightness?: string;
+  /** A vacuum: the camera or image entity with its map; shown in the popup. */
+  map?: string;
+}
+
 export interface Battery {
   name: LocalizedText;
   /** binary_sensor: on = the battery is low. */
@@ -76,7 +84,7 @@ export interface Settings {
   heating: { resume?: string; rooms: Named[] };
   cooling: { rooms: Named[] };
   /** Further sections of tiles (Světla, Zásuvky, Vysavače …), each with its own heading, in this order. */
-  devices: { name: LocalizedText; entities: Named[] }[];
+  devices: { name: LocalizedText; entities: Device[] }[];
   /** Zdraví (uživatel 13. 11. 2026: „Q214 ok“): baterie čidel, připojení, systém, aktualizace. */
   health: {
     batteryLow: number;

@@ -13,7 +13,7 @@ Karta je třetí vedle [Klima Dashboard](https://github.com/michal-madle/ha-klim
 | Žaluzie | předvolby Den, Stín, Tma pro všechny žaluzie; šipka otevře detail s poslední akcí a předvolbami každé místnosti |
 | Větrání | Větrací režim a větráky |
 | Topení, Klimatizace | dlaždice místností; klepnutí otevře společný popup Topení / Klimatizace; v létě je Klimatizace nahoře |
-| Další zařízení | vlastní oddíly z konfigurace (například Světla, Zásuvky, Vysavače); vysavač dvojklepem spustí úklid, při úklidu ho pošle do doku |
+| Další zařízení | vlastní oddíly z konfigurace (například Světla, Zásuvky, Vysavače); vypínač dvojklepem přepne; světlo s jasem nebo barvou a vysavač otevřou klepnutím popup (jas, barva, teplota barvy, jas po zapnutí; mapa, úklid, dok, sací výkon, baterie) |
 | Zdraví | Vyžaduje pozornost, Baterie čidel, Připojení, Systém (například NAS), Aktualizace |
 | Co se stalo | deník dneška z deníku Home Assistantu: co se stalo v jedné chvíli je jeden řádek s příčinou a pod ní, co následovalo |
 | Pravidla domu | jen pro správce Home Assistantu: všechny automatizace s popisem z jejich konfigurace |
@@ -54,7 +54,7 @@ Karta je třetí vedle [Klima Dashboard](https://github.com/michal-madle/ha-klim
 | `ventilation` | Větrací režim (`mode`) a větráky (`fans`) |
 | `heating`, `cooling` | místnosti; `heating.resume` je tlačítko „Zpět na plán“ |
 | `send_delay_seconds` | za kolik sekund po poslední změně popup Topení / Klimatizace změnu odešle (výchozí 2; při zavření hned) |
-| `devices` | další oddíly dlaždic: `name` oddílu a `entities` (light, switch, fan, input_boolean, vacuum) |
+| `devices` | další oddíly dlaždic: `name` oddílu a `entities` (light, switch, fan, input_boolean, vacuum); u světla volitelně `startup_brightness` (input_number s jasem po zapnutí, 0 = neměnit; jas nastaví automatizace Home Assistantu), u vysavače `map` (kamera nebo obrázek s mapou) |
 | `health` | `battery_low` (výchozí 20 %), `batteries` (senzory v %), `connections` (`on` = připojeno), `system` (hodnota s volitelnou mezí `max`, stav svazku jiný než `normal` nebo binary_sensor `on` je problém), `updates: true` (čekající aktualizace celého Home Assistantu) |
 | `house_mode_entity`, `house_modes.summer` | v létě je Klimatizace nad Topením |
 | `guard` | časy chráněného gesta (podržení, dvojité klepnutí, nápověda) |

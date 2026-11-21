@@ -482,7 +482,7 @@ test.describe("ovládání", () => {
     }
   });
 
-  test("další zařízení: každý druh vlastní oddíl za klimatizací; světlo přepne dvojklep a bliká do potvrzení; vysavač dvojklepem spustí úklid nebo jede do doku", async ({ page }) => {
+  test("další zařízení: každý druh vlastní oddíl za klimatizací; vypínač přepne dvojklep; lampa a vysavač otevřou popup jedním klepnutím", async ({ page }) => {
     await open(page);
     const names = await headings(page);
     expect(names.slice(names.indexOf("Klimatizace") + 1)).toEqual(["Světla", "Zásuvky", "Vysavače", "Zdraví"]);
@@ -490,19 +490,67 @@ test.describe("ovládání", () => {
       ["Kuchyně", "Zapnuto", "on"],
       ["Lampa pracovna", "Vypnuto", "off"],
     ]);
-    const lamp = tile(page, "devices-0", "Lampa pracovna");
-    await lamp.dblclick();
-    expect((await calls(page)).at(-1)).toEqual({ domain: "homeassistant", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light" } });
-    await expect(lamp).toHaveAttribute("pending", "");
-    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on" } });
-    await expect(lamp).not.toHaveAttribute("pending", "");
+    // Vypínač bez dalších možností přepíná dvojklepem a bliká do potvrzení.
+    const kitchen = tile(page, "devices-0", "Kuchyně");
+    await kitchen.dblclick();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "homeassistant", service: "turn_off", data: { entity_id: "switch.kuchyne_osvetleni_kuchyne" } });
+    await expect(kitchen).toHaveAttribute("pending", "");
+    // Lampa a vysavače mají šipku a otevřou popup (uživatel 21. 11. 2026: „u řízení potřebuji popupy“).
+    await expect(tile(page, "devices-0", "Lampa pracovna").locator(".chevron")).toHaveText("›");
     expect((await tiles(page, "devices-2")).map((item) => item.text)).toEqual(["V doku", "Uklízí · 12 min"]);
-    // Vysavač: dvojklep spustí úklid, uklízející pošle do doku („Q221 A“).
-    await tile(page, "devices-2", "Patro").dblclick();
+    await expect(tile(page, "devices-2", "Patro").locator(".chevron")).toHaveText("›");
+  });
+
+  test("popup lampy: zapnutí, jas, barva, teplota barvy a jas po zapnutí", async ({ page }) => {
+    await open(page);
+    await tile(page, "devices-0", "Lampa pracovna").click();
+    const sheet = page.locator('[data-part="device-detail"]');
+    await expect(page.locator("dd-sheet h2").first()).toBeVisible();
+    await expect(sheet.locator(".setting-head > span:first-child")).toHaveText(["Jas", "Barva", "Teplota barvy", "Jas po zapnutí"]);
+    await expect(sheet.locator(".setting").last().locator(".setting-value")).toHaveText(/40\s%/);
+    await sheet.locator("dd-switch").getByRole("switch").click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", brightness_pct: 40 } });
+    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on", attributes: { supported_color_modes: ["color_temp", "hs"], min_color_temp_kelvin: 1700, max_color_temp_kelvin: 6500, brightness: 128, color_mode: "color_temp", color_temp_kelvin: 2700, hs_color: [30, 60] } } });
+    await expect(tile(page, "devices-0", "Lampa pracovna")).toContainText(/Zapnuto\s·\s50\s%/);
+    await expect(sheet.locator(".setting").first().locator(".setting-value")).toHaveText(/50\s%/);
+    await expect(sheet.locator(".setting").nth(2).locator(".setting-value")).toHaveText(/2\s700\sK/);
+    const set = async (index: number, value: number) =>
+      sheet.locator("dd-slider").nth(index).locator("input[type=range]").evaluate((input: HTMLInputElement, v) => {
+        input.value = String(v);
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }, value);
+    await set(0, 30);
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", brightness_pct: 30 } });
+    await set(1, 240);
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", hs_color: [240, 100] } });
+    await set(2, 4000);
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", color_temp_kelvin: 4000 } });
+    await set(3, 60);
+    expect((await calls(page)).at(-1)).toEqual({ domain: "input_number", service: "set_value", data: { entity_id: "input_number.lampa_pracovna_jas_po_zapnuti", value: 60 } });
+    // 0 = jas po zapnutí se nemění.
+    await update(page, { "input_number.lampa_pracovna_jas_po_zapnuti": { state: "0" } });
+    await expect(sheet.locator(".setting").last().locator(".setting-value")).toHaveText("Neměnit");
+    expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+  });
+
+  test("popup vysavače: mapa, uklidit nebo pozastavit, do doku, sací výkon, baterie a poslední úklid", async ({ page }) => {
+    await open(page);
+    await tile(page, "devices-2", "Patro").click();
+    const sheet = page.locator('[data-part="device-detail"]');
+    await expect(sheet.locator("img.vacuum-map")).toHaveAttribute("alt", "Mapa");
+    await expect(sheet.locator(".health-row")).toHaveText([/Baterie\s*100\s%/, /Poslední úklid\s*42\sm²\s·\s38 min/]);
+    await sheet.locator("dd-tile").filter({ hasText: "Uklidit" }).click();
     expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "start", data: { entity_id: "vacuum.roborock_s5_ea9e_robot_cleaner" } });
-    await expect(tile(page, "devices-2", "Patro")).toHaveAttribute("pending", "");
-    await page.waitForTimeout(500);
-    await tile(page, "devices-2", "Přízemí").dblclick();
+    await sheet.locator("dd-segmented").getByRole("radio", { name: "Silný" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "set_fan_speed", data: { entity_id: "vacuum.roborock_s5_ea9e_robot_cleaner", fan_speed: "Strong" } });
+    expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+    await page.keyboard.press("Escape");
+    // Uklízející vysavač bez mapy: Pozastavit a Do doku.
+    await tile(page, "devices-2", "Přízemí").click();
+    await expect(sheet.locator("img.vacuum-map")).toHaveCount(0);
+    await sheet.locator("dd-tile").filter({ hasText: "Pozastavit" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "pause", data: { entity_id: "vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner" } });
+    await sheet.locator("dd-tile").filter({ hasText: "Do doku" }).click();
     expect((await calls(page)).at(-1)).toEqual({ domain: "vacuum", service: "return_to_base", data: { entity_id: "vacuum.technicka_mistnost_roborock_prizemi_robot_cleaner" } });
   });
 

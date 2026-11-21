@@ -16,7 +16,7 @@ import { normalizeConfig } from "./config";
 import { cardLanguage, getI18n } from "./i18n";
 import type { I18n } from "./i18n";
 import { styles } from "./styles";
-import type { HomeAssistant, Named, Preset, Settings } from "./types";
+import type { Device, HassEntity, HomeAssistant, Named, Preset, Settings } from "./types";
 import { logRows, logTime, shortNames } from "./log";
 import type { LogEntry, LogItem, LogRow } from "./log";
 
@@ -82,7 +82,7 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}`;
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}` | `device:${string}`;
   /** Kniha pravidel: each automation of Home Assistant with its description (loaded when opened). */
   @state() private _rules?: { id: string; name: string; description: string; on: boolean }[] | "failed";
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
@@ -189,7 +189,7 @@ export class HaDumDashboard extends LitElement {
       ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderHealth(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)} ${this.renderDeviceDetail(config, i18n)}`;
   }
 
   /* ---------- Zdraví ---------- */
@@ -997,8 +997,8 @@ export class HaDumDashboard extends LitElement {
   /* ---------- Další zařízení (Světla, Zásuvky, Vysavače …) ---------- */
 
   /**
-   * One section per kind from the configuration („Q218 zatím A“). A light, a switch or a fan is a guarded toggle like
-   * a fan of Větrání; a vacuum starts cleaning, or goes home while it cleans („Q221 A“).
+   * One section per kind from the configuration („Q218 zatím A“). A switch, a fan and a light that only switches are a
+   * guarded toggle like a fan of Větrání; a vacuum and a light with brightness or colour open their popup.
    */
   private renderDevices(config: Settings, i18n: I18n): TemplateResult[] {
     const t = i18n.t;
@@ -1010,31 +1010,21 @@ export class HaDumDashboard extends LitElement {
             ${group.entities.map((item, index) => {
               const entity = entityState(this.hass, item.entity);
               const missing = !entity || isNoValue(entity.state);
-              if (item.entity.startsWith("vacuum.")) {
-                const cleaning = entity?.state === "cleaning";
-                const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
-                const words = entity && hass?.formatEntityState ? hass.formatEntityState(entity) : (entity?.state ?? "");
-                const text = missing ? t.unavailable : cleaning ? [words, this.duration(item.entity, i18n)].filter(Boolean).join(" · ") : words;
-                // A double tap (or holding) starts cleaning; while it cleans, it sends it home (uživatel 13. 11. 2026: „Q221 A“).
-                const key = `vacuum:${item.entity}`;
+              // A vacuum and a light with more than on and off open their popup (uživatel 21. 11. 2026: „To co ma více
+              // možností než jen zapnout vypnout u řízení potřebuji popupy. At už standardní nebo vlastní“); this replaces the
+              // double tap of a vacuum („Q221 A“). Opening changes nothing, so it is one tap.
+              if (item.entity.startsWith("vacuum.") || this.lightOptions(item, entity) !== undefined) {
+                const vacuum = item.entity.startsWith("vacuum.");
+                const active = vacuum ? entity?.state === "cleaning" : entity?.state === "on";
+                const text = missing ? t.unavailable : vacuum ? this.vacuumText(item, entity!, i18n) : this.lightText(entity!, i18n);
                 return html`<dd-tile
-                  kind="action"
-                  guarded
+                  kind="open"
                   data-entity=${item.entity}
                   .name=${this.name(item.name)}
                   .text=${text}
-                  .state=${(cleaning ? "on" : missing ? "off" : "idle") as TileState}
-                  .disabled=${missing}
-                  .hint=${t.hint}
-                  .hintAlign=${this.align(index)}
-                  .holdMs=${config.guard.holdMs}
-                  .doubleTapMs=${config.guard.doubleTapMs}
-                  .hintSeconds=${config.guard.hintSeconds}
-                  .pending=${this.pending.has(key)}
-                  @hdk-press=${() =>
-                    cleaning
-                      ? this.send(key, { entities: [item.entity], done: () => ["returning", "docked"].includes(readText(this.hass, item.entity) ?? "") }, "vacuum", "return_to_base", { entity_id: item.entity })
-                      : this.send(key, { entities: [item.entity], done: () => readText(this.hass, item.entity) === "cleaning" }, "vacuum", "start", { entity_id: item.entity })}
+                  .label=${`${this.name(item.name)}. ${text}`}
+                  .state=${(active ? "on" : missing ? "off" : vacuum ? "idle" : "off") as TileState}
+                  @hdk-open=${() => (this._detail = `device:${item.entity}`)}
                 ></dd-tile>`;
               }
               const on = entity?.state === "on";
@@ -1062,6 +1052,249 @@ export class HaDumDashboard extends LitElement {
             })}
           </div>`,
       );
+  }
+
+  /* ---------- Popupy zařízení: světlo a vysavač ---------- */
+
+  /** What a light can do besides on and off (its colour modes); undefined when it only switches and has no startup brightness. */
+  private lightOptions(item: Device, entity: HassEntity | undefined): { brightness: boolean; hue: boolean; temperature: boolean } | undefined {
+    if (!item.entity.startsWith("light.")) return undefined;
+    const modes = entity?.attributes.supported_color_modes;
+    const list = Array.isArray(modes) ? modes.map(String) : [];
+    const hue = list.some((mode) => ["hs", "rgb", "rgbw", "rgbww", "xy"].includes(mode));
+    const temperature = list.includes("color_temp");
+    const brightness = hue || temperature || list.includes("brightness") || list.includes("white");
+    if (!brightness && !item.startupBrightness) return undefined;
+    return { brightness, hue, temperature };
+  }
+
+  /** Brightness of a light in % (Home Assistant keeps 0–255). */
+  private lightPercent(entity: HassEntity | undefined): number | undefined {
+    const value = Number(entity?.attributes.brightness);
+    return entity?.state === "on" && Number.isFinite(value) ? Math.max(1, Math.round((value / 255) * 100)) : undefined;
+  }
+
+  private lightText(entity: HassEntity, i18n: I18n): string {
+    const percent = this.lightPercent(entity);
+    if (entity.state !== "on") return i18n.t.off;
+    return percent === undefined ? i18n.t.on : `${i18n.t.on} · ${i18n.percent(percent)}`;
+  }
+
+  /** The vacuum in words as Home Assistant says it, with the time it cleans; the battery when it is not full and not cleaning. */
+  private vacuumText(item: Device, entity: HassEntity, i18n: I18n): string {
+    const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
+    const words = hass?.formatEntityState ? hass.formatEntityState(entity) : entity.state;
+    if (entity.state === "cleaning") return [words, this.duration(item.entity, i18n)].filter(Boolean).join(" · ");
+    return words;
+  }
+
+  private findDevice(config: Settings, entity: string): Device | undefined {
+    for (const group of config.devices) for (const item of group.entities) if (item.entity === entity) return item;
+    return undefined;
+  }
+
+  /** The popup of a light or a vacuum (one tap everywhere in it: the popup was opened on purpose, „Q188“). */
+  private renderDeviceDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    const id = this._detail?.startsWith("device:") ? this._detail.slice(7) : undefined;
+    const item = id ? this.findDevice(config, id) : undefined;
+    const entity = item ? entityState(this.hass, item.entity) : undefined;
+    const missing = !entity || isNoValue(entity.state);
+    const sub = !item ? "" : missing ? i18n.t.unavailable : item.entity.startsWith("vacuum.") ? this.vacuumText(item, entity!, i18n) : this.lightText(entity!, i18n);
+    return html`<dd-sheet .open=${item !== undefined} .heading=${item ? this.name(item.name) : ""} .sub=${sub} .closeLabel=${i18n.t.close} @hdk-close=${() => (this._detail = undefined)}>
+      ${item
+        ? html`<div class="detail device-detail" data-part="device-detail" data-entity=${item.entity}>
+            ${item.entity.startsWith("vacuum.") ? this.renderVacuum(item, entity, missing, i18n) : this.renderLight(item, entity, missing, i18n)}
+          </div>`
+        : nothing}
+    </dd-sheet>`;
+  }
+
+  /** One setting of a popup: its name and value above, the slider of the kit under it. */
+  private setting(name: string, value: string | TemplateResult, slider: TemplateResult, note?: string, apart = false): TemplateResult {
+    return html`<div class="setting ${apart ? "apart" : ""}">
+      <div class="setting-head"><span>${name}</span><span class="setting-value">${value}</span></div>
+      ${slider}
+      ${note ? html`<small>${note}</small>` : nothing}
+    </div>`;
+  }
+
+  /**
+   * The light (uživatel 21. 11. 2026: „u lampy bedside nastavovat barvu a jas. Při spuštění potřebuji nastavit konkrétní
+   * jas“): on and off, brightness, colour (a rainbow bar), colour temperature (warm to cold) and the brightness after
+   * switching on, which an automation of Home Assistant applies (`startup_brightness`, 0 = unchanged).
+   */
+  private renderLight(item: Device, entity: HassEntity | undefined, missing: boolean, i18n: I18n): TemplateResult {
+    const t = i18n.t;
+    const options = this.lightOptions(item, entity) ?? { brightness: false, hue: false, temperature: false };
+    const on = entity?.state === "on";
+    const percent = this.lightPercent(entity);
+    const hs = entity?.attributes.hs_color;
+    const hue = Array.isArray(hs) && Number.isFinite(Number(hs[0])) ? Math.round(Number(hs[0])) : undefined;
+    const kelvin = Number(entity?.attributes.color_temp_kelvin);
+    const minK = Number(entity?.attributes.min_color_temp_kelvin) || 2700;
+    const maxK = Number(entity?.attributes.max_color_temp_kelvin) || 6500;
+    const mode = String(entity?.attributes.color_mode ?? "");
+    const kelvinText = (value: number) => `${i18n.whole(value)}\u00a0K`;
+    const turnOn = (data: Record<string, unknown>) => this.call("light", "turn_on", { entity_id: item.entity, ...data });
+    const startup = item.startupBrightness ? readNumber(this.hass, item.startupBrightness) : undefined;
+    return html`<div class="setting-row">
+        <span>${t.device.light}</span>
+        <dd-switch
+          .checked=${on}
+          .disabled=${missing}
+          .label=${`${this.name(item.name)}: ${t.device.light}`}
+          .pending=${this.pending.has(`toggle:${item.entity}`)}
+          @hdk-toggle=${(event: CustomEvent<{ checked: boolean }>) => {
+            const want = event.detail.checked ? "on" : "off";
+            // Switched on here, the light comes on at once at its startup brightness: the automation of Home Assistant only
+            // takes the button and the app, so it never overrides a brightness set in this popup.
+            const at = event.detail.checked && startup !== undefined && startup > 0 ? { brightness_pct: Math.round(startup) } : {};
+            this.send(`toggle:${item.entity}`, { entities: [item.entity], done: () => readText(this.hass, item.entity) === want }, "light", event.detail.checked ? "turn_on" : "turn_off", { entity_id: item.entity, ...at });
+          }}
+        ></dd-switch>
+      </div>
+      ${options.brightness
+        ? this.setting(
+            t.device.brightness,
+            percent === undefined ? t.off : i18n.percent(percent),
+            html`<dd-slider
+              min="5"
+              max="100"
+              step="5"
+              .value=${percent ?? 5}
+              .disabled=${missing}
+              .label=${t.device.brightness}
+              .valueText=${percent === undefined ? t.off : i18n.percent(percent)}
+              .minLabel=${i18n.percent(5)}
+              .maxLabel=${i18n.percent(100)}
+              @hdk-change=${(event: CustomEvent<{ value: number }>) => turnOn({ brightness_pct: event.detail.value })}
+            ></dd-slider>`,
+          )
+        : nothing}
+      ${options.hue
+        ? this.setting(
+            t.device.colour,
+            // The colour as a dot of that colour, not a number of degrees (a number would mean nothing here).
+            mode === "color_temp" || hue === undefined ? "" : html`<span class="swatch" style=${`background: hsl(${hue} 100% 50%)`}></span>`,
+            html`<dd-slider
+              min="0"
+              max="360"
+              step="5"
+              .value=${hue ?? 0}
+              .disabled=${missing}
+              .label=${t.device.colour}
+              .valueText=${hue === undefined ? "" : `${hue}°`}
+              .track=${"linear-gradient(to right, hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%), hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%))"}
+              @hdk-change=${(event: CustomEvent<{ value: number }>) => turnOn({ hs_color: [event.detail.value, 100] })}
+            ></dd-slider>`,
+          )
+        : nothing}
+      ${options.temperature
+        ? this.setting(
+            t.device.temperature,
+            mode === "color_temp" && Number.isFinite(kelvin) ? kelvinText(kelvin) : "",
+            html`<dd-slider
+              min=${minK}
+              max=${maxK}
+              step="100"
+              .value=${Number.isFinite(kelvin) ? kelvin : minK}
+              .disabled=${missing}
+              .label=${t.device.temperature}
+              .valueText=${Number.isFinite(kelvin) ? kelvinText(kelvin) : ""}
+              .minLabel=${t.device.warm}
+              .maxLabel=${t.device.cold}
+              .track=${"linear-gradient(to right, #ff9f3a, #ffd9a8, #ffffff, #cddcff)"}
+              @hdk-change=${(event: CustomEvent<{ value: number }>) => turnOn({ color_temp_kelvin: event.detail.value })}
+            ></dd-slider>`,
+          )
+        : nothing}
+      ${item.startupBrightness
+        ? this.setting(
+            t.device.startup,
+            startup === undefined ? t.unavailable : startup > 0 ? i18n.percent(Math.round(startup)) : t.device.unchanged,
+            html`<dd-slider
+              min="0"
+              max="100"
+              step="5"
+              .value=${startup ?? 0}
+              .disabled=${startup === undefined}
+              .label=${t.device.startup}
+              .valueText=${startup === undefined ? t.unavailable : startup > 0 ? i18n.percent(Math.round(startup)) : t.device.unchanged}
+              .minLabel=${t.device.unchanged}
+              .maxLabel=${i18n.percent(100)}
+              @hdk-change=${(event: CustomEvent<{ value: number }>) => this.call("input_number", "set_value", { entity_id: item.startupBrightness, value: event.detail.value })}
+            ></dd-slider>`,
+            t.device.startupNote,
+            true,
+          )
+        : nothing}`;
+  }
+
+  /**
+   * The vacuum (uživatel 21. 11. 2026: „u vysavačů potřebuji kartu vysavačů s mapou, baterii atd.“): its map (`map`, a camera
+   * or an image entity), the state, the battery, the last cleaning, suction and the actions start or pause and dock.
+   */
+  private renderVacuum(item: Device, entity: HassEntity | undefined, missing: boolean, i18n: I18n): TemplateResult {
+    const t = i18n.t;
+    const attributes = entity?.attributes ?? {};
+    const cleaning = entity?.state === "cleaning";
+    const map = item.map ? entityState(this.hass, item.map) : undefined;
+    const picture = map && !isNoValue(map.state) && typeof map.attributes.entity_picture === "string" ? map.attributes.entity_picture : undefined;
+    const battery = Number(attributes.battery_level);
+    const area = Number(attributes.clean_area);
+    const minutes = Number(attributes.clean_time);
+    const speeds = Array.isArray(attributes.fan_speed_list) ? attributes.fan_speed_list.map(String) : [];
+    const speed = typeof attributes.fan_speed === "string" ? attributes.fan_speed : "";
+    const rows: Array<[string, string]> = [];
+    // A vacuum that reports no battery (the integration reports an error) shows „––“, never hides the row.
+    rows.push([t.device.battery, Number.isFinite(battery) ? i18n.percent(Math.round(battery)) : "––"]);
+    if (!cleaning && Number.isFinite(area) && Number.isFinite(minutes) && (area > 0 || minutes > 0)) rows.push([t.device.lastClean, `${i18n.whole(area)}\u00a0m² · ${t.minutes(Math.round(minutes))}`]);
+    const run = `vacuum:${item.entity}`;
+    const home = `vacuum-home:${item.entity}`;
+    return html`${item.map
+        ? picture
+          ? html`<img class="vacuum-map" src=${picture} alt=${t.device.map} />`
+          : html`<p class="vacuum-map empty">${t.device.noMap}</p>`
+        : nothing}
+      <div class="vacuum-actions">
+        <dd-tile
+          kind="action"
+          centered
+          .name=${cleaning ? t.device.pause : t.device.clean}
+          .disabled=${missing}
+          .pending=${this.pending.has(run)}
+          @hdk-press=${() =>
+            cleaning
+              ? this.send(run, { entities: [item.entity], done: () => readText(this.hass, item.entity) !== "cleaning" }, "vacuum", "pause", { entity_id: item.entity })
+              : this.send(run, { entities: [item.entity], done: () => readText(this.hass, item.entity) === "cleaning" }, "vacuum", "start", { entity_id: item.entity })}
+        ></dd-tile>
+        <dd-tile
+          kind="action"
+          centered
+          .name=${t.device.dock}
+          .disabled=${missing || entity?.state === "docked"}
+          .pending=${this.pending.has(home)}
+          @hdk-press=${() => this.send(home, { entities: [item.entity], done: () => ["returning", "docked"].includes(readText(this.hass, item.entity) ?? "") }, "vacuum", "return_to_base", { entity_id: item.entity })}
+        ></dd-tile>
+      </div>
+      ${speeds.length
+        ? html`<div class="setting">
+            <div class="setting-head"><span>${t.device.suction}</span></div>
+            <dd-segmented
+              wrap
+              .label=${t.device.suction}
+              .value=${speed}
+              .disabled=${missing}
+              .pending=${this.pending.has(`speed:${item.entity}`)}
+              .options=${speeds.map((value) => ({ value, label: t.device.speeds[value] ?? value }))}
+              @hdk-select=${(event: CustomEvent<{ value: string }>) =>
+                this.send(`speed:${item.entity}`, { entities: [item.entity], done: () => entityState(this.hass, item.entity)?.attributes.fan_speed === event.detail.value }, "vacuum", "set_fan_speed", { entity_id: item.entity, fan_speed: event.detail.value })}
+            ></dd-segmented>
+          </div>`
+        : nothing}
+      ${rows.length
+        ? html`<div class="group">${rows.map(([label, value]) => html`<div class="health-row"><span class="main">${label}</span><span class="value">${value}</span></div>`)}</div>`
+        : nothing}`;
   }
 
   /* ---------- Topení a Klimatizace ---------- */
