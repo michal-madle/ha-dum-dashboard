@@ -114,8 +114,6 @@ export const en: typeof cs = {
     coloured: "Colour",
     colour: "Colour",
     temperature: "Colour temperature",
-    warm: "Warm",
-    cold: "Cool",
     startup: "Brightness when switched on",
     unchanged: "Unchanged",
     startupNote: "Applies when switched on by its button or from the Xiaomi app; here it comes on at this brightness at once.",

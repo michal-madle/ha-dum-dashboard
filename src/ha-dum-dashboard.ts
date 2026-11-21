@@ -1232,8 +1232,8 @@ export class HaDumDashboard extends LitElement {
               .disabled=${missing}
               .label=${t.device.temperature}
               .valueText=${Number.isFinite(kelvin) ? kelvinText(kelvin) : ""}
-              .minLabel=${t.device.warm}
-              .maxLabel=${t.device.cold}
+              .minLabel=${""}
+              .maxLabel=${""}
               .track=${"linear-gradient(to right, #ff9f3a, #ffd9a8, #ffffff, #cddcff)"}
               @hdk-change=${(event: CustomEvent<{ value: number }>) => turnOn({ color_temp_kelvin: event.detail.value })}
             ></dd-slider>`,

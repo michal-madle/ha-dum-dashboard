@@ -112,8 +112,6 @@ export const cs = {
     coloured: "Barevná",
     colour: "Barva",
     temperature: "Teplota barvy",
-    warm: "Teplá",
-    cold: "Studená",
     startup: "Jas po zapnutí",
     unchanged: "Neměnit",
     startupNote: "Platí pro zapnutí tlačítkem na lampě a z aplikace Xiaomi; odsud se lampa zapne rovnou tímto jasem.",

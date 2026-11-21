@@ -2001,11 +2001,14 @@ re.styles = Y`
       background: #fff;
       box-shadow: 0 2px 6px rgb(0 0 0 / 40%);
     }
+    /* A painted bar has a thin outline, so its light end stays visible on the light capsule. */
     input.painted::-webkit-slider-runnable-track {
       background: var(--track);
+      box-shadow: inset 0 0 0 1px var(--hdk-track-outline, rgb(128 128 128 / 45%));
     }
     input.painted::-moz-range-track {
       background: var(--track);
+      box-shadow: inset 0 0 0 1px var(--hdk-track-outline, rgb(128 128 128 / 45%));
     }
     input.painted::-moz-range-progress {
       background: transparent;
@@ -3091,8 +3094,6 @@ const us = {
     coloured: "Barevná",
     colour: "Barva",
     temperature: "Teplota barvy",
-    warm: "Teplá",
-    cold: "Studená",
     startup: "Jas po zapnutí",
     unchanged: "Neměnit",
     startupNote: "Platí pro zapnutí tlačítkem na lampě a z aplikace Xiaomi; odsud se lampa zapne rovnou tímto jasem.",
@@ -3220,8 +3221,6 @@ const us = {
     coloured: "Colour",
     colour: "Colour",
     temperature: "Colour temperature",
-    warm: "Warm",
-    cold: "Cool",
     startup: "Brightness when switched on",
     unchanged: "Unchanged",
     startupNote: "Applies when switched on by its button or from the Xiaomi app; here it comes on at this brightness at once.",
@@ -3349,8 +3348,6 @@ const us = {
     coloured: "Färg",
     colour: "Färg",
     temperature: "Färgtemperatur",
-    warm: "Varm",
-    cold: "Kall",
     startup: "Ljusstyrka vid tändning",
     unchanged: "Oförändrad",
     startupNote: "Gäller när den tänds med knappen eller i Xiaomi-appen; här tänds den direkt med denna ljusstyrka.",
@@ -3557,10 +3554,10 @@ const gs = Y`
   }
   .swatch {
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 20%);
+    box-shadow: inset 0 0 0 1.5px rgb(128 128 128 / 50%);
     vertical-align: middle;
   }
   .setting small {
@@ -4804,8 +4801,8 @@ const Ss = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
               .disabled=${n}
               .label=${o.device.temperature}
               .valueText=${Number.isFinite(m) ? w(m) : ""}
-              .minLabel=${o.device.warm}
-              .maxLabel=${o.device.cold}
+              .minLabel=${""}
+              .maxLabel=${""}
               .track=${"linear-gradient(to right, #ff9f3a, #ffd9a8, #ffffff, #cddcff)"}
               @hdk-change=${(y) => g({ color_temp_kelvin: y.detail.value })}
             ></dd-slider>`
@@ -5043,4 +5040,4 @@ window.customCards.some((i) => i.type === "ha-dum-dashboard") || window.customCa
   description: Ie(is()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.21.1 · 2026-11-21 22:17 UTC · po b8e66f4 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.21.2 · 2026-11-21 22:18 UTC · po 972602a ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

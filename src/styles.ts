@@ -190,10 +190,10 @@ export const styles = css`
   }
   .swatch {
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 20%);
+    box-shadow: inset 0 0 0 1.5px rgb(128 128 128 / 50%);
     vertical-align: middle;
   }
   .setting small {

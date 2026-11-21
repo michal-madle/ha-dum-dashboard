@@ -114,8 +114,6 @@ export const sv: typeof cs = {
     coloured: "Färg",
     colour: "Färg",
     temperature: "Färgtemperatur",
-    warm: "Varm",
-    cold: "Kall",
     startup: "Ljusstyrka vid tändning",
     unchanged: "Oförändrad",
     startupNote: "Gäller när den tänds med knappen eller i Xiaomi-appen; här tänds den direkt med denna ljusstyrka.",
