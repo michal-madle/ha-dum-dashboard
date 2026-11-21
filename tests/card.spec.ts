@@ -501,19 +501,22 @@ test.describe("ovládání", () => {
     await expect(tile(page, "devices-2", "Patro").locator(".chevron")).toHaveText("›");
   });
 
-  test("popup lampy: zapnutí, jas, barva, teplota barvy a jas po zapnutí", async ({ page }) => {
+  test("popup lampy: zapnutí, jas, bílá nebo barevná (jen posuvník zvoleného režimu), jas po zapnutí", async ({ page }) => {
     await open(page);
     await tile(page, "devices-0", "Lampa pracovna").click();
     const sheet = page.locator('[data-part="device-detail"]');
-    await expect(page.locator("dd-sheet h2").first()).toBeVisible();
-    await expect(sheet.locator(".setting-head > span:first-child")).toHaveText(["Jas", "Barva", "Teplota barvy", "Jas po zapnutí"]);
+    const heads = () => sheet.locator(".setting-head > span:first-child");
+    // Vypnutá lampa režim nehlásí: Bílá a jen Teplota barvy („Nemůže najednou je tam White a nebo color ne zároveň“).
+    await expect(heads()).toHaveText(["Jas", "Teplota barvy", "Jas po zapnutí"]);
+    await expect(sheet.locator("dd-segmented").getByRole("radio", { name: "Bílá" })).toHaveAttribute("aria-checked", "true");
     await expect(sheet.locator(".setting").last().locator(".setting-value")).toHaveText(/40\s%/);
     await sheet.locator("dd-switch").getByRole("switch").click();
     expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", brightness_pct: 40 } });
-    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on", attributes: { supported_color_modes: ["color_temp", "hs"], min_color_temp_kelvin: 1700, max_color_temp_kelvin: 6500, brightness: 128, color_mode: "color_temp", color_temp_kelvin: 2700, hs_color: [30, 60] } } });
+    const LAMP = { supported_color_modes: ["color_temp", "hs"], min_color_temp_kelvin: 1700, max_color_temp_kelvin: 6500, brightness: 128 };
+    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on", attributes: { ...LAMP, color_mode: "color_temp", color_temp_kelvin: 2700, hs_color: [30, 60] } } });
     await expect(tile(page, "devices-0", "Lampa pracovna")).toContainText(/Zapnuto\s·\s50\s%/);
     await expect(sheet.locator(".setting").first().locator(".setting-value")).toHaveText(/50\s%/);
-    await expect(sheet.locator(".setting").nth(2).locator(".setting-value")).toHaveText(/2\s700\sK/);
+    await expect(sheet.locator(".setting").nth(1).locator(".setting-value")).toHaveText(/2\s700\sK/);
     const set = async (index: number, value: number) =>
       sheet.locator("dd-slider").nth(index).locator("input[type=range]").evaluate((input: HTMLInputElement, v) => {
         input.value = String(v);
@@ -521,11 +524,19 @@ test.describe("ovládání", () => {
       }, value);
     await set(0, 30);
     expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", brightness_pct: 30 } });
+    await set(1, 4000);
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", color_temp_kelvin: 4000 } });
+    // Barevná: lampa přejde do barvy s odstínem, který měla, a ukáže se jen Barva.
+    await sheet.locator("dd-segmented").getByRole("radio", { name: "Barevná" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", hs_color: [30, 100] } });
+    await update(page, { "light.yeelink_bslamp2_cd35_light": { state: "on", attributes: { ...LAMP, color_mode: "hs", color_temp_kelvin: null, hs_color: [30, 100] } } });
+    await expect(heads()).toHaveText(["Jas", "Barva", "Jas po zapnutí"]);
     await set(1, 240);
     expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", hs_color: [240, 100] } });
-    await set(2, 4000);
-    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", color_temp_kelvin: 4000 } });
-    await set(3, 60);
+    // Zpět na Bílou: bez známé teploty nejteplejší bílá.
+    await sheet.locator("dd-segmented").getByRole("radio", { name: "Bílá" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "light", service: "turn_on", data: { entity_id: "light.yeelink_bslamp2_cd35_light", color_temp_kelvin: 1700 } });
+    await set(2, 60);
     expect((await calls(page)).at(-1)).toEqual({ domain: "input_number", service: "set_value", data: { entity_id: "input_number.lampa_pracovna_jas_po_zapnuti", value: 60 } });
     // 0 = jas po zapnutí se nemění.
     await update(page, { "input_number.lampa_pracovna_jas_po_zapnuti": { state: "0" } });

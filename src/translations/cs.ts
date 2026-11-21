@@ -107,6 +107,9 @@ export const cs = {
   device: {
     light: "Svítí",
     brightness: "Jas",
+    lightMode: "Režim světla",
+    white: "Bílá",
+    coloured: "Barevná",
     colour: "Barva",
     temperature: "Teplota barvy",
     warm: "Teplá",

@@ -1130,13 +1130,22 @@ export class HaDumDashboard extends LitElement {
     const percent = this.lightPercent(entity);
     const hs = entity?.attributes.hs_color;
     const hue = Array.isArray(hs) && Number.isFinite(Number(hs[0])) ? Math.round(Number(hs[0])) : undefined;
-    const kelvin = Number(entity?.attributes.color_temp_kelvin);
+    // Home Assistant reports null in a colour mode: that is no temperature, not 0 K.
+    const rawKelvin = entity?.attributes.color_temp_kelvin;
+    const kelvin = typeof rawKelvin === "number" && rawKelvin > 0 ? rawKelvin : NaN;
     const minK = Number(entity?.attributes.min_color_temp_kelvin) || 2700;
     const maxK = Number(entity?.attributes.max_color_temp_kelvin) || 6500;
     const mode = String(entity?.attributes.color_mode ?? "");
     const kelvinText = (value: number) => `${i18n.whole(value)}\u00a0K`;
     const turnOn = (data: Record<string, unknown>) => this.call("light", "turn_on", { entity_id: item.entity, ...data });
     const startup = item.startupBrightness ? readNumber(this.hass, item.startupBrightness) : undefined;
+    // A light shines either in shades of white or in a colour, never both (uživatel 21. 11. 2026: „Lampa svítí buď odstíny
+    // bíle nebo barevně. Nemůže najednou je tam White a nebo color ne zároveň“): a choice Bílá | Barevná and only the slider
+    // of that mode. Off, the light reports no mode: Bílá is chosen until it shines in a colour.
+    const colourModes = ["hs", "rgb", "rgbw", "rgbww", "xy"];
+    const shown: "white" | "colour" = options.hue && (colourModes.includes(mode) || !options.temperature) ? "colour" : "white";
+    const both = options.hue && options.temperature;
+    const modeKey = `light-mode:${item.entity}`;
     return html`<div class="setting-row">
         <span>${t.device.light}</span>
         <dd-switch
@@ -1171,11 +1180,33 @@ export class HaDumDashboard extends LitElement {
             ></dd-slider>`,
           )
         : nothing}
-      ${options.hue
+      ${both
+        ? html`<dd-segmented
+            .label=${t.device.lightMode}
+            .value=${shown}
+            .disabled=${missing}
+            .pending=${this.pending.has(modeKey)}
+            .options=${[
+              { value: "white", label: t.device.white },
+              { value: "colour", label: t.device.coloured },
+            ]}
+            @hdk-select=${(event: CustomEvent<{ value: string }>) => {
+              const colour = event.detail.value === "colour";
+              const done = () => {
+                const now = String(entityState(this.hass, item.entity)?.attributes.color_mode ?? "");
+                return colour ? colourModes.includes(now) : now === "color_temp";
+              };
+              // White comes back at its colour temperature, else the warmest; a colour at the hue it had, at full saturation.
+              const data = colour ? { hs_color: [hue ?? 30, 100] } : { color_temp_kelvin: Number.isFinite(kelvin) ? kelvin : minK };
+              this.send(modeKey, { entities: [item.entity], done }, "light", "turn_on", { entity_id: item.entity, ...data });
+            }}
+          ></dd-segmented>`
+        : nothing}
+      ${options.hue && shown === "colour"
         ? this.setting(
             t.device.colour,
             // The colour as a dot of that colour, not a number of degrees (a number would mean nothing here).
-            mode === "color_temp" || hue === undefined ? "" : html`<span class="swatch" style=${`background: hsl(${hue} 100% 50%)`}></span>`,
+            hue === undefined || !on ? "" : html`<span class="swatch" style=${`background: hsl(${hue} 100% 50%)`}></span>`,
             html`<dd-slider
               min="0"
               max="360"
@@ -1189,10 +1220,10 @@ export class HaDumDashboard extends LitElement {
             ></dd-slider>`,
           )
         : nothing}
-      ${options.temperature
+      ${options.temperature && shown === "white"
         ? this.setting(
             t.device.temperature,
-            mode === "color_temp" && Number.isFinite(kelvin) ? kelvinText(kelvin) : "",
+            Number.isFinite(kelvin) && on ? kelvinText(kelvin) : "",
             html`<dd-slider
               min=${minK}
               max=${maxK}

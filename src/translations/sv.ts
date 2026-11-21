@@ -109,6 +109,9 @@ export const sv: typeof cs = {
   device: {
     light: "Tänd",
     brightness: "Ljusstyrka",
+    lightMode: "Ljusläge",
+    white: "Vitt",
+    coloured: "Färg",
     colour: "Färg",
     temperature: "Färgtemperatur",
     warm: "Varm",

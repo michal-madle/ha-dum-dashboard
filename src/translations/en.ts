@@ -109,6 +109,9 @@ export const en: typeof cs = {
   device: {
     light: "On",
     brightness: "Brightness",
+    lightMode: "Light mode",
+    white: "White",
+    coloured: "Colour",
     colour: "Colour",
     temperature: "Colour temperature",
     warm: "Warm",
