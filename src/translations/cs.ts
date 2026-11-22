@@ -15,8 +15,6 @@ export const cs = {
   cycles: (count: number, every: number) => `${count} z ${every} cyklů`,
   running: "Teď běží",
   nothingRuns: "Nic neběží",
-  minutes: (value: number) => `${value} min`,
-  hours: (h: number, min: number) => (min ? `${h} h ${min} min` : `${h} h`),
   covers: "Žaluzie",
   coversDetail: "Podrobnosti žaluzií",
   close: "Zavřít",

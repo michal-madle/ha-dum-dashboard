@@ -7,8 +7,11 @@ import type { LocalizedText } from "ha-dashboard-kit/config";
 import { hintStyles } from "ha-dashboard-kit/controls";
 import type { TileState } from "ha-dashboard-kit/controls";
 import { entityState, isNoValue, readNumber, readText } from "ha-dashboard-kit/entities";
+import { fetchHistory } from "ha-dashboard-kit/history";
+import { formatDuration } from "ha-dashboard-kit/i18n";
 import { HoldOrDoubleTap } from "ha-dashboard-kit/gesture";
 import { fitJoined, joined, joinedStyles, joinedText } from "ha-dashboard-kit/joined";
+import { Appearance } from "ha-dashboard-kit/palette";
 import { RunStarts } from "ha-dashboard-kit/runstart";
 import { Pending } from "ha-dashboard-kit/pending";
 import type { PendingCommand } from "ha-dashboard-kit/pending";
@@ -94,6 +97,8 @@ export class HaDumDashboard extends LitElement {
   private logTimer?: number;
   /** Commands on their way: the control pulses until Home Assistant reports the result (spec kitu, Odezva). */
   private readonly pending = new Pending(() => this.requestUpdate());
+  /** Dark or light like Home Assistant (ha-dashboard-kit/palette). */
+  private readonly appearance = new Appearance(this, () => this.appearance.apply(this.hass));
   /** The rooms the popup Topení / Klimatizace opened with (the tile that was tapped). */
   @state() private _climateSelected: string[] = [];
   /** The row whose menu "Odložit" is open. */
@@ -121,6 +126,7 @@ export class HaDumDashboard extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.appearance.connect();
     // The durations ("Pračka 42 min") move without any change of an entity.
     this.timer = window.setInterval(() => (this._now = Date.now()), 30000);
     window.addEventListener("pointerdown", this.closeMenu);
@@ -151,6 +157,7 @@ export class HaDumDashboard extends LitElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.appearance.disconnect();
     window.clearInterval(this.timer);
     window.clearInterval(this.logTimer);
     this.pending.clear();
@@ -163,7 +170,7 @@ export class HaDumDashboard extends LitElement {
 
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has("hass")) {
-      this.toggleAttribute("data-light", this.hass?.themes?.darkMode === false);
+      this.appearance.apply(this.hass);
       this._now = Date.now();
       if (!changed.get("hass")) void this.loadLog();
       this.pending.check(this.hass);
@@ -325,27 +332,15 @@ export class HaDumDashboard extends LitElement {
   private async loadCoverHistory(config: Settings, midnight: Date): Promise<void> {
     if (!config.covers.entities.length || !this.hass) return;
     try {
-      type Row = { s?: string; a?: Record<string, unknown>; lu?: number; lc?: number };
-      const answer = await this.hass.callWS<Record<string, Row[]>>({
-        type: "history/history_during_period",
-        start_time: midnight.toISOString(),
-        entity_ids: config.covers.entities,
-        include_start_time_state: true,
-        significant_changes_only: false,
-        minimal_response: false,
-        no_attributes: false,
-      });
+      // The positions are attributes; a row without them repeats the last ones (ha-dashboard-kit/history).
+      const answer = await fetchHistory(this.hass, config.covers.entities, midnight.getTime(), Date.now(), { attributes: true });
       const history: typeof this.coverHistory = {};
-      for (const [id, rows] of Object.entries(answer ?? {})) {
-        let last: { position: number; tilt: number } | undefined;
-        history[id] = (Array.isArray(rows) ? rows : []).flatMap((row) => {
-          // A row without attributes repeats the last ones (compressed history).
-          const position = Number(row.a?.current_position ?? last?.position);
-          const tilt = Number(row.a?.current_tilt_position ?? last?.tilt);
-          const time = Number(row.lu ?? row.lc) * 1000;
-          if (!Number.isFinite(position) || !Number.isFinite(tilt) || !Number.isFinite(time)) return [];
-          last = { position, tilt };
-          return [{ time, position, tilt }];
+      for (const [id, points] of Object.entries(answer)) {
+        history[id] = points.flatMap((point) => {
+          const position = Number(point.attributes?.current_position);
+          const tilt = Number(point.attributes?.current_tilt_position);
+          if (!Number.isFinite(position) || !Number.isFinite(tilt)) return [];
+          return [{ time: point.time, position, tilt }];
         });
       }
       this.coverHistory = history;
@@ -804,11 +799,10 @@ export class HaDumDashboard extends LitElement {
 
   /* ---------- Teď běží ---------- */
 
-  private duration(entityId: string, i18n: I18n): string {
+  private duration(entityId: string): string {
     const start = this.starts.of(this.hass, entityId);
     if (start === undefined) return "";
-    const minutes = Math.max(0, Math.floor((this._now - start) / 60000));
-    return minutes < 60 ? i18n.t.minutes(minutes) : i18n.t.hours(Math.floor(minutes / 60), minutes % 60);
+    return formatDuration((this._now - start) / 60000);
   }
 
   private renderRunning(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -816,7 +810,7 @@ export class HaDumDashboard extends LitElement {
     // Only what has no tile of its own (spec: „Teď běží ukazuje jen to, co nemá vlastní dlaždici“).
     const tiled = new Set(config.devices.flatMap((group) => group.entities.map((item) => item.entity)));
     const active = config.running.filter((item) => !tiled.has(item.entity) && ["on", "cleaning", "returning"].includes(readText(this.hass, item.entity) ?? ""));
-    const parts = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity, i18n)}`.trim());
+    const parts = active.map((item) => `${this.name(item.name)} ${this.duration(item.entity)}`.trim());
     return html`<h2><span>${i18n.t.running}</span></h2>
       <div class="group" data-part="running"><div class="row now ${active.length ? "" : "none"}"><span class="main" style="font-size:inherit;line-height:inherit">${parts.length ? joined(parts) : i18n.t.nothingRuns}</span></div></div>`;
   }
@@ -974,7 +968,7 @@ export class HaDumDashboard extends LitElement {
             guarded
             data-entity=${item.entity}
             .name=${this.name(item.name)}
-            .text=${missing ? t.unavailable : on ? t.runs(this.duration(item.entity, i18n)).trim() : t.off}
+            .text=${missing ? t.unavailable : on ? t.runs(this.duration(item.entity)).trim() : t.off}
             .state=${(on ? "on" : "off") as TileState}
             .disabled=${missing}
             .hint=${t.hint}
@@ -1084,7 +1078,7 @@ export class HaDumDashboard extends LitElement {
   private vacuumText(item: Device, entity: HassEntity, i18n: I18n): string {
     const hass = this.hass as (HomeAssistant & { formatEntityState?: (stateObj: unknown) => string }) | undefined;
     const words = hass?.formatEntityState ? hass.formatEntityState(entity) : entity.state;
-    if (entity.state === "cleaning") return [words, this.duration(item.entity, i18n)].filter(Boolean).join(" · ");
+    if (entity.state === "cleaning") return [words, this.duration(item.entity)].filter(Boolean).join(" · ");
     return words;
   }
 
@@ -1279,7 +1273,7 @@ export class HaDumDashboard extends LitElement {
     const rows: Array<[string, string]> = [];
     // A vacuum that reports no battery (the integration reports an error) shows „––“, never hides the row.
     rows.push([t.device.battery, Number.isFinite(battery) ? i18n.percent(Math.round(battery)) : "––"]);
-    if (!cleaning && Number.isFinite(area) && Number.isFinite(minutes) && (area > 0 || minutes > 0)) rows.push([t.device.lastClean, `${i18n.whole(area)}\u00a0m² · ${t.minutes(Math.round(minutes))}`]);
+    if (!cleaning && Number.isFinite(area) && Number.isFinite(minutes) && (area > 0 || minutes > 0)) rows.push([t.device.lastClean, `${i18n.whole(area)}\u00a0m² · ${formatDuration(Math.round(minutes))}`]);
     const run = `vacuum:${item.entity}`;
     const home = `vacuum-home:${item.entity}`;
     return html`${item.map

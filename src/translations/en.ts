@@ -17,8 +17,6 @@ export const en: typeof cs = {
   cycles: (count, every) => `${count} of ${every} cycles`,
   running: "Running now",
   nothingRuns: "Nothing is running",
-  minutes: (value) => `${value} min`,
-  hours: (h, min) => (min ? `${h} h ${min} min` : `${h} h`),
   covers: "Blinds",
   coversDetail: "Blinds in detail",
   close: "Close",

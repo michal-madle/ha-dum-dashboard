@@ -17,8 +17,6 @@ export const sv: typeof cs = {
   cycles: (count, every) => `${count} av ${every} cykler`,
   running: "Körs nu",
   nothingRuns: "Inget körs",
-  minutes: (value) => `${value} min`,
-  hours: (h, min) => (min ? `${h} h ${min} min` : `${h} h`),
   covers: "Persienner",
   coversDetail: "Persienner i detalj",
   close: "Stäng",

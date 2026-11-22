@@ -1,76 +1,37 @@
 import { css } from "lit";
+import { paletteStyles } from "ha-dashboard-kit/palette";
+import { typographyStyles } from "ha-dashboard-kit/typography";
 
 /* Look of the card: the shared visual language (DASHBOARD_UX_SYSTEM.md); the tiles are the kit's. */
-export const styles = css`
+export const styles = [
+  typographyStyles,
+  paletteStyles("dd"),
+  css`
   :host {
     display: block;
-    --dd-page: #000000;
-    --dd-card: #1c1c1e;
-    --dd-el: #2c2c2e;
-    --dd-text: #ffffff;
-    --dd-secondary: #98989f;
-    --dd-sep: rgb(84 84 88 / 65%);
-    --dd-button: rgb(118 118 128 / 24%);
+    /* The shared surfaces and texts are the kit's (paletteStyles, CURRENT_SPEC.md kitu, Barvy); only what is the card's own is set here. */
+    --dd-page: var(--hdk-page);
+    --dd-card: var(--hdk-card);
+    --dd-el: var(--hdk-el);
+    --dd-text: var(--hdk-text);
+    --dd-secondary: var(--hdk-secondary);
+    --dd-sep: var(--hdk-sep);
+    --dd-button: var(--hdk-button);
     --dd-menu: #2c2c2e;
-    --dd-accent: #0a84ff;
+    --dd-accent: var(--hdk-blue);
     --dd-warning: #ff9230;
     --dd-warning-bg: rgb(255 146 48 / 16%);
     --dd-alert: #ff6961;
     --dd-alert-bg: rgb(255 66 69 / 18%);
-    --hdk-accent: var(--dd-accent);
-    --hdk-secondary: var(--dd-secondary);
-    --hdk-tile: var(--dd-card);
-    --hdk-tile-text: var(--dd-text);
-    --hdk-tile-border: var(--dd-sep);
-    --hdk-tile-on: #0a6ed1;
-    --hdk-tile-on-text: #ffffff;
-    --hdk-tile-on-sub: #ffffff;
-    --hdk-tile-on-border: transparent;
-    --hdk-tile-mixed: #17395d;
-    --hdk-tile-badge: rgb(255 255 255 / 16%);
-    /* Slider and segmented control of the popup Topení / Klimatizace: the values of Energie (one visual language). */
-    --hdk-track: #2c2c2e;
-    --hdk-track-compact: #3a3a3c;
-    --hdk-bar: rgb(255 255 255 / 14%);
-    --hdk-tick: rgb(255 255 255 / 28%);
-    /* Selected segment: grey #636366 with white text in the dark, white with black in the light (uživatel 16. 11. 2026: „Q289 dark V4, light V0“). */
-    --hdk-seg-thumb: #636366;
-    --hdk-seg-text: #ebebf5;
-    --hdk-seg-selected: #ffffff;
-    --hdk-bubble: #3a3a3c;
-    --hdk-bubble-text: #ffffff;
     color: var(--dd-text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, Roboto, "Helvetica Neue", sans-serif;
-    font-feature-settings: "tnum" 1;
-    -webkit-font-smoothing: antialiased;
   }
   :host([data-light]) {
-    --dd-page: #f2f2f7;
-    --dd-card: #ffffff;
-    --dd-el: #f2f2f7;
-    --dd-text: #000000;
-    --dd-secondary: #5f5f66;
-    --dd-sep: rgb(60 60 67 / 29%);
     --dd-button: rgb(118 118 128 / 16%);
     --dd-menu: #ffffff;
-    --dd-accent: #0a6ed1;
     --dd-warning: #8f4a12;
     --dd-warning-bg: rgb(168 82 0 / 12%);
     --dd-alert: #c4001a;
     --dd-alert-bg: rgb(196 0 26 / 10%);
-    --hdk-tile-on: #d8e8f8;
-    --hdk-tile-on-text: #000000;
-    --hdk-tile-on-sub: #0a5cb0;
-    --hdk-tile-on-border: #0a6ed1;
-    --hdk-tile-mixed: #e6eff9;
-    --hdk-tile-badge: rgb(60 60 67 / 14%);
-    --hdk-track: #f2f2f7;
-    --hdk-track-compact: #e5e5ea;
-    --hdk-seg-thumb: #ffffff;
-    --hdk-seg-selected: #000000;
-    --hdk-bar: rgb(60 60 67 / 18%);
-    --hdk-tick: rgb(60 60 67 / 30%);
-    --hdk-seg-text: #000000;
   }
   ha-card {
     /* Never wider than the screen: whatever does not fit wraps inside (overflow-wrap) or is clipped, the page never scrolls sideways. */
@@ -115,18 +76,6 @@ export const styles = css`
   .chevron:focus-visible {
     outline: 2px solid var(--dd-accent);
     outline-offset: -2px;
-  }
-  dd-sheet {
-    --hdk-sheet-bg: var(--dd-card);
-    --hdk-sheet-text: var(--dd-text);
-    --hdk-sheet-button: var(--dd-button);
-    --hdk-tile: var(--dd-el);
-  }
-  :host([data-light]) dd-sheet {
-    --hdk-sheet-button: rgb(118 118 128 / 12%);
-    --hdk-sheet-backdrop: 35%;
-    --hdk-sheet-border: rgb(0 0 0 / 8%);
-    --hdk-sheet-grabber: rgb(60 60 67 / 30%);
   }
   /* „Co se stalo“ has no heading: the gap of a section heading keeps it apart from the tiles above. */
   .group[data-part="log"] {
@@ -606,4 +555,5 @@ export const styles = css`
     font-size: 13px;
     line-height: 18px;
   }
-`;
+`,
+];
