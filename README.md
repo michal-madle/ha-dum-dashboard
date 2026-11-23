@@ -47,6 +47,7 @@ Karta je třetí vedle [Klima Dashboard](https://github.com/michal-madle/ha-klim
 | `batteries` | čidla s baterií: `low` (binary_sensor, `on` = slabá), volitelně `level` a `type` |
 | `filters` | filtry klimatizací: `hours` (input_number, hodiny od čištění) a `threshold` (práh v hodinách) |
 | `laundry` | prádlo čeká: `entity` (input_boolean, `on` = čeká); „Hotovo“ ho vypne |
+| `tasks` | senzory s úkoly pro „Potřebuje tebe“ (atribut `ukoly`: `klic`, `nazev`, `detail`, `uroven` `alert`/`warn`, `akce` `{sluzba, data}`); s akcí má řádek „Hotovo“, které zavolá službu. Karta jen s `tasks` ukáže jen frontu (příklad [`examples/ukoly.yaml`](examples/ukoly.yaml)) |
 | `leaks` | čidla úniku vody: `entity` (binary_sensor, `on` = voda); únik je první řádek „Potřebuje tebe“, dokud trvá |
 | `maintenance` | údržba spotřebičů: `task`, `counter` (cykly od údržby) a `every` (po kolika cyklech); „Hotovo“ počítadlo vynuluje |
 | `running` | spotřebiče pro „Teď běží“ |
@@ -68,7 +69,7 @@ npm ci
 npm test
 ```
 
-`npm test` kartu sestaví a pustí 33 testů v prohlížeči (Playwright, Chromium) na zkušební stránce [`tests/harness.html`](tests/harness.html) s náhradními daty Home Assistantu ([`tests/scenarios.js`](tests/scenarios.js)), včetně přístupnosti (axe-core) v tmavém i světlém režimu a šířek 320 až 430 px. `ha-dum-dashboard.js` v kořeni je výsledek sestavení, ručně se neupravuje a commituje se kvůli HACS.
+`npm test` kartu sestaví a pustí 38 testů v prohlížeči (Playwright, Chromium) na zkušební stránce [`tests/harness.html`](tests/harness.html) s náhradními daty Home Assistantu ([`tests/scenarios.js`](tests/scenarios.js)), včetně přístupnosti (axe-core) v tmavém i světlém režimu a šířek 320 až 430 px. `ha-dum-dashboard.js` v kořeni je výsledek sestavení, ručně se neupravuje a commituje se kvůli HACS.
 
 Spec a historie návrhu karty jsou v soukromém repozitáři autora; veřejně je popis konfigurace v příkladu.
 

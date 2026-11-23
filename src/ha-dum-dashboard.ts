@@ -69,6 +69,18 @@ const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
 const ICON_LEAK = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3.5z" stroke-linejoin="round"></path></svg>`;
 
+/** A task from a sensor (`tasks`): a list with a tick (SF Symbols „checklist“). */
+const ICON_TASK = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l1.5 1.5L8 6M4 15l1.5 1.5L8 14M11 7.5h9M11 15.5h9"></path></svg>`;
+
+/** One task of a `tasks` sensor (attribute `ukoly`). */
+interface Task {
+  klic: string;
+  nazev: string;
+  detail?: string;
+  uroven?: string;
+  akce?: { sluzba: string; data?: Record<string, unknown> };
+}
+
 const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
 
 /**
@@ -606,8 +618,22 @@ export class HaDumDashboard extends LitElement {
     return Array.isArray(items) ? items.filter((item): item is Failed => typeof item === "object" && item !== null && typeof (item as Failed).entita === "string") : [];
   }
 
+  /** The tasks of the `tasks` sensors: the urgent ones („alert“, „warn“) first, otherwise in the order of the sensor. */
+  private tasks(config: Settings): Task[] {
+    const rank = (task: Task) => (task.uroven === "alert" ? 0 : task.uroven === "warn" ? 1 : 2);
+    return config.tasks
+      .flatMap((id) => {
+        const items = entityState(this.hass, id)?.attributes.ukoly;
+        return Array.isArray(items) ? items : [];
+      })
+      .filter((item): item is Task => typeof item === "object" && item !== null && typeof (item as Task).klic === "string" && typeof (item as Task).nazev === "string")
+      .map((task, index) => ({ task, index }))
+      .sort((a, b) => rank(a.task) - rank(b.task) || a.index - b.index)
+      .map(({ task }) => task);
+  }
+
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length && !config.leaks.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length && !config.leaks.length && !config.tasks.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
@@ -623,7 +649,8 @@ export class HaDumDashboard extends LitElement {
     // Water where it should not be (uživatel 14. 11. 2026: „udelej nejaky alert kdyz zacne hlasit unik vody“): the first
     // row, red, without a button: it goes away when the sensor is dry again.
     const leaking = config.leaks.filter((item) => readText(this.hass, item.entity) === "on");
-    const count = leaking.length + failed.length + low.length + dirty.length + waiting.length + due.length;
+    const tasks = this.tasks(config);
+    const count = leaking.length + failed.length + tasks.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
       ...leaking.map((item) => {
         const start = this.starts.of(this.hass, item.entity);
@@ -663,6 +690,15 @@ export class HaDumDashboard extends LitElement {
                 ${done}
               </span>`
             : done}
+        </div>`;
+      }),
+      ...tasks.map((task) => {
+        const mark = task.uroven === "alert" ? html`<span class="mark alert" aria-hidden="true">!</span>` : task.uroven === "warn" ? html`<span class="mark warn" aria-hidden="true">!</span>` : html`<span class="mark" aria-hidden="true">${ICON_TASK}</span>`;
+        const [domain, service] = (task.akce?.sluzba ?? "").split(".");
+        return html`<div class="row" data-row="task" data-key=${task.klic}>
+          ${mark}
+          <span class="main">${task.nazev}${task.detail ? html`<small class=${task.uroven === "alert" ? "alert" : ""}>${task.detail}</small>` : nothing}</span>
+          ${domain && service ? this.iconButton(ICON_DONE, i18n.t.done, task.nazev, () => this.call(domain, service, task.akce?.data ?? {})) : nothing}
         </div>`;
       }),
       ...low.map((battery) => {

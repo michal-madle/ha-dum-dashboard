@@ -694,3 +694,43 @@ test("únik vody: první řádek „Potřebuje tebe“, červený, bez tlačítk
   await update(page, { "binary_sensor.kuchyne_mycka_unik_vody_unik_vody": { state: "off" } });
   await expect(leak).toHaveCount(0);
 });
+
+test.describe("úkoly ze senzoru (tasks)", () => {
+  async function openTasks(page: Page, theme: "dark" | "light" = "dark"): Promise<void> {
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(`/tests/tasks.html${theme === "light" ? "?theme=light" : ""}`);
+    await page.waitForFunction(() => (window as any).__test?.ready === true);
+    await page.locator('[data-part="queue"]').waitFor();
+    await page.evaluate(() => document.fonts.ready.then(() => true));
+  }
+
+  test("karta jen s úkoly ukáže jen frontu: naléhavé nahoře, fajfka v řádku zavolá službu, úkol bez akce fajfku nemá", async ({ page }) => {
+    await openTasks(page);
+    expect(await headings(page)).toEqual(["Potřebuje tebe · 4"]);
+    await expect(page.locator("dd-tile")).toHaveCount(0);
+    const rows = page.locator('[data-row="task"]');
+    await expect(rows).toHaveCount(4);
+    await expect(rows.nth(0)).toContainText("Nájem");
+    await expect(rows.nth(0)).toContainText("po splatnosti (5.)");
+    await expect(rows.nth(1)).toContainText("Upravit limitní ordery");
+    await expect(rows.nth(2)).toContainText("Rebalance XDWD");
+    await expect(rows.nth(3)).toContainText("Telefon");
+    await expect(rows.nth(2).getByRole("button")).toHaveCount(0);
+    await rows.nth(0).getByRole("button", { name: "Hotovo" }).click();
+    await rows.nth(1).getByRole("button", { name: "Hotovo" }).click();
+    expect(await calls(page)).toEqual([
+      { domain: "input_boolean", service: "turn_on", data: { entity_id: "input_boolean.platba_najem" } },
+      { domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } },
+    ]);
+    await update(page, { "sensor.ukoly": { state: "0", attributes: { ukoly: [] } } });
+    await expect(page.locator('[data-part="queue"]')).toHaveText("Nic na tebe nečeká");
+  });
+
+  for (const theme of ["dark", "light"] as const) {
+    test(`úkoly: přístupnost a snímek (${theme})`, async ({ page }, info) => {
+      await openTasks(page, theme);
+      expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+      await page.screenshot({ path: info.outputPath(`ukoly-${theme}.png`), fullPage: true });
+    });
+  }
+});

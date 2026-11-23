@@ -150,6 +150,7 @@ function normalize(raw: unknown): Settings {
     filters,
     laundry: named(raw.laundry, "laundry", ["input_boolean"]),
     leaks: named(raw.leaks, "leaks", ["binary_sensor"]),
+    tasks: list(raw.tasks, "tasks").map((item, index) => entityId(item, `tasks[${index}]`, { domain: "sensor" }) ?? fail(`tasks[${index}] is missing.`)),
     maintenance,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
