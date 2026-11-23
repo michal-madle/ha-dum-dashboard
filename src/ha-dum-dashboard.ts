@@ -643,21 +643,23 @@ export class HaDumDashboard extends LitElement {
     return i18n.percent(`${sign}${i18n.one(Math.abs(fraction * 100))}`);
   }
 
-  /** The nearest BUY and SELL of the new orders, with their distance from the price. */
+  /** The nearest BUY and SELL that lie at the broker now (`ted`), with their distance from the price (dashboard Finance, „Q39 ano“). */
   private nearest(i18n: I18n, item: Instrument): TemplateResult {
-    const buys = (item.ordery ?? []).filter((order) => order.side === "BUY" && Number.isFinite(order.nove)).map((order) => order.nove!);
-    const sells = (item.ordery ?? []).filter((order) => order.side === "SELL" && Number.isFinite(order.nove)).map((order) => order.nove!);
+    const now = (side: string) => (item.ordery ?? []).filter((order) => order.side === side && order.ted != null && Number.isFinite(order.ted)).map((order) => order.ted!);
+    const buys = now("BUY");
+    const sells = now("SELL");
     const price = item.cena ?? undefined;
-    const part = (arrow: string, value: number | undefined) =>
-      value === undefined ? undefined : `${arrow}\u00a0${this.euro(i18n, value)}${price ? ` (${this.signed(i18n, value / price - 1)})` : ""}`;
-    return joined([part("↓", buys.length ? Math.max(...buys) : undefined), part("↑", sells.length ? Math.min(...sells) : undefined)].filter((text): text is string => Boolean(text)));
+    const part = (side: string, value: number | undefined) =>
+      value === undefined ? `${side} ${i18n.t.ordersMissing}` : `${side}\u00a0${this.euro(i18n, value)}${price ? ` (${this.signed(i18n, value / price - 1)})` : ""}`;
+    return joined([part("BUY", buys.length ? Math.max(...buys) : undefined), part("SELL", sells.length ? Math.min(...sells) : undefined)]);
   }
 
-  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean): TemplateResult | typeof nothing {
+  /** Updates all orders that differ (one button of Home Assistant); in the dry run a plain button, it changes nothing. */
+  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean, count: number): TemplateResult | typeof nothing {
     const update = config.orders?.update;
     if (!update) return nothing;
-    return html`<button class="button primary orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
-      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
+    return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
+      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry(count) : i18n.t.ordersUpdate(count)}</button>`;
   }
 
   private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -671,10 +673,15 @@ export class HaDumDashboard extends LitElement {
     const items = this.instruments(config);
     const count = items.filter((item) => item.upravit).length;
     const check = config.orders.check;
+    // „2026-11-23 08:30“: only the time today, the day otherwise (old data must not look current).
+    const cas = typeof attrs.cas === "string" ? attrs.cas : "";
+    const today = this.day(new Date(this._now));
+    const stale = cas !== "" && !cas.startsWith(today);
+    const checked = stale ? `${i18n.day(Date.parse(cas.replace(" ", "T")))} ${cas.slice(11)}` : cas.slice(11) || cas;
     const status =
       state === "chyba"
         ? html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${String(attrs.chyba ?? "")}</small></span>`
-        : html`<span class="main"><small>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([t.ordersChecked(attrs.cas.slice(11) || attrs.cas), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small></span>`;
+        : html`<span class="main"><small class=${stale ? "warn" : ""}>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([t.ordersChecked(checked), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small></span>`;
     return html`<h2><span>${count ? `${t.orders} · ${t.ordersToUpdate(count)}` : t.orders}</span></h2>
       <div class="group" data-part="orders">
         ${items.map(
@@ -689,7 +696,7 @@ export class HaDumDashboard extends LitElement {
           ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.call("input_button", "press", { entity_id: check })}>${ICON_RETRY}</button>` : nothing}
         </div>
       </div>
-      ${count ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;
+      ${count ? this.updateButton(config, i18n, busy, dryRun, count) : nothing}`;
   }
 
   private renderOrdersDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -704,15 +711,16 @@ export class HaDumDashboard extends LitElement {
     return html`<dd-sheet .open=${item !== undefined} .heading=${symbol ?? ""} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
       ${item
         ? html`<div class="detail" data-part="order-detail">
-            ${line(t.ordersPosition, joined([amount(item.pozice ?? undefined, item.jednotka), this.euro(i18n, item.cena)]))}
+            ${line(t.ordersPosition, amount(item.pozice ?? undefined, item.jednotka))}
             ${item.hodnota != null ? line(t.ordersValue, joined([this.euro(i18n, item.hodnota), item.odchylka != null ? t.ordersTarget(this.signed(i18n, item.odchylka)) : undefined].filter((text): text is string => Boolean(text)))) : nothing}
             <div class="health-row orders-head"><span class="main">${t.orders}</span><span class="value">${t.ordersNow} → ${t.ordersNew}</span></div>
-            ${(item.ordery ?? []).map((order) => {
+            ${[...(item.ordery ?? [])].sort((a, b) => (a.side === b.side ? (b.nove ?? b.ted ?? 0) - (a.nove ?? a.ted ?? 0) : a.side === "SELL" ? -1 : 1)).map((order) => {
               const same = order.ted != null && order.nove != null && Math.abs(order.ted - order.nove) < 1e-9;
               const now = order.ted == null ? t.ordersMissing : this.euro(i18n, order.ted);
-              return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${this.euro(i18n, order.nove)}`, !same);
+              const next = order.nove == null ? t.ordersCancel : this.euro(i18n, order.nove);
+              return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${next}`, !same);
             })}
-            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true)}</div>` : nothing}
+            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true, this.instruments(config).filter((entry) => entry.upravit).length)}</div>` : nothing}
           </div>`
         : nothing}
     </dd-sheet>`;

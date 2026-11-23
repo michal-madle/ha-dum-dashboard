@@ -20,7 +20,7 @@ const instrumenty = [
     ordery: [{ side: "BUY", mnozstvi: 0.0025, ted: 55000, nove: 54750 }, { side: "BUY", mnozstvi: 0.0025, ted: null, nove: 54500 },
       { side: "SELL", mnozstvi: 0.0025, ted: 58500, nove: 56750 }, { side: "SELL", mnozstvi: 0.0025, ted: null, nove: 57000 }] },
 ];
-const states = { "sensor.ordery": { state: "upravit", attributes: { instrumenty, cas: "2026-11-23 08:30", dry_run: true }, last_changed: new Date().toISOString(), last_updated: new Date().toISOString() },
+const states = { "sensor.ordery": { state: "upravit", attributes: { instrumenty, cas: `${new Date().toISOString().slice(0, 10)} 08:30`, dry_run: true }, last_changed: new Date().toISOString(), last_updated: new Date().toISOString() },
   "sensor.ukoly": { state: String(ukoly.length), attributes: { ukoly }, last_changed: new Date().toISOString(), last_updated: new Date().toISOString() } };
 if (light) {
   document.documentElement.style.background = "#f2f2f7";

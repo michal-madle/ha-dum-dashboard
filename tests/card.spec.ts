@@ -749,8 +749,10 @@ test.describe("limitní ordery (orders)", () => {
     const rows = page.locator('[data-part="orders"] [data-instrument]');
     await expect(rows).toHaveCount(3);
     await expect(rows.nth(0)).toContainText("SXR8 · 701,28 €");
-    expect(await joinedLines(rows.nth(0).locator("small"))).toEqual(["↓ 692,52 € (−1,2 %) · ↑ 720,80 € (+2,8 %)"]);
-    expect(await joinedLines(rows.nth(2).locator("small"))).toEqual(["↓ 54 750 € (−2,0 %) · ↑ 56 750 € (+1,6 %)"]);
+    expect(await joinedLines(rows.nth(0).locator("small"))).toEqual(["BUY 677,88 € (−3,3 %) · SELL chybí"]);
+    // Dlouhý řádek se zalomí v oddělovači (joined kitu), ne uprostřed částky.
+    expect((await joinedLines(rows.nth(2).locator("small"))).join(" · ")).toBe("BUY 55 000 € (−1,6 %) · SELL 58 500 € (+4,7 %)");
+    await expect(page.locator(".orders-update")).toHaveText("Vyzkoušet aktualizaci (2)");
     await expect(page.locator('[data-row="orders-status"]')).toContainText("Kontrola 08:30 · zkušební režim, ordery se nemění");
     await page.locator(".orders-update").click();
     expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
@@ -766,6 +768,7 @@ test.describe("limitní ordery (orders)", () => {
     await page.locator('[data-instrument="SXR8"]').click();
     const detail = page.locator('[data-part="order-detail"]');
     await expect(detail).toContainText("140 ks");
+    await expect(detail).not.toContainText("701,28");
     await expect(detail).toContainText("677,88 € → 692,52 €");
     await expect(detail).toContainText("chybí → 720,80 €");
     await expect(detail).toContainText("teď → nově");
