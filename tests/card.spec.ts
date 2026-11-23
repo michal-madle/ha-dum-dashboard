@@ -758,8 +758,18 @@ test.describe("limitní ordery (orders)", () => {
     expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
     await page.locator('[data-row="orders-status"]').getByRole("button", { name: "Zkontrolovat" }).click();
     expect((await calls(page)).at(-1)).toEqual({ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_zkontrolovat" } });
+    // Výsledek stisku (atribut provedeno): ve zkušebním režimu „Zkoušeno“, v ostrém „Změněno“, chyba červeně; nová kontrola ho zahodí.
+    const today = new Date().toISOString().slice(0, 10);
+    const status = page.locator('[data-row="orders-status"]');
+    await update(page, { "sensor.ordery": { state: "upravit", attributes: { instrumenty: [{ symbol: "SXR8", cena: 700, pozice: 1, jednotka: "ks", upravit: true, ordery: [] }], cas: `${today} 21:47`, dry_run: true, provedeno: ["[dry-run] SXR8 BUY 3 @ 677.88", "BTC: 3 z 3 orderů (dry-run)"] } } });
+    await expect(status).toContainText("Zkoušeno 21:47 · zkušební režim, ordery se nemění");
+    await expect(status.locator("[data-done]")).toHaveText(["[dry-run] SXR8 BUY 3 @ 677.88", "BTC: 3 z 3 orderů (dry-run)"]);
+    await update(page, { "sensor.ordery": { state: "upravit", attributes: { instrumenty: [{ symbol: "SXR8", cena: 700, pozice: 1, jednotka: "ks", upravit: true, ordery: [] }], cas: `${today} 21:50`, dry_run: false, provedeno: ["BTC CHYBA: spojení"] } } });
+    await expect(status).toContainText("Změněno 21:50");
+    await expect(status.locator("small.alert[data-done]")).toHaveText("BTC CHYBA: spojení");
     await update(page, { "sensor.ordery": { state: "ok", attributes: { instrumenty: [], cas: "2026-11-23 09:00" } } });
     await expect(page.locator(".orders-update")).toHaveCount(0);
+    await expect(status.locator("[data-done]")).toHaveCount(0);
     expect((await headings(page))[0]).toBe("Limitní ordery");
   });
 

@@ -10,6 +10,8 @@ export const en: typeof cs = {
   ordersCancel: "cancel",
   ordersCheck: "Check",
   ordersChecked: (time) => `Checked ${time}`,
+  ordersTried: (time) => `Tried ${time}`,
+  ordersApplied: (time) => `Changed ${time}`,
   ordersChecking: "Checking…",
   ordersFailed: "Check failed",
   ordersDryRun: "dry run, orders are not changed",

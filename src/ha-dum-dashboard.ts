@@ -678,10 +678,13 @@ export class HaDumDashboard extends LitElement {
     const today = this.day(new Date(this._now));
     const stale = cas !== "" && !cas.startsWith(today);
     const checked = stale ? `${i18n.day(Date.parse(cas.replace(" ", "T")))} ${cas.slice(11)}` : cas.slice(11) || cas;
+    // What the last press of the button did (`provedeno` of the sensor, lines as AppDaemon wrote them); a new check drops it.
+    const done = Array.isArray(attrs.provedeno) ? attrs.provedeno.filter((line): line is string => typeof line === "string" && line !== "") : [];
     const status =
       state === "chyba"
         ? html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${String(attrs.chyba ?? "")}</small></span>`
-        : html`<span class="main"><small class=${stale ? "warn" : ""}>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([t.ordersChecked(checked), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small></span>`;
+        : html`<span class="main"><small class=${stale ? "warn" : ""}>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([(done.length ? (dryRun ? t.ordersTried : t.ordersApplied) : t.ordersChecked)(checked), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small>
+          ${busy ? nothing : done.map((line) => html`<small class=${/CHYBA|ručně/.test(line) ? "alert" : ""} data-done>${line}</small>`)}</span>`;
     return html`<h2><span>${count ? `${t.orders} · ${t.ordersToUpdate(count)}` : t.orders}</span></h2>
       <div class="group" data-part="orders">
         ${items.map(

@@ -248,21 +248,21 @@ let bt = class extends HTMLElement {
 };
 bt.elementStyles = [], bt.shadowRootOptions = { mode: "open" }, bt[Mt("elementProperties")] = /* @__PURE__ */ new Map(), bt[Mt("finalized")] = /* @__PURE__ */ new Map(), os?.({ ReactiveElement: bt }), (Rt.reactiveElementVersions ??= []).push("2.1.2");
 const Xt = globalThis, ke = (i) => i, Pt = Xt.trustedTypes, we = Pt ? Pt.createPolicy("lit-html", { createHTML: (i) => i }) : void 0, Ue = "$lit$", rt = `lit$${Math.random().toFixed(9).slice(2)}$`, Re = "?" + rt, as = `<${Re}>`, ut = document, Ct = () => ut.createComment(""), Tt = (i) => i === null || typeof i != "object" && typeof i != "function", Jt = Array.isArray, rs = (i) => Jt(i) || typeof i?.[Symbol.iterator] == "function", Wt = `[ 	
-\f\r]`, At = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _e = /-->/g, Se = />/g, dt = RegExp(`>|${Wt}(?:([^\\s"'>=/]+)(${Wt}*=${Wt}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Ae = /'/g, Me = /"/g, Be = /^(?:script|style|textarea|title)$/i, ls = (i) => (t, ...e) => ({ _$litType$: i, strings: t, values: e }), c = ls(1), yt = /* @__PURE__ */ Symbol.for("lit-noChange"), f = /* @__PURE__ */ Symbol.for("lit-nothing"), Ce = /* @__PURE__ */ new WeakMap(), ht = ut.createTreeWalker(ut, 129);
+\f\r]`, St = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _e = /-->/g, Ae = />/g, dt = RegExp(`>|${Wt}(?:([^\\s"'>=/]+)(${Wt}*=${Wt}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Se = /'/g, Me = /"/g, Be = /^(?:script|style|textarea|title)$/i, ls = (i) => (t, ...e) => ({ _$litType$: i, strings: t, values: e }), c = ls(1), yt = /* @__PURE__ */ Symbol.for("lit-noChange"), f = /* @__PURE__ */ Symbol.for("lit-nothing"), Ce = /* @__PURE__ */ new WeakMap(), ht = ut.createTreeWalker(ut, 129);
 function Ie(i, t) {
   if (!Jt(i) || !i.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return we !== void 0 ? we.createHTML(t) : t;
 }
 const ds = (i, t) => {
   const e = i.length - 1, s = [];
-  let n, o = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", a = At;
+  let n, o = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", a = St;
   for (let r = 0; r < e; r++) {
     const l = i[r];
     let d, u, h = -1, p = 0;
-    for (; p < l.length && (a.lastIndex = p, u = a.exec(l), u !== null); ) p = a.lastIndex, a === At ? u[1] === "!--" ? a = _e : u[1] !== void 0 ? a = Se : u[2] !== void 0 ? (Be.test(u[2]) && (n = RegExp("</" + u[2], "g")), a = dt) : u[3] !== void 0 && (a = dt) : a === dt ? u[0] === ">" ? (a = n ?? At, h = -1) : u[1] === void 0 ? h = -2 : (h = a.lastIndex - u[2].length, d = u[1], a = u[3] === void 0 ? dt : u[3] === '"' ? Me : Ae) : a === Me || a === Ae ? a = dt : a === _e || a === Se ? a = At : (a = dt, n = void 0);
+    for (; p < l.length && (a.lastIndex = p, u = a.exec(l), u !== null); ) p = a.lastIndex, a === St ? u[1] === "!--" ? a = _e : u[1] !== void 0 ? a = Ae : u[2] !== void 0 ? (Be.test(u[2]) && (n = RegExp("</" + u[2], "g")), a = dt) : u[3] !== void 0 && (a = dt) : a === dt ? u[0] === ">" ? (a = n ?? St, h = -1) : u[1] === void 0 ? h = -2 : (h = a.lastIndex - u[2].length, d = u[1], a = u[3] === void 0 ? dt : u[3] === '"' ? Me : Se) : a === Me || a === Se ? a = dt : a === _e || a === Ae ? a = St : (a = dt, n = void 0);
     const x = a === dt && i[r + 1].startsWith("/>") ? " " : "";
-    o += a === At ? l + as : h >= 0 ? (s.push(d), l.slice(0, h) + Ue + l.slice(h) + rt + x) : l + rt + (h === -2 ? r : x);
+    o += a === St ? l + as : h >= 0 ? (s.push(d), l.slice(0, h) + Ue + l.slice(h) + rt + x) : l + rt + (h === -2 ? r : x);
   }
   return [Ie(i, o + (i[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), s];
 };
@@ -537,14 +537,14 @@ const ys = { attribute: !0, type: String, converter: Lt, reflect: !1, hasChanged
   }
   throw Error("Unsupported decorator location: " + s);
 };
-function b(i) {
+function v(i) {
   return (t, e) => typeof e == "object" ? xs(i, t, e) : ((s, n, o) => {
     const a = n.hasOwnProperty(o);
     return n.constructor.createProperty(o, s), a ? Object.getOwnPropertyDescriptor(n, o) : void 0;
   })(i, t, e);
 }
 function z(i) {
-  return b({ ...i, state: !0, attribute: !1 });
+  return v({ ...i, state: !0, attribute: !1 });
 }
 function et(i, t = {}) {
   return i.length < 2 ? c`${i[0] ?? f}` : c`<span class="joined ${t.whole ? "whole" : ""}">${i.map(
@@ -671,13 +671,13 @@ function _s(i, t, e, s, n) {
   const o = Ut(i, t?.states[n]);
   return o === void 0 ? s : e.filter((a) => Ut(i, t?.states[a.entity]) === o).map((a) => a.entity);
 }
-function Ss(i, t) {
+function As(i, t) {
   return t.flatMap((e) => {
     const s = pt(i?.states[e]?.attributes.temperature);
     return s === void 0 ? [] : [{ entity: e, value: s }];
   });
 }
-function As(i, t, e) {
+function Ss(i, t, e) {
   const s = new Set(e.map((n) => ct(i, t?.states[n])).filter((n) => n !== void 0));
   return s.size === 1 ? [...s][0] : void 0;
 }
@@ -807,27 +807,27 @@ const Ps = ["next", "30", "60", "180", "forever"], Fs = [0, 60, 180, 480], de = 
   render() {
     const t = this.texts, e = this.i18n;
     if (!t || !e) return f;
-    const s = this.hass, n = s?.states[this.selected[0]], { min: o, max: a, step: r } = Ms(this.system, n), l = Ss(s, this.selected), d = [...new Set(l.map(($) => $.value))], u = As(this.system, s, this.selected), h = this.draft.mode ?? u, p = this.draft.temperature === void 0 && d.length > 1, x = d[0], m = this.draft.temperature ?? (h === "boost" ? 25 : h === "manual" && x !== void 0 && x <= jt ? We : x), k = h === "off" || h === "fan_only", w = k && h !== void 0 ? t.modes[h] : p ? `${this.degrees(Math.min(...d)).replace(/°$/, "")}–${this.degrees(Math.max(...d))}` : m !== void 0 ? this.degrees(m) : "––", g = this.selected.flatMap(($) => {
-      const N = pt(s?.states[$]?.attributes.current_temperature);
-      return N === void 0 ? [] : [{ id: $, text: `${e.one(N)} °C` }];
-    }), y = this.system === "heating" && this.selected.length === 1 && s?.states[this.selected[0]]?.attributes.hvac_action === "heating", v = p ? t.targets(l.map(($) => `${this.name($.entity)} ${this.degrees($.value)}`).join(" · ")) : g.length ? t.now(this.selected.length === 1 ? `${g[0].text}${y ? ` · ${t.heats}` : ""}` : g.map(($) => `${this.name($.id)} ${$.text}`).join(" · ")) : "", A = this.system === "heating" ? ws.filter(($) => $ !== "boost" || Kt(s)) : ne.filter(($) => this.selected.some((N) => Cs(s?.states[N]).includes($))), S = this.draft.mode === void 0 && u === void 0 && this.selected.length > 1, T = this.system === "cooling" && (h === "off" || h === "fan_only");
+    const s = this.hass, n = s?.states[this.selected[0]], { min: o, max: a, step: r } = Ms(this.system, n), l = As(s, this.selected), d = [...new Set(l.map((y) => y.value))], u = Ss(this.system, s, this.selected), h = this.draft.mode ?? u, p = this.draft.temperature === void 0 && d.length > 1, x = d[0], m = this.draft.temperature ?? (h === "boost" ? 25 : h === "manual" && x !== void 0 && x <= jt ? We : x), k = h === "off" || h === "fan_only", w = k && h !== void 0 ? t.modes[h] : p ? `${this.degrees(Math.min(...d)).replace(/°$/, "")}–${this.degrees(Math.max(...d))}` : m !== void 0 ? this.degrees(m) : "––", g = this.selected.flatMap((y) => {
+      const N = pt(s?.states[y]?.attributes.current_temperature);
+      return N === void 0 ? [] : [{ id: y, text: `${e.one(N)} °C` }];
+    }), b = this.system === "heating" && this.selected.length === 1 && s?.states[this.selected[0]]?.attributes.hvac_action === "heating", $ = p ? t.targets(l.map((y) => `${this.name(y.entity)} ${this.degrees(y.value)}`).join(" · ")) : g.length ? t.now(this.selected.length === 1 ? `${g[0].text}${b ? ` · ${t.heats}` : ""}` : g.map((y) => `${this.name(y.id)} ${y.text}`).join(" · ")) : "", S = this.system === "heating" ? ws.filter((y) => y !== "boost" || Kt(s)) : ne.filter((y) => this.selected.some((N) => Cs(s?.states[N]).includes(y))), A = this.draft.mode === void 0 && u === void 0 && this.selected.length > 1, T = this.system === "cooling" && (h === "off" || h === "fan_only");
     return c`
       <div class="rooms" role="group" aria-label=${t.rooms}>
-        ${this.rooms.map(($) => {
-      const N = s?.states[$.entity], K = Ut(this.system, N), I = this.selected.includes($.entity);
+        ${this.rooms.map((y) => {
+      const N = s?.states[y.entity], K = Ut(this.system, N), I = this.selected.includes(y.entity);
       return Ee(this.prefix, {
-        name: $.name,
-        text: this.roomText($.entity),
+        name: y.name,
+        text: this.roomText(y.entity),
         state: I ? "on" : K ? "idle" : "off",
         disabled: K === void 0,
         pressed: I,
-        onPress: () => this.selectRoom($.entity)
+        onPress: () => this.selectRoom(y.entity)
       });
     })}
       </div>
       <div class="target">
         <div class="big ${k ? "word" : ""}" aria-live="polite">${w}</div>
-        <div class="sub">${v}</div>
+        <div class="sub">${$}</div>
         ${this.busy ? c`<span class="busy" role="status" aria-label=${t.sending}
               ><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 2.5a7.5 7.5 0 1 1-7.5 7.5"></path></svg
             ></span>` : f}
@@ -845,31 +845,31 @@ const Ps = ["next", "30", "60", "180", "forever"], Fs = [0, 60, 180, 480], de = 
       minLabel: this.degrees(o),
       maxLabel: this.degrees(a),
       disabled: T || !this.selected.length,
-      onChange: ($) => (
+      onChange: (y) => (
         // Moving the temperature of the heating is Ručně (spec: „Posunutí teploty přepne Plán na Ručně“).
-        this.change(this.system === "heating" && h !== "manual" ? { temperature: $, mode: "manual" } : { temperature: $ })
+        this.change(this.system === "heating" && h !== "manual" ? { temperature: y, mode: "manual" } : { temperature: y })
       )
     })}
       </div>
       <h3>${t.mode}</h3>
       ${this.system === "heating" ? zt(this.prefix, {
       label: t.mode,
-      options: A.map(($) => ({ value: $, label: t.modes[$] })),
+      options: S.map((y) => ({ value: y, label: t.modes[y] })),
       value: h ?? "",
-      onSelect: ($) => this.change({ mode: $, ...$ === "plan" || $ === "off" ? { temperature: void 0 } : {} })
+      onSelect: (y) => this.change({ mode: y, ...y === "plan" || y === "off" ? { temperature: void 0 } : {} })
     }) : c`<div class="modes" role="group" aria-label=${t.mode}>
-            ${A.map(
-      ($) => Ee(this.prefix, {
+            ${S.map(
+      (y) => Ee(this.prefix, {
         centered: !0,
-        name: t.modes[$],
-        state: h === $ ? "on" : "idle",
-        pressed: h === $,
-        onPress: () => this.change({ mode: $ })
+        name: t.modes[y],
+        state: h === y ? "on" : "idle",
+        pressed: h === y,
+        onPress: () => this.change({ mode: y })
       })
     )}
           </div>`}
-      ${S ? c`<div class="note">${$t(t.mixedModes(this.selected.map(($) => `${this.name($)} ${t.modes[ct(this.system, s?.states[$]) ?? "off"] ?? ""}`).join(" · ")))}</div>` : f}
-      ${(p || S) && !Object.keys(this.draft).length ? c`<div class="note">${t.firstChange}</div>` : f}
+      ${A ? c`<div class="note">${$t(t.mixedModes(this.selected.map((y) => `${this.name(y)} ${t.modes[ct(this.system, s?.states[y]) ?? "off"] ?? ""}`).join(" · ")))}</div>` : f}
+      ${(p || A) && !Object.keys(this.draft).length ? c`<div class="note">${t.firstChange}</div>` : f}
       ${this.system === "heating" ? this.renderManualFor(h) : [this.renderAttribute("fan"), this.renderAttribute("swing"), this.renderOffAfter(h)]}
       ${this.error ? c`<div class="error" role="alert">${this.error}</div>` : f}
       ${this.selected.length === 1 ? c`<button
@@ -1029,28 +1029,28 @@ de.styles = [It, se, W`
   `];
 let U = de;
 G([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], U.prototype, "hass");
 G([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], U.prototype, "i18n");
 G([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], U.prototype, "texts");
 G([
-  b()
+  v()
 ], U.prototype, "system");
 G([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], U.prototype, "rooms");
 G([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], U.prototype, "selected");
 G([
-  b()
+  v()
 ], U.prototype, "prefix");
 G([
-  b({ type: Number })
+  v({ type: Number })
 ], U.prototype, "delayMs");
 G([
   z()
@@ -1211,10 +1211,10 @@ he.styles = [
 ];
 let kt = he;
 oe([
-  b()
+  v()
 ], kt.prototype, "label");
 oe([
-  b()
+  v()
 ], kt.prototype, "text");
 oe([
   z()
@@ -1296,22 +1296,22 @@ ce.styles = W`
   `;
 let nt = ce;
 wt([
-  b({ type: Number })
+  v({ type: Number })
 ], nt.prototype, "fraction");
 wt([
-  b({ type: Number })
+  v({ type: Number })
 ], nt.prototype, "size");
 wt([
-  b({ type: Number })
+  v({ type: Number })
 ], nt.prototype, "stroke");
 wt([
-  b()
+  v()
 ], nt.prototype, "num");
 wt([
-  b()
+  v()
 ], nt.prototype, "unit");
 wt([
-  b()
+  v()
 ], nt.prototype, "label");
 class Ht {
   /** `times` is read at every press, so changed properties apply at once. */
@@ -1697,40 +1697,40 @@ ue.styles = [
 ];
 let L = ue;
 R([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], L.prototype, "options");
 R([
-  b()
+  v()
 ], L.prototype, "value");
 R([
-  b()
+  v()
 ], L.prototype, "label");
 R([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], L.prototype, "disabled");
 R([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], L.prototype, "pending");
 R([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], L.prototype, "compact");
 R([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], L.prototype, "wrap");
 R([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], L.prototype, "guarded");
 R([
-  b({ type: Number })
+  v({ type: Number })
 ], L.prototype, "holdMs");
 R([
-  b({ type: Number })
+  v({ type: Number })
 ], L.prototype, "doubleTapMs");
 R([
-  b({ type: Number })
+  v({ type: Number })
 ], L.prototype, "hintSeconds");
 R([
-  b()
+  v()
 ], L.prototype, "hint");
 R([
   z()
@@ -1978,19 +1978,19 @@ pe.styles = [It, W`
   `];
 let J = pe;
 mt([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], J.prototype, "open");
 mt([
-  b()
+  v()
 ], J.prototype, "heading");
 mt([
-  b()
+  v()
 ], J.prototype, "sub");
 mt([
-  b()
+  v()
 ], J.prototype, "closeLabel");
 mt([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], J.prototype, "wide");
 mt([
   z()
@@ -2170,43 +2170,43 @@ me.styles = W`
   `;
 let P = me;
 B([
-  b({ type: Number })
+  v({ type: Number })
 ], P.prototype, "min");
 B([
-  b({ type: Number })
+  v({ type: Number })
 ], P.prototype, "max");
 B([
-  b({ type: Number })
+  v({ type: Number })
 ], P.prototype, "step");
 B([
-  b({ type: Number })
+  v({ type: Number })
 ], P.prototype, "tickStep");
 B([
-  b({ type: Number })
+  v({ type: Number })
 ], P.prototype, "value");
 B([
-  b()
+  v()
 ], P.prototype, "label");
 B([
-  b()
+  v()
 ], P.prototype, "valueText");
 B([
-  b()
+  v()
 ], P.prototype, "minLabel");
 B([
-  b()
+  v()
 ], P.prototype, "maxLabel");
 B([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], P.prototype, "disabled");
 B([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], P.prototype, "mixed");
 B([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], P.prototype, "marks");
 B([
-  b()
+  v()
 ], P.prototype, "track");
 B([
   z()
@@ -2367,34 +2367,34 @@ fe.styles = [
 ];
 let V = fe;
 Q([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], V.prototype, "checked");
 Q([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], V.prototype, "disabled");
 Q([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], V.prototype, "pending");
 Q([
-  b()
+  v()
 ], V.prototype, "label");
 Q([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], V.prototype, "guarded");
 Q([
-  b({ type: Number })
+  v({ type: Number })
 ], V.prototype, "holdMs");
 Q([
-  b({ type: Number })
+  v({ type: Number })
 ], V.prototype, "doubleTapMs");
 Q([
-  b({ type: Number })
+  v({ type: Number })
 ], V.prototype, "hintSeconds");
 Q([
-  b()
+  v()
 ], V.prototype, "hintPlacement");
 Q([
-  b()
+  v()
 ], V.prototype, "hint");
 var Gs = Object.defineProperty, F = (i, t, e, s) => {
   for (var n = void 0, o = i.length - 1, a; o >= 0; o--)
@@ -2633,55 +2633,55 @@ ge.styles = [
 ];
 let E = ge;
 F([
-  b()
+  v()
 ], E.prototype, "name");
 F([
-  b()
+  v()
 ], E.prototype, "text");
 F([
-  b({ reflect: !0 })
+  v({ reflect: !0 })
 ], E.prototype, "state");
 F([
-  b()
+  v()
 ], E.prototype, "kind");
 F([
-  b()
+  v()
 ], E.prototype, "corner");
 F([
-  b({ type: Number })
+  v({ type: Number })
 ], E.prototype, "count");
 F([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], E.prototype, "centered");
 F([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], E.prototype, "disabled");
 F([
-  b({ type: Boolean, reflect: !0 })
+  v({ type: Boolean, reflect: !0 })
 ], E.prototype, "pending");
 F([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], E.prototype, "pressed");
 F([
-  b()
+  v()
 ], E.prototype, "label");
 F([
-  b({ type: Boolean })
+  v({ type: Boolean })
 ], E.prototype, "guarded");
 F([
-  b({ type: Number })
+  v({ type: Number })
 ], E.prototype, "holdMs");
 F([
-  b({ type: Number })
+  v({ type: Number })
 ], E.prototype, "doubleTapMs");
 F([
-  b({ type: Number })
+  v({ type: Number })
 ], E.prototype, "hintSeconds");
 F([
-  b()
+  v()
 ], E.prototype, "hint");
 F([
-  b()
+  v()
 ], E.prototype, "hintAlign");
 function Zs(i) {
   const t = [
@@ -2865,25 +2865,25 @@ function pn(i, t) {
   return (/* @__PURE__ */ new Date("January 1, 2023 22:00:00")).toLocaleString(e).includes("10");
 }
 function mn(i, t, e, s, n, o) {
-  const a = un(e), r = s === "system" ? void 0 : s === "none" ? "en-US" : hn[s] ?? a, l = s === "none" ? { useGrouping: !1 } : {}, d = new Intl.NumberFormat(r, { minimumFractionDigits: 1, maximumFractionDigits: 1, ...l }), u = new Intl.NumberFormat(r, { minimumFractionDigits: 2, maximumFractionDigits: 2, ...l }), h = new Intl.NumberFormat(r, { maximumFractionDigits: 1, ...l }), p = new Intl.NumberFormat(r, { maximumFractionDigits: 0, ...l }), x = pn(n, a), m = x ? "h12" : "h23", k = new Intl.DateTimeFormat(a, { hour: x ? "numeric" : "2-digit", minute: "2-digit", hourCycle: m }), w = new Intl.DateTimeFormat(a, x ? { hour: "numeric", hourCycle: m } : { hour: "2-digit", minute: "2-digit", hourCycle: m }), g = o === "system" ? void 0 : a, y = new Intl.DateTimeFormat(g, { day: "numeric", month: "numeric" }), v = (S) => {
+  const a = un(e), r = s === "system" ? void 0 : s === "none" ? "en-US" : hn[s] ?? a, l = s === "none" ? { useGrouping: !1 } : {}, d = new Intl.NumberFormat(r, { minimumFractionDigits: 1, maximumFractionDigits: 1, ...l }), u = new Intl.NumberFormat(r, { minimumFractionDigits: 2, maximumFractionDigits: 2, ...l }), h = new Intl.NumberFormat(r, { maximumFractionDigits: 1, ...l }), p = new Intl.NumberFormat(r, { maximumFractionDigits: 0, ...l }), x = pn(n, a), m = x ? "h12" : "h23", k = new Intl.DateTimeFormat(a, { hour: x ? "numeric" : "2-digit", minute: "2-digit", hourCycle: m }), w = new Intl.DateTimeFormat(a, x ? { hour: "numeric", hourCycle: m } : { hour: "2-digit", minute: "2-digit", hourCycle: m }), g = o === "system" ? void 0 : a, b = new Intl.DateTimeFormat(g, { day: "numeric", month: "numeric" }), $ = (A) => {
     if (!["DMY", "MDY", "YMD"].includes(o))
-      return y.format(S);
-    const T = y.formatToParts(S), $ = T.find((St) => St.type === "literal")?.value ?? "/", N = T[T.length - 1], K = N?.type === "literal" ? N.value : "", I = T.find((St) => St.type === "day")?.value ?? "", _t = T.find((St) => St.type === "month")?.value ?? "";
-    return o === "DMY" ? `${I}${$}${_t}${K}` : `${_t}${$}${I}${K}`;
-  }, A = dn.has(a.toLowerCase().split("-")[0]) ? " " : "";
+      return b.format(A);
+    const T = b.formatToParts(A), y = T.find((At) => At.type === "literal")?.value ?? "/", N = T[T.length - 1], K = N?.type === "literal" ? N.value : "", I = T.find((At) => At.type === "day")?.value ?? "", _t = T.find((At) => At.type === "month")?.value ?? "";
+    return o === "DMY" ? `${I}${y}${_t}${K}` : `${_t}${y}${I}${K}`;
+  }, S = dn.has(a.toLowerCase().split("-")[0]) ? " " : "";
   return {
     language: t,
     locale: a,
     t: i,
-    one: (S) => d.format(S),
-    two: (S) => u.format(S),
-    half: (S) => h.format(Math.round(S * 2) / 2),
-    tick: (S) => h.format(S),
-    whole: (S) => p.format(S),
-    percent: (S) => `${S}${A}%`,
-    time: (S) => k.format(S),
-    hour: (S) => w.format(S),
-    day: v
+    one: (A) => d.format(A),
+    two: (A) => u.format(A),
+    half: (A) => h.format(Math.round(A * 2) / 2),
+    tick: (A) => h.format(A),
+    whole: (A) => p.format(A),
+    percent: (A) => `${A}${S}%`,
+    time: (A) => k.format(A),
+    hour: (A) => w.format(A),
+    day: $
   };
 }
 const fn = `
@@ -3111,12 +3111,12 @@ function _n(i) {
   Y(i) || _("the configuration must be a mapping of keys.");
   const t = ot(i.covers, "covers");
   D(t, ["script", "entities", "last_action", "presets", "tolerance"], "covers");
-  const e = {}, s = X(t.entities, "covers.entities").map((g, y) => {
-    const v = `covers.entities[${y}]`;
-    if (!Y(g)) return C(g, v, { domain: "cover" }) ?? _(`${v} is missing.`);
-    D(g, ["name", "entity"], v);
-    const A = C(g.entity, `${v}.entity`, { domain: "cover" }) ?? _(`${v}.entity is missing.`), S = at(g.name, `${v}.name`);
-    return S !== void 0 && (e[A] = S), A;
+  const e = {}, s = X(t.entities, "covers.entities").map((g, b) => {
+    const $ = `covers.entities[${b}]`;
+    if (!Y(g)) return C(g, $, { domain: "cover" }) ?? _(`${$} is missing.`);
+    D(g, ["name", "entity"], $);
+    const S = C(g.entity, `${$}.entity`, { domain: "cover" }) ?? _(`${$}.entity is missing.`), A = at(g.name, `${$}.name`);
+    return A !== void 0 && (e[S] = A), S;
   }), n = ot(i.ventilation, "ventilation");
   D(n, ["mode", "fans"], "ventilation");
   const o = ot(i.heating, "heating");
@@ -3129,47 +3129,47 @@ function _n(i) {
   D(r, ["hold_ms", "double_tap_ms", "hint_seconds"], "guard");
   const u = ot(i.house_modes, "house_modes");
   D(u, ["winter", "summer"], "house_modes");
-  const h = X(t.presets, "covers.presets").map((g, y) => {
-    const v = `covers.presets[${y}]`;
-    return Y(g) || _(`${v} must be a mapping with name, position and tilt.`), D(g, ["name", "position", "tilt"], v), {
-      name: at(g.name, `${v}.name`) ?? _(`${v}.name is missing.`),
-      position: tt(g.position, `${v}.position`, 0, 0, 100),
-      tilt: tt(g.tilt, `${v}.tilt`, 0, 0, 100)
+  const h = X(t.presets, "covers.presets").map((g, b) => {
+    const $ = `covers.presets[${b}]`;
+    return Y(g) || _(`${$} must be a mapping with name, position and tilt.`), D(g, ["name", "position", "tilt"], $), {
+      name: at(g.name, `${$}.name`) ?? _(`${$}.name is missing.`),
+      position: tt(g.position, `${$}.position`, 0, 0, 100),
+      tilt: tt(g.tilt, `${$}.tilt`, 0, 0, 100)
     };
-  }), p = X(i.batteries, "batteries").map((g, y) => {
-    const v = `batteries[${y}]`;
-    return Y(g) || _(`${v} must be a mapping with name and low.`), D(g, ["name", "low", "level", "type"], v), {
-      name: at(g.name, `${v}.name`) ?? _(`${v}.name is missing.`),
-      low: C(g.low, `${v}.low`, { domain: "binary_sensor" }) ?? _(`${v}.low is missing.`),
-      level: C(g.level, `${v}.level`, { domain: "sensor" }),
-      type: C(g.type, `${v}.type`, { domain: "sensor" })
+  }), p = X(i.batteries, "batteries").map((g, b) => {
+    const $ = `batteries[${b}]`;
+    return Y(g) || _(`${$} must be a mapping with name and low.`), D(g, ["name", "low", "level", "type"], $), {
+      name: at(g.name, `${$}.name`) ?? _(`${$}.name is missing.`),
+      low: C(g.low, `${$}.low`, { domain: "binary_sensor" }) ?? _(`${$}.low is missing.`),
+      level: C(g.level, `${$}.level`, { domain: "sensor" }),
+      type: C(g.type, `${$}.type`, { domain: "sensor" })
     };
-  }), x = X(i.filters, "filters").map((g, y) => {
-    const v = `filters[${y}]`;
-    return Y(g) || _(`${v} must be a mapping with name, hours and threshold.`), D(g, ["name", "hours", "threshold"], v), {
-      name: at(g.name, `${v}.name`) ?? _(`${v}.name is missing.`),
-      hours: C(g.hours, `${v}.hours`, { domain: "input_number" }) ?? _(`${v}.hours is missing.`),
-      threshold: C(g.threshold, `${v}.threshold`, { domain: "select" }) ?? _(`${v}.threshold is missing.`)
+  }), x = X(i.filters, "filters").map((g, b) => {
+    const $ = `filters[${b}]`;
+    return Y(g) || _(`${$} must be a mapping with name, hours and threshold.`), D(g, ["name", "hours", "threshold"], $), {
+      name: at(g.name, `${$}.name`) ?? _(`${$}.name is missing.`),
+      hours: C(g.hours, `${$}.hours`, { domain: "input_number" }) ?? _(`${$}.hours is missing.`),
+      threshold: C(g.threshold, `${$}.threshold`, { domain: "select" }) ?? _(`${$}.threshold is missing.`)
     };
-  }), m = X(i.maintenance, "maintenance").map((g, y) => {
-    const v = `maintenance[${y}]`;
-    return Y(g) || _(`${v} must be a mapping with name, task, counter and every.`), D(g, ["name", "task", "counter", "every"], v), {
-      name: at(g.name, `${v}.name`) ?? _(`${v}.name is missing.`),
-      task: at(g.task, `${v}.task`) ?? _(`${v}.task is missing.`),
-      counter: C(g.counter, `${v}.counter`, { domain: "counter" }) ?? _(`${v}.counter is missing.`),
-      every: tt(g.every, `${v}.every`, 30, 1, 1e3)
+  }), m = X(i.maintenance, "maintenance").map((g, b) => {
+    const $ = `maintenance[${b}]`;
+    return Y(g) || _(`${$} must be a mapping with name, task, counter and every.`), D(g, ["name", "task", "counter", "every"], $), {
+      name: at(g.name, `${$}.name`) ?? _(`${$}.name is missing.`),
+      task: at(g.task, `${$}.task`) ?? _(`${$}.task is missing.`),
+      counter: C(g.counter, `${$}.counter`, { domain: "counter" }) ?? _(`${$}.counter is missing.`),
+      every: tt(g.every, `${$}.every`, 30, 1, 1e3)
     };
-  }), k = X(i.devices, "devices").map((g, y) => {
-    const v = `devices[${y}]`;
-    return Y(g) || _(`${v} must be a mapping with name and entities.`), D(g, ["name", "entities"], v), {
-      name: at(g.name, `${v}.name`) ?? _(`${v}.name is missing.`),
-      entities: X(g.entities, `${v}.entities`).map((A, S) => {
-        const T = `${v}.entities[${S}]`;
-        Y(A) || _(`${T} must be a mapping with name and entity.`), D(A, ["name", "entity", "startup_brightness", "map"], T);
-        const [$] = Z([{ name: A.name, entity: A.entity }], `${v}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"]), N = $.entity.split(".")[0];
-        A.startup_brightness != null && N !== "light" && _(`${T}.startup_brightness is only for a light.`), A.map != null && N !== "vacuum" && _(`${T}.map is only for a vacuum.`);
-        const K = C(A.startup_brightness, `${T}.startup_brightness`, { domain: "input_number" }), I = C(A.map, `${T}.map`, { example: "camera.example" });
-        return I && !["camera", "image"].includes(I.split(".")[0]) && _(`${T}.map must be a camera or an image, not ${I}.`), { ...$, ...K ? { startupBrightness: K } : {}, ...I ? { map: I } : {} };
+  }), k = X(i.devices, "devices").map((g, b) => {
+    const $ = `devices[${b}]`;
+    return Y(g) || _(`${$} must be a mapping with name and entities.`), D(g, ["name", "entities"], $), {
+      name: at(g.name, `${$}.name`) ?? _(`${$}.name is missing.`),
+      entities: X(g.entities, `${$}.entities`).map((S, A) => {
+        const T = `${$}.entities[${A}]`;
+        Y(S) || _(`${T} must be a mapping with name and entity.`), D(S, ["name", "entity", "startup_brightness", "map"], T);
+        const [y] = Z([{ name: S.name, entity: S.entity }], `${$}.entities`, ["light", "switch", "fan", "input_boolean", "vacuum"]), N = y.entity.split(".")[0];
+        S.startup_brightness != null && N !== "light" && _(`${T}.startup_brightness is only for a light.`), S.map != null && N !== "vacuum" && _(`${T}.map is only for a vacuum.`);
+        const K = C(S.startup_brightness, `${T}.startup_brightness`, { domain: "input_number" }), I = C(S.map, `${T}.map`, { example: "camera.example" });
+        return I && !["camera", "image"].includes(I.split(".")[0]) && _(`${T}.map must be a camera or an image, not ${I}.`), { ...y, ...K ? { startupBrightness: K } : {}, ...I ? { map: I } : {} };
       })
     };
   }), w = ot(i.health, "health");
@@ -3186,7 +3186,7 @@ function _n(i) {
     laundry: Z(i.laundry, "laundry", ["input_boolean"]),
     leaks: Z(i.leaks, "leaks", ["binary_sensor"]),
     orders: d ? { entity: d, update: C(l.update, "orders.update", { domain: "input_button" }), check: C(l.check, "orders.check", { domain: "input_button" }) } : void 0,
-    tasks: X(i.tasks, "tasks").map((g, y) => C(g, `tasks[${y}]`, { domain: "sensor" }) ?? _(`tasks[${y}] is missing.`)),
+    tasks: X(i.tasks, "tasks").map((g, b) => C(g, `tasks[${b}]`, { domain: "sensor" }) ?? _(`tasks[${b}] is missing.`)),
     maintenance: m,
     running: Z(i.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {
@@ -3211,11 +3211,11 @@ function _n(i) {
       batteryLow: tt(w.battery_low, "health.battery_low", 20, 1, 99),
       batteries: Z(w.batteries, "health.batteries", ["sensor"]),
       connections: Z(w.connections, "health.connections", ["binary_sensor"]),
-      system: X(w.system, "health.system").map((g, y) => {
-        const v = `health.system[${y}]`;
-        Y(g) || _(`${v} must be a mapping with name and entity.`), D(g, ["name", "entity", "max"], v);
-        const [A] = Z([{ name: g.name, entity: g.entity }], v, ["sensor", "binary_sensor"]);
-        return g.max !== void 0 && (typeof g.max != "number" || !Number.isFinite(g.max)) && _(`${v}.max must be a number.`), { ...A, max: g.max };
+      system: X(w.system, "health.system").map((g, b) => {
+        const $ = `health.system[${b}]`;
+        Y(g) || _(`${$} must be a mapping with name and entity.`), D(g, ["name", "entity", "max"], $);
+        const [S] = Z([{ name: g.name, entity: g.entity }], $, ["sensor", "binary_sensor"]);
+        return g.max !== void 0 && (typeof g.max != "number" || !Number.isFinite(g.max)) && _(`${$}.max must be a number.`), { ...S, max: g.max };
       }),
       updates: w.updates === !0
     },
@@ -3227,10 +3227,10 @@ function _n(i) {
     }
   };
 }
-function Sn(i) {
+function An(i) {
   return Js("Dům Dashboard", () => _n(i));
 }
-const An = {
+const Sn = {
   cardDescription: "Řídicí centrum domu: co tě potřebuje a ovládání na jednom místě.",
   title: "Dům",
   orders: "Limitní ordery",
@@ -3240,6 +3240,8 @@ const An = {
   ordersCancel: "zrušit",
   ordersCheck: "Zkontrolovat",
   ordersChecked: (i) => `Kontrola ${i}`,
+  ordersTried: (i) => `Zkoušeno ${i}`,
+  ordersApplied: (i) => `Změněno ${i}`,
   ordersChecking: "Probíhá kontrola…",
   ordersFailed: "Kontrola selhala",
   ordersDryRun: "zkušební režim, ordery se nemění",
@@ -3383,6 +3385,8 @@ const An = {
   ordersCancel: "cancel",
   ordersCheck: "Check",
   ordersChecked: (i) => `Checked ${i}`,
+  ordersTried: (i) => `Tried ${i}`,
+  ordersApplied: (i) => `Changed ${i}`,
   ordersChecking: "Checking…",
   ordersFailed: "Check failed",
   ordersDryRun: "dry run, orders are not changed",
@@ -3526,6 +3530,8 @@ const An = {
   ordersCancel: "ta bort",
   ordersCheck: "Kontrollera",
   ordersChecked: (i) => `Kontrollerat ${i}`,
+  ordersTried: (i) => `Testkört ${i}`,
+  ordersApplied: (i) => `Ändrat ${i}`,
   ordersChecking: "Kontrollerar…",
   ordersFailed: "Kontrollen misslyckades",
   ordersDryRun: "testläge, ordrarna ändras inte",
@@ -3659,7 +3665,7 @@ const An = {
     suction: "Sugkraft",
     speeds: { Silent: "Tyst", Basic: "Standard", Strong: "Stark", "Full Speed": "Max" }
   }
-}, Tn = { cs: An, en: Mn, sv: Cn };
+}, Tn = { cs: Sn, en: Mn, sv: Cn };
 function Ge(i, t) {
   return cn(Tn, i, t);
 }
@@ -4309,7 +4315,7 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     };
   }
   setConfig(t) {
-    this._config = Sn(t);
+    this._config = An(t);
   }
   getCardSize() {
     return 12;
@@ -4584,16 +4590,16 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
       cooling: s.cooling,
       ...Object.fromEntries(t.devices.map((u, h) => [`devices-${h}`, this.name(u.name)]))
     }, d = (u) => u.map((h) => {
-      const p = h.head, x = this.withoutName(this.coverReason(t, p, e), p, t), m = (y) => {
-        const v = [...y].sort((S, T) => this.configIndex(t, S.entry.entity_id) - this.configIndex(t, T.entry.entity_id)), A = v.map((S) => this.shortName(t, S.entry));
-        return (A.every((S) => S !== void 0) ? A : Ln(v.map((S) => this.logName(S.entry)))).join(", ");
-      }, k = p.kind ? h.groups.find((y) => y.kind === p.kind && y.state === p.state) : void 0, w = k ? `${l[p.kind] ?? ""} · ${this.logState(p.entry, p.state)}` : this.logTitle(t, p.entry, p.state, e), g = h.groups.map((y) => {
-        if (y === k) return m([p, ...y.items]);
-        const v = this.logState(y.items[0].entry, y.state);
-        return y.kind ? `${l[y.kind] ?? ""} · ${v}: ${m(y.items)}` : `${this.logName(y.items[0].entry)} · ${v}`;
+      const p = h.head, x = this.withoutName(this.coverReason(t, p, e), p, t), m = (b) => {
+        const $ = [...b].sort((A, T) => this.configIndex(t, A.entry.entity_id) - this.configIndex(t, T.entry.entity_id)), S = $.map((A) => this.shortName(t, A.entry));
+        return (S.every((A) => A !== void 0) ? S : Ln($.map((A) => this.logName(A.entry)))).join(", ");
+      }, k = p.kind ? h.groups.find((b) => b.kind === p.kind && b.state === p.state) : void 0, w = k ? `${l[p.kind] ?? ""} · ${this.logState(p.entry, p.state)}` : this.logTitle(t, p.entry, p.state, e), g = h.groups.map((b) => {
+        if (b === k) return m([p, ...b.items]);
+        const $ = this.logState(b.items[0].entry, b.state);
+        return b.kind ? `${l[b.kind] ?? ""} · ${$}: ${m(b.items)}` : `${this.logName(b.items[0].entry)} · ${$}`;
       });
       return c`<div class="log-row"><span class="log-time">${e.time(h.time)}</span><span class="main"
-            >${w}${x ? c`<small>${x}</small>` : f}${g.map((y) => c`<span class="log-members">${y}</span>`)}</span
+            >${w}${x ? c`<small>${x}</small>` : f}${g.map((b) => c`<span class="log-members">${b}</span>`)}</span
           ></div>`;
     });
     return c`<dd-sheet .open=${n} .heading=${s.log} .closeLabel=${s.close} @hdk-close=${() => this.closeLog()}>
@@ -4629,18 +4635,19 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   }
   renderOrders(t, e) {
     if (!t.orders) return f;
-    const s = e.t, n = M(this.hass, t.orders.entity), o = n?.state, a = n?.attributes ?? {}, r = a.dry_run === !0, l = o === "probiha", d = this.instruments(t), u = d.filter((g) => g.upravit).length, h = t.orders.check, p = typeof a.cas == "string" ? a.cas : "", x = this.day(new Date(this._now)), m = p !== "" && !p.startsWith(x), k = m ? `${e.day(Date.parse(p.replace(" ", "T")))} ${p.slice(11)}` : p.slice(11) || p, w = o === "chyba" ? c`<span class="mark alert" aria-hidden="true">!</span><span class="main">${s.ordersFailed}<small class="alert">${String(a.chyba ?? "")}</small></span>` : c`<span class="main"><small class=${m ? "warn" : ""}>${l ? s.ordersChecking : typeof a.cas == "string" ? et([s.ordersChecked(k), r ? s.ordersDryRun : void 0].filter((g) => !!g)) : s.ordersNoData}</small></span>`;
+    const s = e.t, n = M(this.hass, t.orders.entity), o = n?.state, a = n?.attributes ?? {}, r = a.dry_run === !0, l = o === "probiha", d = this.instruments(t), u = d.filter((b) => b.upravit).length, h = t.orders.check, p = typeof a.cas == "string" ? a.cas : "", x = this.day(new Date(this._now)), m = p !== "" && !p.startsWith(x), k = m ? `${e.day(Date.parse(p.replace(" ", "T")))} ${p.slice(11)}` : p.slice(11) || p, w = Array.isArray(a.provedeno) ? a.provedeno.filter((b) => typeof b == "string" && b !== "") : [], g = o === "chyba" ? c`<span class="mark alert" aria-hidden="true">!</span><span class="main">${s.ordersFailed}<small class="alert">${String(a.chyba ?? "")}</small></span>` : c`<span class="main"><small class=${m ? "warn" : ""}>${l ? s.ordersChecking : typeof a.cas == "string" ? et([(w.length ? r ? s.ordersTried : s.ordersApplied : s.ordersChecked)(k), r ? s.ordersDryRun : void 0].filter((b) => !!b)) : s.ordersNoData}</small>
+          ${l ? f : w.map((b) => c`<small class=${/CHYBA|ručně/.test(b) ? "alert" : ""} data-done>${b}</small>`)}</span>`;
     return c`<h2><span>${u ? `${s.orders} · ${s.ordersToUpdate(u)}` : s.orders}</span></h2>
       <div class="group" data-part="orders">
         ${d.map(
-      (g) => c`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${g.symbol} @click=${() => this._detail = `order:${g.symbol}`}>
-            ${g.upravit ? c`<span class="mark warn" aria-hidden="true">!</span>` : c`<span class="mark" aria-hidden="true">${gt}</span>`}
-            <span class="main">${g.symbol} · ${this.euro(e, g.cena)}<small class=${g.upravit ? "warn" : ""}>${this.nearest(e, g)}</small></span>
+      (b) => c`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${b.symbol} @click=${() => this._detail = `order:${b.symbol}`}>
+            ${b.upravit ? c`<span class="mark warn" aria-hidden="true">!</span>` : c`<span class="mark" aria-hidden="true">${gt}</span>`}
+            <span class="main">${b.symbol} · ${this.euro(e, b.cena)}<small class=${b.upravit ? "warn" : ""}>${this.nearest(e, b)}</small></span>
             <span class="chevron-mark" aria-hidden="true">›</span>
           </button>`
     )}
         <div class="row" data-row="orders-status">
-          ${w}
+          ${g}
           ${h ? c`<button class="button icon ${l ? "pending" : ""}" type="button" title=${s.ordersCheck} aria-label=${s.ordersCheck} aria-busy=${l ? "true" : f} @click=${() => this.call("input_button", "press", { entity_id: h })}>${Fe}</button>` : f}
         </div>
       </div>
@@ -4689,12 +4696,12 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
         </div>`;
       }),
       ...n.map((m) => {
-        const k = t.covers.names[m.entita], w = M(this.hass, m.entita)?.attributes.friendly_name, g = typeof w == "string" ? w : k !== void 0 ? this.name(k) : void 0, y = m.cas ? Date.parse(m.cas) : NaN, v = this.failedGoal(t, m), A = v ? s.notArrivedTo(this.name(v.name)) : m.duvod || m.akce, S = et([A ? A.charAt(0).toLocaleUpperCase(e.language) + A.slice(1) : void 0, Number.isFinite(y) ? e.time(y) : void 0].filter(Boolean)), T = this.retryOf(t, m), $ = typeof g == "string" ? g : m.entita, N = t.clearFailed ? this.iconButton(gt, s.done, $, () => this.call("script", t.clearFailed.split(".")[1], { entita: m.entita })) : f;
+        const k = t.covers.names[m.entita], w = M(this.hass, m.entita)?.attributes.friendly_name, g = typeof w == "string" ? w : k !== void 0 ? this.name(k) : void 0, b = m.cas ? Date.parse(m.cas) : NaN, $ = this.failedGoal(t, m), S = $ ? s.notArrivedTo(this.name($.name)) : m.duvod || m.akce, A = et([S ? S.charAt(0).toLocaleUpperCase(e.language) + S.slice(1) : void 0, Number.isFinite(b) ? e.time(b) : void 0].filter(Boolean)), T = this.retryOf(t, m), y = typeof g == "string" ? g : m.entita, N = t.clearFailed ? this.iconButton(gt, s.done, y, () => this.call("script", t.clearFailed.split(".")[1], { entita: m.entita })) : f;
         return c`<div class="row" data-row="failed">
           <span class="mark warn" aria-hidden="true">!</span>
-          <span class="main">${$}<small>${S}</small></span>
+          <span class="main">${y}<small>${A}</small></span>
           ${T ? c`<span class="actions">
-                <button class="button icon ${this.pending.has(`retry:${m.entita}`) ? "pending" : ""}" type="button" title=${s.retry} aria-label=${`${s.retry}: ${$}`} aria-busy=${this.pending.has(`retry:${m.entita}`) ? "true" : f} @click=${T}>${Fe}</button>
+                <button class="button icon ${this.pending.has(`retry:${m.entita}`) ? "pending" : ""}" type="button" title=${s.retry} aria-label=${`${s.retry}: ${y}`} aria-busy=${this.pending.has(`retry:${m.entita}`) ? "true" : f} @click=${T}>${Fe}</button>
                 ${N}
               </span>` : N}
         </div>`;
@@ -4716,7 +4723,7 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
         </div>`;
       }),
       ...r.map(({ filter: m, hours: k, threshold: w }) => {
-        const g = (y) => `${e.whole(Math.floor(y))} h`;
+        const g = (b) => `${e.whole(Math.floor(b))} h`;
         return c`<div class="row" data-row="filter">
           <span class="mark">${Bn}</span>
           <span class="main">${this.name(m.name)}<small>${$t(s.filter(g(k), g(w)))}</small></span>
@@ -5055,7 +5062,7 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
    * switching on, which an automation of Home Assistant applies (`startup_brightness`, 0 = unchanged).
    */
   renderLight(t, e, s, n) {
-    const o = n.t, a = this.lightOptions(t, e) ?? { brightness: !1, hue: !1, temperature: !1 }, r = e?.state === "on", l = this.lightPercent(e), d = e?.attributes.hs_color, u = Array.isArray(d) && Number.isFinite(Number(d[0])) ? Math.round(Number(d[0])) : void 0, h = e?.attributes.color_temp_kelvin, p = typeof h == "number" && h > 0 ? h : NaN, x = Number(e?.attributes.min_color_temp_kelvin) || 2700, m = Number(e?.attributes.max_color_temp_kelvin) || 6500, k = String(e?.attributes.color_mode ?? ""), w = ($) => `${n.whole($)} K`, g = ($) => this.call("light", "turn_on", { entity_id: t.entity, ...$ }), y = t.startupBrightness ? ft(this.hass, t.startupBrightness) : void 0, v = ["hs", "rgb", "rgbw", "rgbww", "xy"], A = a.hue && (v.includes(k) || !a.temperature) ? "colour" : "white", S = a.hue && a.temperature, T = `light-mode:${t.entity}`;
+    const o = n.t, a = this.lightOptions(t, e) ?? { brightness: !1, hue: !1, temperature: !1 }, r = e?.state === "on", l = this.lightPercent(e), d = e?.attributes.hs_color, u = Array.isArray(d) && Number.isFinite(Number(d[0])) ? Math.round(Number(d[0])) : void 0, h = e?.attributes.color_temp_kelvin, p = typeof h == "number" && h > 0 ? h : NaN, x = Number(e?.attributes.min_color_temp_kelvin) || 2700, m = Number(e?.attributes.max_color_temp_kelvin) || 6500, k = String(e?.attributes.color_mode ?? ""), w = (y) => `${n.whole(y)} K`, g = (y) => this.call("light", "turn_on", { entity_id: t.entity, ...y }), b = t.startupBrightness ? ft(this.hass, t.startupBrightness) : void 0, $ = ["hs", "rgb", "rgbw", "rgbww", "xy"], S = a.hue && ($.includes(k) || !a.temperature) ? "colour" : "white", A = a.hue && a.temperature, T = `light-mode:${t.entity}`;
     return c`<div class="setting-row">
         <span>${o.device.light}</span>
         <dd-switch
@@ -5063,9 +5070,9 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
           .disabled=${s}
           .label=${`${this.name(t.name)}: ${o.device.light}`}
           .pending=${this.pending.has(`toggle:${t.entity}`)}
-          @hdk-toggle=${($) => {
-      const N = $.detail.checked ? "on" : "off", K = $.detail.checked && y !== void 0 && y > 0 ? { brightness_pct: Math.round(y) } : {};
-      this.send(`toggle:${t.entity}`, { entities: [t.entity], done: () => O(this.hass, t.entity) === N }, "light", $.detail.checked ? "turn_on" : "turn_off", { entity_id: t.entity, ...K });
+          @hdk-toggle=${(y) => {
+      const N = y.detail.checked ? "on" : "off", K = y.detail.checked && b !== void 0 && b > 0 ? { brightness_pct: Math.round(b) } : {};
+      this.send(`toggle:${t.entity}`, { entities: [t.entity], done: () => O(this.hass, t.entity) === N }, "light", y.detail.checked ? "turn_on" : "turn_off", { entity_id: t.entity, ...K });
     }}
         ></dd-switch>
       </div>
@@ -5082,27 +5089,27 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
               .valueText=${l === void 0 ? o.off : n.percent(l)}
               .minLabel=${n.percent(5)}
               .maxLabel=${n.percent(100)}
-              @hdk-change=${($) => g({ brightness_pct: $.detail.value })}
+              @hdk-change=${(y) => g({ brightness_pct: y.detail.value })}
             ></dd-slider>`
     ) : f}
-      ${S ? c`<dd-segmented
+      ${A ? c`<dd-segmented
             .label=${o.device.lightMode}
-            .value=${A}
+            .value=${S}
             .disabled=${s}
             .pending=${this.pending.has(T)}
             .options=${[
       { value: "white", label: o.device.white },
       { value: "colour", label: o.device.coloured }
     ]}
-            @hdk-select=${($) => {
-      const N = $.detail.value === "colour", K = () => {
+            @hdk-select=${(y) => {
+      const N = y.detail.value === "colour", K = () => {
         const _t = String(M(this.hass, t.entity)?.attributes.color_mode ?? "");
-        return N ? v.includes(_t) : _t === "color_temp";
+        return N ? $.includes(_t) : _t === "color_temp";
       }, I = N ? { hs_color: [u ?? 30, 100] } : { color_temp_kelvin: Number.isFinite(p) ? p : x };
       this.send(T, { entities: [t.entity], done: K }, "light", "turn_on", { entity_id: t.entity, ...I });
     }}
           ></dd-segmented>` : f}
-      ${a.hue && A === "colour" ? this.setting(
+      ${a.hue && S === "colour" ? this.setting(
       o.device.colour,
       // The colour as a dot of that colour, not a number of degrees (a number would mean nothing here).
       u === void 0 || !r ? "" : c`<span class="swatch" style=${`background: hsl(${u} 100% 50%)`}></span>`,
@@ -5115,10 +5122,10 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
               .label=${o.device.colour}
               .valueText=${u === void 0 ? "" : `${u}°`}
               .track=${"linear-gradient(to right, hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%), hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%))"}
-              @hdk-change=${($) => g({ hs_color: [$.detail.value, 100] })}
+              @hdk-change=${(y) => g({ hs_color: [y.detail.value, 100] })}
             ></dd-slider>`
     ) : f}
-      ${a.temperature && A === "white" ? this.setting(
+      ${a.temperature && S === "white" ? this.setting(
       o.device.temperature,
       Number.isFinite(p) && r ? w(p) : "",
       c`<dd-slider
@@ -5132,23 +5139,23 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
               .minLabel=${""}
               .maxLabel=${""}
               .track=${"linear-gradient(to right, #ff9f3a, #ffd9a8, #ffffff, #cddcff)"}
-              @hdk-change=${($) => g({ color_temp_kelvin: $.detail.value })}
+              @hdk-change=${(y) => g({ color_temp_kelvin: y.detail.value })}
             ></dd-slider>`
     ) : f}
       ${t.startupBrightness ? this.setting(
       o.device.startup,
-      y === void 0 ? o.unavailable : y > 0 ? n.percent(Math.round(y)) : o.device.unchanged,
+      b === void 0 ? o.unavailable : b > 0 ? n.percent(Math.round(b)) : o.device.unchanged,
       c`<dd-slider
               min="0"
               max="100"
               step="5"
-              .value=${y ?? 0}
-              .disabled=${y === void 0}
+              .value=${b ?? 0}
+              .disabled=${b === void 0}
               .label=${o.device.startup}
-              .valueText=${y === void 0 ? o.unavailable : y > 0 ? n.percent(Math.round(y)) : o.device.unchanged}
+              .valueText=${b === void 0 ? o.unavailable : b > 0 ? n.percent(Math.round(b)) : o.device.unchanged}
               .minLabel=${o.device.unchanged}
               .maxLabel=${n.percent(100)}
-              @hdk-change=${($) => this.call("input_number", "set_value", { entity_id: t.startupBrightness, value: $.detail.value })}
+              @hdk-change=${(y) => this.call("input_number", "set_value", { entity_id: t.startupBrightness, value: y.detail.value })}
             ></dd-slider>`,
       o.device.startupNote,
       !0
@@ -5189,11 +5196,11 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
               .value=${m}
               .disabled=${s}
               .pending=${this.pending.has(`speed:${t.entity}`)}
-              .options=${x.map((y) => ({ value: y, label: o.device.speeds[y] ?? y }))}
-              @hdk-select=${(y) => this.send(`speed:${t.entity}`, { entities: [t.entity], done: () => M(this.hass, t.entity)?.attributes.fan_speed === y.detail.value }, "vacuum", "set_fan_speed", { entity_id: t.entity, fan_speed: y.detail.value })}
+              .options=${x.map((b) => ({ value: b, label: o.device.speeds[b] ?? b }))}
+              @hdk-select=${(b) => this.send(`speed:${t.entity}`, { entities: [t.entity], done: () => M(this.hass, t.entity)?.attributes.fan_speed === b.detail.value }, "vacuum", "set_fan_speed", { entity_id: t.entity, fan_speed: b.detail.value })}
             ></dd-segmented>
           </div>` : f}
-      ${k.length ? c`<div class="group">${k.map(([y, v]) => c`<div class="health-row"><span class="main">${y}</span><span class="value">${v}</span></div>`)}</div>` : f}`;
+      ${k.length ? c`<div class="group">${k.map(([b, $]) => c`<div class="health-row"><span class="main">${b}</span><span class="value">${$}</span></div>`)}</div>` : f}`;
   }
   /* ---------- Topení a Klimatizace ---------- */
   target(t, e, s) {
@@ -5323,7 +5330,7 @@ const Un = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 be.styles = [Vt, se, Nn];
 let j = be;
 q([
-  b({ attribute: !1 })
+  v({ attribute: !1 })
 ], j.prototype, "hass");
 q([
   z()
@@ -5368,4 +5375,4 @@ window.customCards.some((i) => i.type === "ha-dum-dashboard") || window.customCa
   description: Ge(rn()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.24.1 · 2026-11-23 22:32 UTC · po 008aa0a ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.24.2 · 2026-11-23 22:54 UTC · po 61e6144 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");

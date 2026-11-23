@@ -10,6 +10,8 @@ export const sv: typeof cs = {
   ordersCancel: "ta bort",
   ordersCheck: "Kontrollera",
   ordersChecked: (time) => `Kontrollerat ${time}`,
+  ordersTried: (time) => `Testkört ${time}`,
+  ordersApplied: (time) => `Ändrat ${time}`,
   ordersChecking: "Kontrollerar…",
   ordersFailed: "Kontrollen misslyckades",
   ordersDryRun: "testläge, ordrarna ändras inte",

@@ -8,6 +8,8 @@ export const cs = {
   ordersCancel: "zrušit",
   ordersCheck: "Zkontrolovat",
   ordersChecked: (time: string) => `Kontrola ${time}`,
+  ordersTried: (time: string) => `Zkoušeno ${time}`,
+  ordersApplied: (time: string) => `Změněno ${time}`,
   ordersChecking: "Probíhá kontrola…",
   ordersFailed: "Kontrola selhala",
   ordersDryRun: "zkušební režim, ordery se nemění",
