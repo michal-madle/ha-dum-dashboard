@@ -706,21 +706,20 @@ test.describe("úkoly ze senzoru (tasks)", () => {
 
   test("karta jen s úkoly ukáže jen frontu: naléhavé nahoře, fajfka v řádku zavolá službu, úkol bez akce fajfku nemá", async ({ page }) => {
     await openTasks(page);
-    expect(await headings(page)).toEqual(["Potřebuje tebe · 4"]);
+    expect(await headings(page)).toEqual(["Potřebuje tebe · 3"]);
     await expect(page.locator("dd-tile")).toHaveCount(0);
     const rows = page.locator('[data-row="task"]');
-    await expect(rows).toHaveCount(4);
+    await expect(rows).toHaveCount(3);
     await expect(rows.nth(0)).toContainText("Nájem");
     await expect(rows.nth(0)).toContainText("po splatnosti (5.)");
-    await expect(rows.nth(1)).toContainText("Upravit limitní ordery");
-    await expect(rows.nth(2)).toContainText("Rebalance XDWD");
-    await expect(rows.nth(3)).toContainText("Telefon");
-    await expect(rows.nth(2).getByRole("button")).toHaveCount(0);
+    await expect(rows.nth(1)).toContainText("Rebalance XDWD");
+    await expect(rows.nth(2)).toContainText("Telefon");
+    await expect(rows.nth(1).getByRole("button")).toHaveCount(0);
     await rows.nth(0).getByRole("button", { name: "Hotovo" }).click();
-    await rows.nth(1).getByRole("button", { name: "Hotovo" }).click();
+    await rows.nth(2).getByRole("button", { name: "Hotovo" }).click();
     expect(await calls(page)).toEqual([
       { domain: "input_boolean", service: "turn_on", data: { entity_id: "input_boolean.platba_najem" } },
-      { domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } },
+      { domain: "input_boolean", service: "turn_on", data: { entity_id: "input_boolean.platba_telefon" } },
     ]);
     await update(page, { "sensor.ukoly": { state: "0", attributes: { ukoly: [] } } });
     await expect(page.locator('[data-part="queue"]')).toHaveText("Nic na tebe nečeká");
@@ -731,6 +730,63 @@ test.describe("úkoly ze senzoru (tasks)", () => {
       await openTasks(page, theme);
       expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
       await page.screenshot({ path: info.outputPath(`ukoly-${theme}.png`), fullPage: true });
+    });
+  }
+});
+
+test.describe("limitní ordery (orders)", () => {
+  async function openOrders(page: Page, theme: "dark" | "light" = "dark"): Promise<void> {
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(`/tests/tasks.html?cfg=ordery${theme === "light" ? "&theme=light" : ""}`);
+    await page.waitForFunction(() => (window as any).__test?.ready === true);
+    await page.locator('[data-part="orders"]').waitFor();
+    await page.evaluate(() => document.fonts.ready.then(() => true));
+  }
+
+  test("řádek na nástroj: cena a nejbližší BUY a SELL se vzdáleností; Aktualizovat jen když se liší; nahoře před frontou", async ({ page }) => {
+    await openOrders(page);
+    expect(await headings(page)).toEqual(["Limitní ordery · 2 k úpravě", "Potřebuje tebe · 3"]);
+    const rows = page.locator('[data-part="orders"] [data-instrument]');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0)).toContainText("SXR8 · 701,28 €");
+    expect(await joinedLines(rows.nth(0).locator("small"))).toEqual(["↓ 692,52 € (−1,2 %) · ↑ 720,80 € (+2,8 %)"]);
+    expect(await joinedLines(rows.nth(2).locator("small"))).toEqual(["↓ 54 750 € (−2,0 %) · ↑ 56 750 € (+1,6 %)"]);
+    await expect(page.locator('[data-row="orders-status"]')).toContainText("Kontrola 08:30 · zkušební režim, ordery se nemění");
+    await page.locator(".orders-update").click();
+    expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
+    await page.locator('[data-row="orders-status"]').getByRole("button", { name: "Zkontrolovat" }).click();
+    expect((await calls(page)).at(-1)).toEqual({ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_zkontrolovat" } });
+    await update(page, { "sensor.ordery": { state: "ok", attributes: { instrumenty: [], cas: "2026-11-23 09:00" } } });
+    await expect(page.locator(".orders-update")).toHaveCount(0);
+    expect((await headings(page))[0]).toBe("Limitní ordery");
+  });
+
+  test("klepnutí otevře popup s ordery teď → nově a tlačítkem; chyba kontroly je červená", async ({ page }) => {
+    await openOrders(page);
+    await page.locator('[data-instrument="SXR8"]').click();
+    const detail = page.locator('[data-part="order-detail"]');
+    await expect(detail).toContainText("140 ks");
+    await expect(detail).toContainText("677,88 € → 692,52 €");
+    await expect(detail).toContainText("chybí → 720,80 €");
+    await expect(detail).toContainText("teď → nově");
+    await expect(detail).toContainText("proti cíli −0,8 %");
+    await detail.locator(".orders-update").click();
+    expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
+    await update(page, { "sensor.ordery": { state: "chyba", attributes: { instrumenty: [], chyba: "brána IBKR neodpovídá" } } });
+    await expect(page.locator('[data-row="orders-status"]')).toContainText("Kontrola selhala");
+    await expect(page.locator('[data-row="orders-status"] small.alert')).toHaveText("brána IBKR neodpovídá");
+  });
+
+  for (const theme of ["dark", "light"] as const) {
+    test(`ordery: přístupnost a snímky (${theme})`, async ({ page }, info) => {
+      await openOrders(page, theme);
+      expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+      await page.screenshot({ path: info.outputPath(`ordery-${theme}.png`), fullPage: true });
+      await page.locator('[data-instrument="BTC"]').click();
+      await page.locator('[data-part="order-detail"]').waitFor();
+      await page.waitForTimeout(400);
+      expect(await axeViolations(page, ["page-has-heading-one"])).toEqual([]);
+      await page.screenshot({ path: info.outputPath(`ordery-detail-${theme}.png`) });
     });
   }
 });

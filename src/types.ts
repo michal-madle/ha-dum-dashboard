@@ -75,6 +75,14 @@ export interface Settings {
    * the row has „Hotovo“ (the checkmark) that calls the service.
    */
   tasks: string[];
+  /**
+   * Limit orders (dashboard Finance; uživatel 23. 11. 2026: „Nejdulezitejsi jsou ale ty limit ordery … aby bylo videt
+   * aktualni cena, nejblizsi SELL a BUY … rychly proklik na detaily … stavajici limit ordery a nove a tlacitkem je
+   * aktualizovat“, „Q39 ano“): the sensor with the attribute `instrumenty` ([{symbol, cena, pozice, jednotka, hodnota,
+   * cil, odchylka, upravit, ordery: [{side, mnozstvi, ted, nove}]}], its state ok | upravit | probiha | chyba, `cas`,
+   * `dry_run`, `chyba`), the button that updates the orders and the one that checks them again.
+   */
+  orders?: { entity: string; update?: string; check?: string };
   maintenance: Maintenance[];
   running: Named[];
   covers: {

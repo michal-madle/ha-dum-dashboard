@@ -81,6 +81,19 @@ interface Task {
   akce?: { sluzba: string; data?: Record<string, unknown> };
 }
 
+/** One instrument of the limit orders (`orders`, attribute `instrumenty`). */
+interface Instrument {
+  symbol: string;
+  cena?: number | null;
+  pozice?: number | null;
+  jednotka?: string;
+  hodnota?: number | null;
+  cil?: number | null;
+  odchylka?: number | null;
+  upravit?: boolean;
+  ordery?: Array<{ side: string; mnozstvi?: number; ted?: number | null; nove?: number }>;
+}
+
 const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
 
 /**
@@ -97,7 +110,7 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}` | `device:${string}`;
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}` | `device:${string}` | `order:${string}`;
   /** Kniha pravidel: each automation of Home Assistant with its description (loaded when opened). */
   @state() private _rules?: { id: string; name: string; description: string; on: boolean }[] | "failed";
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
@@ -204,11 +217,11 @@ export class HaDumDashboard extends LitElement {
     const summer = config.houseMode !== undefined && readText(this.hass, config.houseMode) === config.summer;
     const climate = summer ? [this.renderCooling(config, i18n), this.renderHeating(config, i18n)] : [this.renderHeating(config, i18n), this.renderCooling(config, i18n)];
     return html`<ha-card>
-      ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
+      ${this.renderOrders(config, i18n)} ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
       ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderHealth(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)} ${this.renderDeviceDetail(config, i18n)}`;
+    ${this.renderOrdersDetail(config, i18n)} ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)} ${this.renderDeviceDetail(config, i18n)}`;
   }
 
   /* ---------- Zdraví ---------- */
@@ -606,6 +619,100 @@ export class HaDumDashboard extends LitElement {
               : entries.length
                 ? html`${fresh.length ? html`<h3>${t.logSince}</h3>${rows(fresh)}` : nothing}${earlier.length ? html`<h3>${t.logEarlier}</h3>${rows(earlier)}` : nothing}`
                 : html`<p class="log-empty">${t.logEmpty}</p>`}
+          </div>`
+        : nothing}
+    </dd-sheet>`;
+  }
+
+  /* ---------- Limitní ordery ---------- */
+
+  private instruments(config: Settings): Instrument[] {
+    const items = config.orders ? entityState(this.hass, config.orders.entity)?.attributes.instrumenty : undefined;
+    return Array.isArray(items) ? items.filter((item): item is Instrument => typeof item === "object" && item !== null && typeof (item as Instrument).symbol === "string") : [];
+  }
+
+  /** Euros: whole above a thousand (BTC 55 876 €), otherwise cents (692,52 €). */
+  private euro(i18n: I18n, value: number | null | undefined): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+    return `${Math.abs(value) >= 1000 ? i18n.whole(value) : i18n.two(value)}\u00a0€`;
+  }
+
+  /** A signed difference in percent with one decimal place: "+2,8 %", "−1,3 %". */
+  private signed(i18n: I18n, fraction: number): string {
+    const sign = fraction > 0.00005 ? "+" : fraction < -0.00005 ? "−" : "";
+    return i18n.percent(`${sign}${i18n.one(Math.abs(fraction * 100))}`);
+  }
+
+  /** The nearest BUY and SELL of the new orders, with their distance from the price. */
+  private nearest(i18n: I18n, item: Instrument): TemplateResult {
+    const buys = (item.ordery ?? []).filter((order) => order.side === "BUY" && Number.isFinite(order.nove)).map((order) => order.nove!);
+    const sells = (item.ordery ?? []).filter((order) => order.side === "SELL" && Number.isFinite(order.nove)).map((order) => order.nove!);
+    const price = item.cena ?? undefined;
+    const part = (arrow: string, value: number | undefined) =>
+      value === undefined ? undefined : `${arrow}\u00a0${this.euro(i18n, value)}${price ? ` (${this.signed(i18n, value / price - 1)})` : ""}`;
+    return joined([part("↓", buys.length ? Math.max(...buys) : undefined), part("↑", sells.length ? Math.min(...sells) : undefined)].filter((text): text is string => Boolean(text)));
+  }
+
+  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean): TemplateResult | typeof nothing {
+    const update = config.orders?.update;
+    if (!update) return nothing;
+    return html`<button class="button primary orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
+      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
+  }
+
+  private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    if (!config.orders) return nothing;
+    const t = i18n.t;
+    const sensor = entityState(this.hass, config.orders.entity);
+    const state = sensor?.state;
+    const attrs = sensor?.attributes ?? {};
+    const dryRun = attrs.dry_run === true;
+    const busy = state === "probiha";
+    const items = this.instruments(config);
+    const count = items.filter((item) => item.upravit).length;
+    const check = config.orders.check;
+    const status =
+      state === "chyba"
+        ? html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${String(attrs.chyba ?? "")}</small></span>`
+        : html`<span class="main"><small>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([t.ordersChecked(attrs.cas.slice(11) || attrs.cas), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small></span>`;
+    return html`<h2><span>${count ? `${t.orders} · ${t.ordersToUpdate(count)}` : t.orders}</span></h2>
+      <div class="group" data-part="orders">
+        ${items.map(
+          (item) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${item.symbol} @click=${() => (this._detail = `order:${item.symbol}`)}>
+            ${item.upravit ? html`<span class="mark warn" aria-hidden="true">!</span>` : html`<span class="mark" aria-hidden="true">${ICON_DONE}</span>`}
+            <span class="main">${item.symbol} · ${this.euro(i18n, item.cena)}<small class=${item.upravit ? "warn" : ""}>${this.nearest(i18n, item)}</small></span>
+            <span class="chevron-mark" aria-hidden="true">›</span>
+          </button>`,
+        )}
+        <div class="row" data-row="orders-status">
+          ${status}
+          ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.call("input_button", "press", { entity_id: check })}>${ICON_RETRY}</button>` : nothing}
+        </div>
+      </div>
+      ${count ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;
+  }
+
+  private renderOrdersDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
+    if (!config.orders) return nothing;
+    const t = i18n.t;
+    const symbol = this._detail?.startsWith("order:") ? this._detail.slice(6) : undefined;
+    const item = symbol ? this.instruments(config).find((entry) => entry.symbol === symbol) : undefined;
+    const attrs = entityState(this.hass, config.orders.entity)?.attributes ?? {};
+    const amount = (value: number | undefined, unit: string | undefined) =>
+      value === undefined ? "" : `${value.toLocaleString(i18n.locale, { maximumFractionDigits: unit === "BTC" ? 8 : 0 })}\u00a0${unit ?? ""}`;
+    const line = (name: unknown, value: unknown, warn = false) => html`<div class="health-row"><span class="main">${name}</span><span class="value ${warn ? "warn" : ""}">${value}</span></div>`;
+    return html`<dd-sheet .open=${item !== undefined} .heading=${symbol ?? ""} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
+      ${item
+        ? html`<div class="detail" data-part="order-detail">
+            ${line(t.ordersPosition, joined([amount(item.pozice ?? undefined, item.jednotka), this.euro(i18n, item.cena)]))}
+            ${item.hodnota != null ? line(t.ordersValue, joined([this.euro(i18n, item.hodnota), item.odchylka != null ? t.ordersTarget(this.signed(i18n, item.odchylka)) : undefined].filter((text): text is string => Boolean(text)))) : nothing}
+            <div class="health-row orders-head"><span class="main">${t.orders}</span><span class="value">${t.ordersNow} → ${t.ordersNew}</span></div>
+            ${(item.ordery ?? []).map((order) => {
+              const same = order.ted != null && order.nove != null && Math.abs(order.ted - order.nove) < 1e-9;
+              const now = order.ted == null ? t.ordersMissing : this.euro(i18n, order.ted);
+              return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${this.euro(i18n, order.nove)}`, !same);
+            })}
+            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true)}</div>` : nothing}
           </div>`
         : nothing}
     </dd-sheet>`;

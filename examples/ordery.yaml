@@ -1,0 +1,10 @@
+# Dashboard s limitními ordery (např. Finance): oddíl Limitní ordery a pod ním fronta úkolů.
+# orders.entity: senzor s atributem `instrumenty` (cena, pozice, ordery teď → nově), stav ok | upravit | probiha | chyba.
+type: custom:ha-dum-dashboard
+language: cs
+orders:
+  entity: sensor.ordery
+  update: input_button.ordery_aktualizovat
+  check: input_button.ordery_zkontrolovat
+tasks:
+  - sensor.ukoly

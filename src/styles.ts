@@ -474,6 +474,24 @@ export const styles = [
     line-height: 20px;
   }
   /* An icon button (Zkusit znovu): a 44 px circle. */
+  /* Limitní ordery: the update under the list and in the detail, the whole width. */
+  .orders-update {
+    width: 100%;
+    margin-top: 12px;
+  }
+  .health-row .main small {
+    display: block;
+    color: var(--dd-secondary);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .orders-head {
+    color: var(--dd-secondary);
+    font-size: 13px;
+  }
+  .detail-actions {
+    padding-top: 4px;
+  }
   .button.icon {
     display: inline-flex;
     align-items: center;
