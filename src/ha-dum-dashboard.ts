@@ -655,11 +655,11 @@ export class HaDumDashboard extends LitElement {
   }
 
   /** Updates all orders that differ (one button of Home Assistant); in the dry run a plain button, it changes nothing. */
-  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean, count: number): TemplateResult | typeof nothing {
+  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean): TemplateResult | typeof nothing {
     const update = config.orders?.update;
     if (!update) return nothing;
     return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
-      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry(count) : i18n.t.ordersUpdate(count)}</button>`;
+      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
   }
 
   private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -673,19 +673,32 @@ export class HaDumDashboard extends LitElement {
     const items = this.instruments(config);
     const count = items.filter((item) => item.upravit).length;
     const check = config.orders.check;
-    // „2026-11-23 08:30“: only the time today, the day otherwise (old data must not look current).
+    // „2026-11-23 08:30“: only the time today, the day otherwise (old data must not look current). Old is only what is older than the
+    // last scheduled check (`cas_kontroly`), so the morning before it is not flagged.
     const cas = typeof attrs.cas === "string" ? attrs.cas : "";
     const today = this.day(new Date(this._now));
-    const stale = cas !== "" && !cas.startsWith(today);
-    const checked = stale ? `${i18n.day(Date.parse(cas.replace(" ", "T")))} ${cas.slice(11)}` : cas.slice(11) || cas;
-    // What the last press of the button did (`provedeno` of the sensor, lines as AppDaemon wrote them); a new check drops it.
-    const done = Array.isArray(attrs.provedeno) ? attrs.provedeno.filter((line): line is string => typeof line === "string" && line !== "") : [];
-    const status =
-      state === "chyba"
-        ? html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${String(attrs.chyba ?? "")}</small></span>`
-        : html`<span class="main"><small class=${stale ? "warn" : ""}>${busy ? t.ordersChecking : typeof attrs.cas === "string" ? joined([(done.length ? (dryRun ? t.ordersTried : t.ordersApplied) : t.ordersChecked)(checked), dryRun ? t.ordersDryRun : undefined].filter((text): text is string => Boolean(text))) : t.ordersNoData}</small>
-          ${busy ? nothing : done.map((line) => html`<small class=${/CHYBA|ručně/.test(line) ? "alert" : ""} data-done>${line}</small>`)}</span>`;
-    return html`<h2><span>${count ? `${t.orders} · ${t.ordersToUpdate(count)}` : t.orders}</span></h2>
+    const clock = (value: string) => value.slice(11) || value;
+    const dayAndTime = (value: string) => (!value || value.startsWith(today) ? clock(value) : `${i18n.day(Date.parse(value.replace(" ", "T")))} ${clock(value)}`);
+    const scheduled = typeof attrs.cas_kontroly === "string" ? attrs.cas_kontroly : "00:00";
+    const nowClock = new Date(this._now).toTimeString().slice(0, 5);
+    const stale = cas !== "" && !cas.startsWith(today) && nowClock >= scheduled;
+    const checked = dayAndTime(cas);
+    // What the last press of the button did: lines that went wrong (`chyby`, written by AppDaemon) and the plain log (`provedeno`).
+    const strings = (value: unknown): string[] => (Array.isArray(value) ? value.filter((line): line is string => typeof line === "string" && line !== "") : []);
+    const problems = strings(attrs.chyby);
+    const pressed = strings(attrs.provedeno).length > 0;
+    const lines = (list: string[]) => list.map((line) => html`<small class="alert" data-done>${line}</small>`);
+    const priceDate = typeof attrs.posledni_ok === "string" && attrs.posledni_ok !== "" ? dayAndTime(attrs.posledni_ok) : "";
+    let status: TemplateResult;
+    if (busy) status = html`<span class="main"><small>${t.ordersChecking}</small></span>`;
+    else if (state === "chyba")
+      status = html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${joined([String(attrs.chyba ?? ""), priceDate ? t.ordersPricesFrom(priceDate) : ""].filter(Boolean))}</small></span>`;
+    else if (typeof attrs.cas !== "string") status = html`<span class="main"><small>${t.ordersNoData}</small></span>`;
+    else if (pressed && problems.length) status = html`<span class="main"><small class="alert">${t.ordersApplyFailed(checked)}</small>${lines(problems)}</span>`;
+    else if (pressed && dryRun) status = html`<span class="main"><small>${t.ordersTried(checked)}</small></span>`;
+    else if (pressed) status = html`<span class="main"><small class=${count ? "warn" : ""}>${joined([t.ordersApplied(checked), count ? t.ordersStillDiffer(count) : ""].filter(Boolean))}</small></span>`;
+    else status = html`<span class="main"><small class=${stale ? "warn" : ""}>${joined([t.ordersChecked(checked), dryRun ? t.ordersDryRun : ""].filter(Boolean))}</small></span>`;
+    return html`<h2><span>${t.orders}</span></h2>
       <div class="group" data-part="orders">
         ${items.map(
           (item) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${item.symbol} @click=${() => (this._detail = `order:${item.symbol}`)}>
@@ -699,7 +712,7 @@ export class HaDumDashboard extends LitElement {
           ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.call("input_button", "press", { entity_id: check })}>${ICON_RETRY}</button>` : nothing}
         </div>
       </div>
-      ${count ? this.updateButton(config, i18n, busy, dryRun, count) : nothing}`;
+      ${count && state !== "chyba" ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;
   }
 
   private renderOrdersDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -723,7 +736,7 @@ export class HaDumDashboard extends LitElement {
               const next = order.nove == null ? t.ordersCancel : this.euro(i18n, order.nove);
               return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${next}`, !same);
             })}
-            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true, this.instruments(config).filter((entry) => entry.upravit).length)}</div>` : nothing}
+            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true)}</div>` : nothing}
           </div>`
         : nothing}
     </dd-sheet>`;
