@@ -658,7 +658,8 @@ export class HaDumDashboard extends LitElement {
   private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean): TemplateResult | typeof nothing {
     const update = config.orders?.update;
     if (!update) return nothing;
-    return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
+    const mine = this.pending.has("orders:update");
+    return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${mine ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
       @click=${() => this.pressOrders(config, "update")}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
   }
 
@@ -744,7 +745,7 @@ export class HaDumDashboard extends LitElement {
         )}
         <div class="row" data-row="orders-status">
           ${status}
-          ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.pressOrders(config, "check")}>${ICON_RETRY}</button>` : nothing}
+          ${check ? html`<button class="button icon ${busy && !this.pending.has("orders:update") ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.pressOrders(config, "check")}>${ICON_RETRY}</button>` : nothing}
         </div>
       </div>
       ${count && state !== "chyba" ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;

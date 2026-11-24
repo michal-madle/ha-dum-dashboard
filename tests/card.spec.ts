@@ -759,6 +759,7 @@ test.describe("limitní ordery (orders)", () => {
     expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
     await expect(page.locator(".orders-update")).toHaveClass(/pending/);
     await expect(page.locator('[data-row="orders-status"]')).toContainText("Upravuji ordery…");
+    await expect(page.locator('[data-row="orders-status"] button.icon')).not.toHaveClass(/pending/);
     await page.locator(".orders-update").click();
     await page.locator('[data-row="orders-status"]').getByRole("button", { name: "Zkontrolovat" }).click({ force: true });
     expect(await calls(page)).toHaveLength(1);

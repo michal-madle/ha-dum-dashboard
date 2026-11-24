@@ -4085,14 +4085,31 @@ const Nn = [
     background: var(--dd-alert-bg);
     color: var(--dd-alert);
   }
-  /* Price between the nearest BUY and SELL: a hairline track and a dot; the numbers are in the line above, this only shows where the price is. */
+  /* Price between the nearest BUY and SELL: a hairline track with a tick at each end (the two limits) and a neutral dot where the price is; the numbers
+     are in the line above, this only shows where the price is. Not a control, so not the accent colour. */
   .scale {
     position: relative;
     display: block;
     height: 3px;
-    margin: 9px 2px 2px;
+    margin: 7px 4px 1px;
     border-radius: 2px;
     background: var(--dd-sep);
+  }
+  .scale::before,
+  .scale::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 1px;
+    height: 7px;
+    margin-top: -3.5px;
+    background: var(--dd-secondary);
+  }
+  .scale::before {
+    left: 0;
+  }
+  .scale::after {
+    right: 0;
   }
   .scale i {
     position: absolute;
@@ -4101,8 +4118,7 @@ const Nn = [
     height: 9px;
     margin: -4.5px 0 0 -4.5px;
     border-radius: 50%;
-    background: var(--dd-accent);
-    box-shadow: 0 0 0 2px var(--dd-card);
+    background: var(--dd-text);
   }
   .scale.out i {
     background: var(--dd-warning);
@@ -4660,8 +4676,10 @@ const jn = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
   }
   /** Updates all orders that differ (one button of Home Assistant); in the dry run a plain button, it changes nothing. */
   updateButton(t, e, s, n) {
-    return t.orders?.update ? c`<button class="button ${n ? "" : "primary"} orders-update ${s ? "pending" : ""}" type="button" aria-busy=${s ? "true" : f}
-      @click=${() => this.pressOrders(t, "update")}>${n ? e.t.ordersUpdateDry : e.t.ordersUpdate}</button>` : f;
+    if (!t.orders?.update) return f;
+    const a = this.pending.has("orders:update");
+    return c`<button class="button ${n ? "" : "primary"} orders-update ${a ? "pending" : ""}" type="button" aria-busy=${s ? "true" : f}
+      @click=${() => this.pressOrders(t, "update")}>${n ? e.t.ordersUpdateDry : e.t.ordersUpdate}</button>`;
   }
   /** A check or an update of the orders is on its way: the sensor says so, or a press of ours has not been answered yet. */
   ordersBusy(t) {
@@ -4702,7 +4720,7 @@ const jn = c`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
     )}
         <div class="row" data-row="orders-status">
           ${z}
-          ${h ? c`<button class="button icon ${l ? "pending" : ""}" type="button" title=${s.ordersCheck} aria-label=${s.ordersCheck} aria-busy=${l ? "true" : f} @click=${() => this.pressOrders(t, "check")}>${Fe}</button>` : f}
+          ${h ? c`<button class="button icon ${l && !this.pending.has("orders:update") ? "pending" : ""}" type="button" title=${s.ordersCheck} aria-label=${s.ordersCheck} aria-busy=${l ? "true" : f} @click=${() => this.pressOrders(t, "check")}>${Fe}</button>` : f}
         </div>
       </div>
       ${u && o !== "chyba" ? this.updateButton(t, e, l, r) : f}`;
@@ -5429,4 +5447,4 @@ window.customCards.some((i) => i.type === "ha-dum-dashboard") || window.customCa
   description: Ge(rn()).t.cardDescription,
   preview: !1
 });
-console.info("%c DUM-DASHBOARD %c 0.25.0 · 2026-11-24 22:30 UTC · po 38e5713 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
+console.info("%c DUM-DASHBOARD %c 0.25.0 · 2026-11-24 22:32 UTC · po 6080378 ", "color:#fff;background:#0A6ED1;font-weight:700", "color:inherit");
