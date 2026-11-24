@@ -15,6 +15,7 @@ export const en: typeof cs = {
   ordersStillDiffer: (count) => `${count} still differ`,
   ordersPricesFrom: (time) => `prices from ${time}`,
   ordersChecking: "Checking…",
+  ordersUpdating: "Updating orders…",
   ordersFailed: "Check failed",
   ordersDryRun: "dry run, orders are not changed",
   ordersNoData: "Not checked yet",

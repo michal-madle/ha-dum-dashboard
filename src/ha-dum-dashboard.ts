@@ -659,7 +659,42 @@ export class HaDumDashboard extends LitElement {
     const update = config.orders?.update;
     if (!update) return nothing;
     return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${busy ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
-      @click=${() => this.call("input_button", "press", { entity_id: update })}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
+      @click=${() => this.pressOrders(config, "update")}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
+  }
+
+  /** A check or an update of the orders is on its way: the sensor says so, or a press of ours has not been answered yet. */
+  private ordersBusy(config: Settings): boolean {
+    return (config.orders ? entityState(this.hass, config.orders.entity)?.state === "probiha" : false) || this.pending.has("orders:update") || this.pending.has("orders:check");
+  }
+
+  /** Presses the button of Home Assistant and pulses at once (not only when AppDaemon reports `probiha`) until the run is over; a second press meanwhile does nothing. */
+  private pressOrders(config: Settings, kind: "update" | "check"): void {
+    const sensor = config.orders?.entity;
+    const button = kind === "update" ? config.orders?.update : config.orders?.check;
+    if (!sensor || !button || this.ordersBusy(config)) return;
+    let seen = false;
+    this.send(`orders:${kind}`, {
+      entities: [sensor],
+      stallMs: 90000,
+      done: (hass) => {
+        if (hass.states[sensor]?.state === "probiha") seen = true;
+        return seen && hass.states[sensor]?.state !== "probiha";
+      },
+    }, "input_button", "press", { entity_id: button });
+  }
+
+  /** A thin scale from the nearest BUY to the nearest SELL with a dot where the price is (decoration; the numbers are in the line above). */
+  private priceScale(item: Instrument): TemplateResult | typeof nothing {
+    const now = (side: string) => (item.ordery ?? []).filter((order) => order.side === side && order.ted != null && Number.isFinite(order.ted)).map((order) => order.ted!);
+    const buys = now("BUY");
+    const sells = now("SELL");
+    const price = item.cena;
+    if (!buys.length || !sells.length || price == null || !Number.isFinite(price)) return nothing;
+    const low = Math.max(...buys);
+    const high = Math.min(...sells);
+    if (!(high > low)) return nothing;
+    const share = (price - low) / (high - low);
+    return html`<span class="scale ${share < 0 || share > 1 ? "out" : ""}" aria-hidden="true"><i style="left:${Math.min(1, Math.max(0, share)) * 100}%"></i></span>`;
   }
 
   private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
@@ -669,7 +704,7 @@ export class HaDumDashboard extends LitElement {
     const state = sensor?.state;
     const attrs = sensor?.attributes ?? {};
     const dryRun = attrs.dry_run === true;
-    const busy = state === "probiha";
+    const busy = this.ordersBusy(config);
     const items = this.instruments(config);
     const count = items.filter((item) => item.upravit).length;
     const check = config.orders.check;
@@ -690,7 +725,7 @@ export class HaDumDashboard extends LitElement {
     const lines = (list: string[]) => list.map((line) => html`<small class="alert" data-done>${line}</small>`);
     const priceDate = typeof attrs.posledni_ok === "string" && attrs.posledni_ok !== "" ? dayAndTime(attrs.posledni_ok) : "";
     let status: TemplateResult;
-    if (busy) status = html`<span class="main"><small>${t.ordersChecking}</small></span>`;
+    if (busy) status = html`<span class="main"><small>${this.pending.has("orders:update") ? t.ordersUpdating : t.ordersChecking}</small></span>`;
     else if (state === "chyba")
       status = html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${joined([String(attrs.chyba ?? ""), priceDate ? t.ordersPricesFrom(priceDate) : ""].filter(Boolean))}</small></span>`;
     else if (typeof attrs.cas !== "string") status = html`<span class="main"><small>${t.ordersNoData}</small></span>`;
@@ -703,13 +738,13 @@ export class HaDumDashboard extends LitElement {
         ${items.map(
           (item) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${item.symbol} @click=${() => (this._detail = `order:${item.symbol}`)}>
             ${item.upravit ? html`<span class="mark warn" aria-hidden="true">!</span>` : html`<span class="mark" aria-hidden="true">${ICON_DONE}</span>`}
-            <span class="main">${item.symbol} · ${this.euro(i18n, item.cena)}<small class=${item.upravit ? "warn" : ""}>${this.nearest(i18n, item)}</small></span>
+            <span class="main">${item.symbol} · ${this.euro(i18n, item.cena)}<small class=${item.upravit ? "warn" : ""}>${this.nearest(i18n, item)}</small>${this.priceScale(item)}</span>
             <span class="chevron-mark" aria-hidden="true">›</span>
           </button>`,
         )}
         <div class="row" data-row="orders-status">
           ${status}
-          ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.call("input_button", "press", { entity_id: check })}>${ICON_RETRY}</button>` : nothing}
+          ${check ? html`<button class="button icon ${busy ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.pressOrders(config, "check")}>${ICON_RETRY}</button>` : nothing}
         </div>
       </div>
       ${count && state !== "chyba" ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;
@@ -736,7 +771,7 @@ export class HaDumDashboard extends LitElement {
               const next = order.nove == null ? t.ordersCancel : this.euro(i18n, order.nove);
               return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${next}`, !same);
             })}
-            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, entityState(this.hass, config.orders.entity)?.state === "probiha", attrs.dry_run === true)}</div>` : nothing}
+            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, this.ordersBusy(config), attrs.dry_run === true)}</div>` : nothing}
           </div>`
         : nothing}
     </dd-sheet>`;

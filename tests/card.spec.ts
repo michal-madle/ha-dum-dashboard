@@ -752,12 +752,25 @@ test.describe("limitní ordery (orders)", () => {
     expect(await joinedLines(rows.nth(0).locator("small"))).toEqual(["BUY 677,88 € (−3,3 %) · SELL chybí"]);
     // Dlouhý řádek se zalomí v oddělovači (joined kitu), ne uprostřed částky.
     expect((await joinedLines(rows.nth(2).locator("small"))).join(" · ")).toBe("BUY 55 000 € (−1,6 %) · SELL 58 500 € (+4,7 %)");
-    await expect(page.locator(".orders-update")).toHaveText("Vyzkoušet aktualizaci");
+    await expect(page.locator(".orders-update")).toHaveText("Vyzkoušet úpravu");
     await expect(page.locator('[data-row="orders-status"]')).toContainText("Zkontrolováno 08:30 · zkušební režim, ordery se nemění");
+    // Okamžitá odezva: tlačítko bliká hned po stisku (ne až když AppDaemon ohlásí „probiha“), druhý stisk nic neodešle, ⟳ taky ne.
     await page.locator(".orders-update").click();
     expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
+    await expect(page.locator(".orders-update")).toHaveClass(/pending/);
+    await expect(page.locator('[data-row="orders-status"]')).toContainText("Upravuji ordery…");
+    await page.locator(".orders-update").click();
+    await page.locator('[data-row="orders-status"]').getByRole("button", { name: "Zkontrolovat" }).click({ force: true });
+    expect(await calls(page)).toHaveLength(1);
+    await update(page, { "sensor.ordery": { state: "probiha", attributes: { instrumenty: [], cas: "2026-11-23 08:30", dry_run: true } } });
+    await expect(page.locator('[data-row="orders-status"]')).toContainText("Upravuji ordery…");
+    await update(page, { "sensor.ordery": { state: "upravit", attributes: { instrumenty: [{ symbol: "SXR8", cena: 700, pozice: 1, jednotka: "ks", upravit: true, ordery: [] }], cas: "2026-11-23 08:31", dry_run: true } } });
+    await expect(page.locator('[data-row="orders-status"]')).not.toContainText("Upravuji");
     await page.locator('[data-row="orders-status"]').getByRole("button", { name: "Zkontrolovat" }).click();
     expect((await calls(page)).at(-1)).toEqual({ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_zkontrolovat" } });
+    await expect(page.locator('[data-row="orders-status"]')).toContainText("Probíhá kontrola…");
+    await update(page, { "sensor.ordery": { state: "probiha", attributes: { instrumenty: [], cas: "2026-11-23 08:31", dry_run: true } } });
+    await update(page, { "sensor.ordery": { state: "upravit", attributes: { instrumenty: [{ symbol: "SXR8", cena: 700, pozice: 1, jednotka: "ks", upravit: true, ordery: [] }], cas: "2026-11-23 08:32", dry_run: true } } });
     // Výsledek stisku: zkušební „Vyzkoušeno“, ostrý „Ordery upraveny“ (se „stále nesedí“, když nástroj pořád „!“), chyba červeně s řádky chyb;
     // úspěšné řádky provedeno se neukazují (úspěch je vidět na řádcích nástrojů).
     const today = new Date().toISOString().slice(0, 10);
@@ -793,6 +806,7 @@ test.describe("limitní ordery (orders)", () => {
     await expect(detail).toContainText("proti cíli −0,8 %");
     await detail.locator(".orders-update").click();
     expect(await calls(page)).toEqual([{ domain: "input_button", service: "press", data: { entity_id: "input_button.ordery_aktualizovat" } }]);
+    await update(page, { "sensor.ordery": { state: "probiha", attributes: { instrumenty: [], dry_run: true } } });
     await update(page, { "sensor.ordery": { state: "chyba", attributes: { instrumenty: [], chyba: "brána IBKR neodpovídá", posledni_ok: "2026-11-23 08:30", provedeno: ["SXR8 BUY 3 @ 1"], chyby: [] } } });
     await expect(page.locator('[data-row="orders-status"]')).toContainText("Kontrola selhala");
     await expect(page.locator('[data-row="orders-status"] small.alert')).toContainText("brána IBKR neodpovídá · ceny z");

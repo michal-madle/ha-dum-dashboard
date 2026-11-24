@@ -410,6 +410,28 @@ export const styles = [
     background: var(--dd-alert-bg);
     color: var(--dd-alert);
   }
+  /* Price between the nearest BUY and SELL: a hairline track and a dot; the numbers are in the line above, this only shows where the price is. */
+  .scale {
+    position: relative;
+    display: block;
+    height: 3px;
+    margin: 9px 2px 2px;
+    border-radius: 2px;
+    background: var(--dd-sep);
+  }
+  .scale i {
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: var(--dd-accent);
+    box-shadow: 0 0 0 2px var(--dd-card);
+  }
+  .scale.out i {
+    background: var(--dd-warning);
+  }
   .row small.alert {
     color: var(--dd-alert);
   }

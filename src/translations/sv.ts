@@ -15,6 +15,7 @@ export const sv: typeof cs = {
   ordersStillDiffer: (count) => `${count} skiljer sig fortfarande`,
   ordersPricesFrom: (time) => `priser från ${time}`,
   ordersChecking: "Kontrollerar…",
+  ordersUpdating: "Uppdaterar ordrar…",
   ordersFailed: "Kontrollen misslyckades",
   ordersDryRun: "testläge, ordrarna ändras inte",
   ordersNoData: "Inte kontrollerat än",
