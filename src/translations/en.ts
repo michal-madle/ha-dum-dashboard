@@ -23,6 +23,7 @@ export const en: typeof cs = {
   ordersNew: "new",
   ordersMissing: "missing",
   ordersSame: "matches",
+  ordersSize: "quantity differs",
   ordersPosition: "Position",
   ordersValue: "Value",
   ordersTarget: (deviation) => `vs target ${deviation}`,

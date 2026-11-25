@@ -91,7 +91,7 @@ interface Instrument {
   cil?: number | null;
   odchylka?: number | null;
   upravit?: boolean;
-  ordery?: Array<{ side: string; mnozstvi?: number; ted?: number | null; nove?: number }>;
+  ordery?: Array<{ side: string; mnozstvi?: number; mnozstvi_ted?: number | null; ted?: number | null; nove?: number }>;
 }
 
 const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
@@ -767,10 +767,12 @@ export class HaDumDashboard extends LitElement {
             ${item.hodnota != null ? line(t.ordersValue, joined([this.euro(i18n, item.hodnota), item.odchylka != null ? t.ordersTarget(this.signed(i18n, item.odchylka)) : undefined].filter((text): text is string => Boolean(text)))) : nothing}
             <div class="health-row orders-head"><span class="main">${t.orders}</span><span class="value">${t.ordersNow} → ${t.ordersNew}</span></div>
             ${[...(item.ordery ?? [])].sort((a, b) => (a.side === b.side ? (b.nove ?? b.ted ?? 0) - (a.nove ?? a.ted ?? 0) : a.side === "SELL" ? -1 : 1)).map((order) => {
-              const same = order.ted != null && order.nove != null && Math.abs(order.ted - order.nove) < 1e-9;
+              // A smaller order than wanted (e.g. the last BUY cut for want of EUR) is changed too, though the price sits.
+              const sizeChanged = order.mnozstvi_ted != null && order.mnozstvi != null && Math.abs(order.mnozstvi_ted - order.mnozstvi) > 1e-9;
+              const same = order.ted != null && order.nove != null && Math.abs(order.ted - order.nove) < 1e-9 && !sizeChanged;
               const now = order.ted == null ? t.ordersMissing : this.euro(i18n, order.ted);
               const next = order.nove == null ? t.ordersCancel : this.euro(i18n, order.nove);
-              return line(html`${order.side}<small>${amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : `${now} → ${next}`, !same);
+              return line(html`${order.side}<small>${sizeChanged ? `${amount(order.mnozstvi_ted ?? undefined, item.jednotka)} → ${amount(order.mnozstvi, item.jednotka)}` : amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : sizeChanged && order.ted === order.nove ? `${now} · ${t.ordersSize}` : `${now} → ${next}`, !same);
             })}
             ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, this.ordersBusy(config), attrs.dry_run === true)}</div>` : nothing}
           </div>`

@@ -23,6 +23,7 @@ export const sv: typeof cs = {
   ordersNew: "ny",
   ordersMissing: "saknas",
   ordersSame: "stämmer",
+  ordersSize: "annan mängd",
   ordersPosition: "Position",
   ordersValue: "Värde",
   ordersTarget: (deviation) => `mot målet ${deviation}`,

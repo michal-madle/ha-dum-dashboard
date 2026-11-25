@@ -21,6 +21,7 @@ export const cs = {
   ordersNew: "nově",
   ordersMissing: "chybí",
   ordersSame: "sedí",
+  ordersSize: "jiné množství",
   ordersPosition: "Pozice",
   ordersValue: "Hodnota",
   ordersTarget: (deviation: string) => `proti cíli ${deviation}`,

@@ -813,6 +813,17 @@ test.describe("limitní ordery (orders)", () => {
     await expect(page.locator('[data-row="orders-status"] small.alert')).toContainText("brána IBKR neodpovídá · ceny z");
   });
 
+  test("menší množství než chtěné se v popupu ukáže a řádek není „sedí“", async ({ page }) => {
+    await openOrders(page);
+    await update(page, { "sensor.ordery": { state: "upravit", attributes: { cas: "2026-11-25 07:00", dry_run: false, instrumenty: [{ symbol: "BTC", cena: 55000, pozice: 0.3, jednotka: "BTC", upravit: true, ordery: [
+      { side: "BUY", mnozstvi: 0.0025, mnozstvi_ted: 0.0015, ted: 54500, nove: 54500 }, { side: "BUY", mnozstvi: 0.0025, mnozstvi_ted: 0.0025, ted: 54000, nove: 54000 }] }] } } });
+    await page.locator('[data-instrument="BTC"]').click();
+    const detail = page.locator('[data-part="order-detail"]');
+    await expect(detail).toContainText("0,0015 BTC → 0,0025 BTC");
+    await expect(detail).toContainText("54 500 € · jiné množství");
+    await expect(detail).toContainText("54 000 € · sedí");
+  });
+
   for (const theme of ["dark", "light"] as const) {
     test(`ordery: přístupnost a snímky (${theme})`, async ({ page }, info) => {
       await openOrders(page, theme);
