@@ -695,7 +695,7 @@ export class HaDumDashboard extends LitElement {
     const high = Math.min(...sells);
     if (!(high > low)) return nothing;
     const share = (price - low) / (high - low);
-    return html`<span class="scale ${share < 0 || share > 1 ? "out" : ""}" aria-hidden="true"><i style="left:${Math.min(1, Math.max(0, share)) * 100}%"></i></span>`;
+    return html`<span class="scale ${share < 0 || share > 1 ? "out" : ""}" aria-hidden="true"><b style="width:${Math.min(1, Math.max(0, share)) * 100}%"></b><i style="left:${Math.min(1, Math.max(0, share)) * 100}%"></i></span>`;
   }
 
   private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {

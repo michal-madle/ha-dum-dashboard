@@ -410,40 +410,33 @@ export const styles = [
     background: var(--dd-alert-bg);
     color: var(--dd-alert);
   }
-  /* Price between the nearest BUY and SELL: a hairline track with a tick at each end (the two limits) and a neutral dot where the price is; the numbers
-     are in the line above, this only shows where the price is. Not a control, so not the accent colour. */
+  /* Price between the nearest BUY and SELL, as the range bar of Apple Weather and Stocks: a soft capsule from the BUY (left) to the SELL (right),
+     filled up to a round marker where the price is. Neutral colours (the accent is for controls); the numbers are in the line above, this only
+     shows where the price is. */
   .scale {
     position: relative;
     display: block;
-    height: 3px;
-    margin: 7px 4px 1px;
-    border-radius: 2px;
-    background: var(--dd-sep);
+    height: 6px;
+    margin: 10px 0 2px;
+    border-radius: 3px;
+    background: var(--dd-button);
   }
-  .scale::before,
-  .scale::after {
-    content: "";
+  .scale b {
     position: absolute;
-    top: 50%;
-    width: 1px;
-    height: 7px;
-    margin-top: -3.5px;
-    background: var(--dd-secondary);
-  }
-  .scale::before {
-    left: 0;
-  }
-  .scale::after {
-    right: 0;
+    inset: 0 auto 0 0;
+    border-radius: 3px;
+    background: var(--dd-text);
+    opacity: 0.24;
   }
   .scale i {
     position: absolute;
     top: 50%;
-    width: 9px;
-    height: 9px;
-    margin: -4.5px 0 0 -4.5px;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
     border-radius: 50%;
     background: var(--dd-text);
+    box-shadow: 0 0 0 2.5px var(--dd-card), 0 1px 4px rgb(0 0 0 / 35%);
   }
   .scale.out i {
     background: var(--dd-warning);

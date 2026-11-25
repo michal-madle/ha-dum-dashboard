@@ -2,7 +2,7 @@
   "name": "ha-dum-dashboard",
   "description": "Dům Dashboard: Lovelace card for Home Assistant (house control centre)",
   "license": "MIT",
-  "version": "0.25.1",
+  "version": "0.25.2",
   "private": true,
   "type": "module",
   "scripts": {
