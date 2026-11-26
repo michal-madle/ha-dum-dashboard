@@ -62,9 +62,6 @@ function normalize(raw: unknown): Settings {
   const cooling = section(raw.cooling, "cooling");
   checkKeys(cooling, ["rooms"], "cooling");
   const guard = section(raw.guard, "guard");
-  const orders = section(raw.orders, "orders");
-  checkKeys(orders, ["entity", "update", "check"], "orders");
-  const ordersEntity = entityId(orders.entity, "orders.entity", { domain: "sensor" });
   checkKeys(guard, ["hold_ms", "double_tap_ms", "hint_seconds"], "guard");
   const modes = section(raw.house_modes, "house_modes");
   checkKeys(modes, ["winter", "summer"], "house_modes");
@@ -153,10 +150,6 @@ function normalize(raw: unknown): Settings {
     filters,
     laundry: named(raw.laundry, "laundry", ["input_boolean"]),
     leaks: named(raw.leaks, "leaks", ["binary_sensor"]),
-    orders: ordersEntity
-      ? { entity: ordersEntity, update: entityId(orders.update, "orders.update", { domain: "input_button" }), check: entityId(orders.check, "orders.check", { domain: "input_button" }) }
-      : undefined,
-    tasks: list(raw.tasks, "tasks").map((item, index) => entityId(item, `tasks[${index}]`, { domain: "sensor" }) ?? fail(`tasks[${index}] is missing.`)),
     maintenance,
     running: named(raw.running, "running", ["input_boolean", "binary_sensor", "switch", "vacuum"]),
     covers: {

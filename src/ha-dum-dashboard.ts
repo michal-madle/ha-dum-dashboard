@@ -69,31 +69,6 @@ const ICON_FILTER = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 const ICON_LAUNDRY = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle cx="12" cy="13" r="4.5"></circle><path d="M7.5 6.5h2" stroke-linecap="round"></path></svg>`;
 const ICON_LEAK = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10.2a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3.5z" stroke-linejoin="round"></path></svg>`;
 
-/** A task from a sensor (`tasks`): a list with a tick (SF Symbols „checklist“). */
-const ICON_TASK = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l1.5 1.5L8 6M4 15l1.5 1.5L8 14M11 7.5h9M11 15.5h9"></path></svg>`;
-
-/** One task of a `tasks` sensor (attribute `ukoly`). */
-interface Task {
-  klic: string;
-  nazev: string;
-  detail?: string;
-  uroven?: string;
-  akce?: { sluzba: string; data?: Record<string, unknown> };
-}
-
-/** One instrument of the limit orders (`orders`, attribute `instrumenty`). */
-interface Instrument {
-  symbol: string;
-  cena?: number | null;
-  pozice?: number | null;
-  jednotka?: string;
-  hodnota?: number | null;
-  cil?: number | null;
-  odchylka?: number | null;
-  upravit?: boolean;
-  ordery?: Array<{ side: string; mnozstvi?: number; mnozstvi_ted?: number | null; ted?: number | null; nove?: number }>;
-}
-
 const ICON_MAINTENANCE = html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>`;
 
 /**
@@ -110,7 +85,7 @@ export class HaDumDashboard extends LitElement {
   @state() private _hint?: string;
   @state() private _now = Date.now();
   /** The open detail (a sheet from the bottom). */
-  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}` | `device:${string}` | `order:${string}`;
+  @state() private _detail?: "covers" | "heating" | "cooling" | "log" | "rules" | `health:${HealthPart}` | `device:${string}`;
   /** Kniha pravidel: each automation of Home Assistant with its description (loaded when opened). */
   @state() private _rules?: { id: string; name: string; description: string; on: boolean }[] | "failed";
   /** Today's entries of the logbook of Home Assistant for the entities of the card („Co se stalo“). */
@@ -217,11 +192,11 @@ export class HaDumDashboard extends LitElement {
     const summer = config.houseMode !== undefined && readText(this.hass, config.houseMode) === config.summer;
     const climate = summer ? [this.renderCooling(config, i18n), this.renderHeating(config, i18n)] : [this.renderHeating(config, i18n), this.renderCooling(config, i18n)];
     return html`<ha-card>
-      ${this.renderOrders(config, i18n)} ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
+      ${this.renderQueue(config, i18n)} ${this.renderRunning(config, i18n)} ${this.renderCovers(config, i18n)}
       ${this.renderVentilation(config, i18n)} ${climate} ${this.renderDevices(config, i18n)} ${this.renderHealth(config, i18n)} ${this.renderLogRow(config, i18n)}
       ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : nothing}
     </ha-card>
-    ${this.renderOrdersDetail(config, i18n)} ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)} ${this.renderDeviceDetail(config, i18n)}`;
+    ${this.renderCoversDetail(config, i18n)} ${this.renderClimate(config, i18n)} ${this.renderLog(config, i18n)} ${this.renderHealthDetail(config, i18n)} ${this.renderRules(i18n)} ${this.renderDeviceDetail(config, i18n)}`;
   }
 
   /* ---------- Zdraví ---------- */
@@ -624,162 +599,6 @@ export class HaDumDashboard extends LitElement {
     </dd-sheet>`;
   }
 
-  /* ---------- Limitní ordery ---------- */
-
-  private instruments(config: Settings): Instrument[] {
-    const items = config.orders ? entityState(this.hass, config.orders.entity)?.attributes.instrumenty : undefined;
-    return Array.isArray(items) ? items.filter((item): item is Instrument => typeof item === "object" && item !== null && typeof (item as Instrument).symbol === "string") : [];
-  }
-
-  /** Euros: whole above a thousand (BTC 55 876 €), otherwise cents (692,52 €). */
-  private euro(i18n: I18n, value: number | null | undefined): string {
-    if (value === null || value === undefined || !Number.isFinite(value)) return "—";
-    return `${Math.abs(value) >= 1000 ? i18n.whole(value) : i18n.two(value)}\u00a0€`;
-  }
-
-  /** A signed difference in percent with one decimal place: "+2,8 %", "−1,3 %". */
-  private signed(i18n: I18n, fraction: number): string {
-    const sign = fraction > 0.00005 ? "+" : fraction < -0.00005 ? "−" : "";
-    return i18n.percent(`${sign}${i18n.one(Math.abs(fraction * 100))}`);
-  }
-
-  /** The nearest BUY and SELL that lie at the broker now (`ted`), with their distance from the price (dashboard Finance, „Q39 ano“). */
-  private nearest(i18n: I18n, item: Instrument): TemplateResult {
-    const now = (side: string) => (item.ordery ?? []).filter((order) => order.side === side && order.ted != null && Number.isFinite(order.ted)).map((order) => order.ted!);
-    const buys = now("BUY");
-    const sells = now("SELL");
-    const price = item.cena ?? undefined;
-    const part = (side: string, value: number | undefined) =>
-      value === undefined ? `${side} ${i18n.t.ordersMissing}` : `${side}\u00a0${this.euro(i18n, value)}${price ? ` (${this.signed(i18n, value / price - 1)})` : ""}`;
-    return joined([part("BUY", buys.length ? Math.max(...buys) : undefined), part("SELL", sells.length ? Math.min(...sells) : undefined)]);
-  }
-
-  /** Updates all orders that differ (one button of Home Assistant); in the dry run a plain button, it changes nothing. */
-  private updateButton(config: Settings, i18n: I18n, busy: boolean, dryRun: boolean): TemplateResult | typeof nothing {
-    const update = config.orders?.update;
-    if (!update) return nothing;
-    const mine = this.pending.has("orders:update");
-    return html`<button class="button ${dryRun ? "" : "primary"} orders-update ${mine ? "pending" : ""}" type="button" aria-busy=${busy ? "true" : nothing}
-      @click=${() => this.pressOrders(config, "update")}>${dryRun ? i18n.t.ordersUpdateDry : i18n.t.ordersUpdate}</button>`;
-  }
-
-  /** A check or an update of the orders is on its way: the sensor says so, or a press of ours has not been answered yet. */
-  private ordersBusy(config: Settings): boolean {
-    return (config.orders ? entityState(this.hass, config.orders.entity)?.state === "probiha" : false) || this.pending.has("orders:update") || this.pending.has("orders:check");
-  }
-
-  /** Presses the button of Home Assistant and pulses at once (not only when AppDaemon reports `probiha`) until the run is over; a second press meanwhile does nothing. */
-  private pressOrders(config: Settings, kind: "update" | "check"): void {
-    const sensor = config.orders?.entity;
-    const button = kind === "update" ? config.orders?.update : config.orders?.check;
-    if (!sensor || !button || this.ordersBusy(config)) return;
-    let seen = false;
-    this.send(`orders:${kind}`, {
-      entities: [sensor],
-      stallMs: 90000,
-      done: (hass) => {
-        if (hass.states[sensor]?.state === "probiha") seen = true;
-        return seen && hass.states[sensor]?.state !== "probiha";
-      },
-    }, "input_button", "press", { entity_id: button });
-  }
-
-  /** A thin scale from the nearest BUY to the nearest SELL with a dot where the price is (decoration; the numbers are in the line above). */
-  private priceScale(item: Instrument): TemplateResult | typeof nothing {
-    const now = (side: string) => (item.ordery ?? []).filter((order) => order.side === side && order.ted != null && Number.isFinite(order.ted)).map((order) => order.ted!);
-    const buys = now("BUY");
-    const sells = now("SELL");
-    const price = item.cena;
-    if (!buys.length || !sells.length || price == null || !Number.isFinite(price)) return nothing;
-    const low = Math.max(...buys);
-    const high = Math.min(...sells);
-    if (!(high > low)) return nothing;
-    const share = (price - low) / (high - low);
-    return html`<span class="scale ${share < 0 || share > 1 ? "out" : ""}" aria-hidden="true"><b style="width:${Math.min(1, Math.max(0, share)) * 100}%"></b><i style="left:${Math.min(1, Math.max(0, share)) * 100}%"></i></span>`;
-  }
-
-  private renderOrders(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.orders) return nothing;
-    const t = i18n.t;
-    const sensor = entityState(this.hass, config.orders.entity);
-    const state = sensor?.state;
-    const attrs = sensor?.attributes ?? {};
-    const dryRun = attrs.dry_run === true;
-    const busy = this.ordersBusy(config);
-    const items = this.instruments(config);
-    const count = items.filter((item) => item.upravit).length;
-    const check = config.orders.check;
-    // „2026-11-23 08:30“: only the time today, the day otherwise (old data must not look current). Old is only what is older than the
-    // last scheduled check (`cas_kontroly`), so the morning before it is not flagged.
-    const cas = typeof attrs.cas === "string" ? attrs.cas : "";
-    const today = this.day(new Date(this._now));
-    const clock = (value: string) => value.slice(11) || value;
-    const dayAndTime = (value: string) => (!value || value.startsWith(today) ? clock(value) : `${i18n.day(Date.parse(value.replace(" ", "T")))} ${clock(value)}`);
-    const scheduled = typeof attrs.cas_kontroly === "string" ? attrs.cas_kontroly : "00:00";
-    const nowClock = new Date(this._now).toTimeString().slice(0, 5);
-    const stale = cas !== "" && !cas.startsWith(today) && nowClock >= scheduled;
-    const checked = dayAndTime(cas);
-    // What the last press of the button did: lines that went wrong (`chyby`, written by AppDaemon) and the plain log (`provedeno`).
-    const strings = (value: unknown): string[] => (Array.isArray(value) ? value.filter((line): line is string => typeof line === "string" && line !== "") : []);
-    const problems = strings(attrs.chyby);
-    const pressed = strings(attrs.provedeno).length > 0;
-    const lines = (list: string[]) => list.map((line) => html`<small class="alert" data-done>${line}</small>`);
-    const priceDate = typeof attrs.posledni_ok === "string" && attrs.posledni_ok !== "" ? dayAndTime(attrs.posledni_ok) : "";
-    let status: TemplateResult;
-    if (busy) status = html`<span class="main"><small>${this.pending.has("orders:update") ? t.ordersUpdating : t.ordersChecking}</small></span>`;
-    else if (state === "chyba")
-      status = html`<span class="mark alert" aria-hidden="true">!</span><span class="main">${t.ordersFailed}<small class="alert">${joined([String(attrs.chyba ?? ""), priceDate ? t.ordersPricesFrom(priceDate) : ""].filter(Boolean))}</small></span>`;
-    else if (typeof attrs.cas !== "string") status = html`<span class="main"><small>${t.ordersNoData}</small></span>`;
-    else if (pressed && problems.length) status = html`<span class="main"><small class="alert">${t.ordersApplyFailed(checked)}</small>${lines(problems)}</span>`;
-    else if (pressed && dryRun) status = html`<span class="main"><small>${t.ordersTried(checked)}</small></span>`;
-    else if (pressed) status = html`<span class="main"><small class=${count ? "warn" : ""}>${joined([t.ordersApplied(checked), count ? t.ordersStillDiffer(count) : ""].filter(Boolean))}</small></span>`;
-    else status = html`<span class="main"><small class=${stale ? "warn" : ""}>${joined([t.ordersChecked(checked), dryRun ? t.ordersDryRun : ""].filter(Boolean))}</small></span>`;
-    return html`<h2><span>${t.orders}</span></h2>
-      <div class="group" data-part="orders">
-        ${items.map(
-          (item) => html`<button class="row link-row" type="button" aria-haspopup="dialog" data-instrument=${item.symbol} @click=${() => (this._detail = `order:${item.symbol}`)}>
-            ${item.upravit ? html`<span class="mark warn" aria-hidden="true">!</span>` : html`<span class="mark" aria-hidden="true">${ICON_DONE}</span>`}
-            <span class="main">${item.symbol} · ${this.euro(i18n, item.cena)}<small class=${item.upravit ? "warn" : ""}>${this.nearest(i18n, item)}</small>${this.priceScale(item)}</span>
-            <span class="chevron-mark" aria-hidden="true">›</span>
-          </button>`,
-        )}
-        <div class="row" data-row="orders-status">
-          ${status}
-          ${check ? html`<button class="button icon ${busy && !this.pending.has("orders:update") ? "pending" : ""}" type="button" title=${t.ordersCheck} aria-label=${t.ordersCheck} aria-busy=${busy ? "true" : nothing} @click=${() => this.pressOrders(config, "check")}>${ICON_RETRY}</button>` : nothing}
-        </div>
-      </div>
-      ${count && state !== "chyba" ? this.updateButton(config, i18n, busy, dryRun) : nothing}`;
-  }
-
-  private renderOrdersDetail(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.orders) return nothing;
-    const t = i18n.t;
-    const symbol = this._detail?.startsWith("order:") ? this._detail.slice(6) : undefined;
-    const item = symbol ? this.instruments(config).find((entry) => entry.symbol === symbol) : undefined;
-    const attrs = entityState(this.hass, config.orders.entity)?.attributes ?? {};
-    const amount = (value: number | undefined, unit: string | undefined) =>
-      value === undefined ? "" : `${value.toLocaleString(i18n.locale, { maximumFractionDigits: unit === "BTC" ? 8 : 0 })}\u00a0${unit ?? ""}`;
-    const line = (name: unknown, value: unknown, warn = false) => html`<div class="health-row"><span class="main">${name}</span><span class="value ${warn ? "warn" : ""}">${value}</span></div>`;
-    return html`<dd-sheet .open=${item !== undefined} .heading=${symbol ?? ""} .closeLabel=${t.close} @hdk-close=${() => (this._detail = undefined)}>
-      ${item
-        ? html`<div class="detail" data-part="order-detail">
-            ${line(t.ordersPosition, amount(item.pozice ?? undefined, item.jednotka))}
-            ${item.hodnota != null ? line(t.ordersValue, joined([this.euro(i18n, item.hodnota), item.odchylka != null ? t.ordersTarget(this.signed(i18n, item.odchylka)) : undefined].filter((text): text is string => Boolean(text)))) : nothing}
-            <div class="health-row orders-head"><span class="main">${t.orders}</span><span class="value">${t.ordersNow} → ${t.ordersNew}</span></div>
-            ${[...(item.ordery ?? [])].sort((a, b) => (a.side === b.side ? (b.nove ?? b.ted ?? 0) - (a.nove ?? a.ted ?? 0) : a.side === "SELL" ? -1 : 1)).map((order) => {
-              // A smaller order than wanted (e.g. the last BUY cut for want of EUR) is changed too, though the price sits.
-              const sizeChanged = order.mnozstvi_ted != null && order.mnozstvi != null && Math.abs(order.mnozstvi_ted - order.mnozstvi) > 1e-9;
-              const same = order.ted != null && order.nove != null && Math.abs(order.ted - order.nove) < 1e-9 && !sizeChanged;
-              const now = order.ted == null ? t.ordersMissing : this.euro(i18n, order.ted);
-              const next = order.nove == null ? t.ordersCancel : this.euro(i18n, order.nove);
-              return line(html`${order.side}<small>${sizeChanged ? `${amount(order.mnozstvi_ted ?? undefined, item.jednotka)} → ${amount(order.mnozstvi, item.jednotka)}` : amount(order.mnozstvi, item.jednotka)}</small>`, same ? `${now} · ${t.ordersSame}` : sizeChanged && order.ted === order.nove ? `${now} · ${t.ordersSize}` : `${now} → ${next}`, !same);
-            })}
-            ${item.upravit ? html`<div class="detail-actions">${this.updateButton(config, i18n, this.ordersBusy(config), attrs.dry_run === true)}</div>` : nothing}
-          </div>`
-        : nothing}
-    </dd-sheet>`;
-  }
-
   /* ---------- Potřebuje tebe ---------- */
 
   private failed(config: Settings): Failed[] {
@@ -787,22 +606,8 @@ export class HaDumDashboard extends LitElement {
     return Array.isArray(items) ? items.filter((item): item is Failed => typeof item === "object" && item !== null && typeof (item as Failed).entita === "string") : [];
   }
 
-  /** The tasks of the `tasks` sensors: the urgent ones („alert“, „warn“) first, otherwise in the order of the sensor. */
-  private tasks(config: Settings): Task[] {
-    const rank = (task: Task) => (task.uroven === "alert" ? 0 : task.uroven === "warn" ? 1 : 2);
-    return config.tasks
-      .flatMap((id) => {
-        const items = entityState(this.hass, id)?.attributes.ukoly;
-        return Array.isArray(items) ? items : [];
-      })
-      .filter((item): item is Task => typeof item === "object" && item !== null && typeof (item as Task).klic === "string" && typeof (item as Task).nazev === "string")
-      .map((task, index) => ({ task, index }))
-      .sort((a, b) => rank(a.task) - rank(b.task) || a.index - b.index)
-      .map(({ task }) => task);
-  }
-
   private renderQueue(config: Settings, i18n: I18n): TemplateResult | typeof nothing {
-    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length && !config.leaks.length && !config.tasks.length) return nothing;
+    if (!config.failedActions && !config.batteries.length && !config.filters.length && !config.laundry.length && !config.maintenance.length && !config.leaks.length) return nothing;
     const t = i18n.t;
     const failed = this.failed(config);
     const snoozed = this.snoozed(config);
@@ -818,8 +623,7 @@ export class HaDumDashboard extends LitElement {
     // Water where it should not be (uživatel 14. 11. 2026: „udelej nejaky alert kdyz zacne hlasit unik vody“): the first
     // row, red, without a button: it goes away when the sensor is dry again.
     const leaking = config.leaks.filter((item) => readText(this.hass, item.entity) === "on");
-    const tasks = this.tasks(config);
-    const count = leaking.length + failed.length + tasks.length + low.length + dirty.length + waiting.length + due.length;
+    const count = leaking.length + failed.length + low.length + dirty.length + waiting.length + due.length;
     const rows = [
       ...leaking.map((item) => {
         const start = this.starts.of(this.hass, item.entity);
@@ -859,15 +663,6 @@ export class HaDumDashboard extends LitElement {
                 ${done}
               </span>`
             : done}
-        </div>`;
-      }),
-      ...tasks.map((task) => {
-        const mark = task.uroven === "alert" ? html`<span class="mark alert" aria-hidden="true">!</span>` : task.uroven === "warn" ? html`<span class="mark warn" aria-hidden="true">!</span>` : html`<span class="mark" aria-hidden="true">${ICON_TASK}</span>`;
-        const [domain, service] = (task.akce?.sluzba ?? "").split(".");
-        return html`<div class="row" data-row="task" data-key=${task.klic}>
-          ${mark}
-          <span class="main">${task.nazev}${task.detail ? html`<small class=${task.uroven === "alert" ? "alert" : ""}>${task.detail}</small>` : nothing}</span>
-          ${domain && service ? this.iconButton(ICON_DONE, i18n.t.done, task.nazev, () => this.call(domain, service, task.akce?.data ?? {})) : nothing}
         </div>`;
       }),
       ...low.map((battery) => {

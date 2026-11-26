@@ -68,21 +68,6 @@ export interface Settings {
   laundry: Named[];
   /** Water leak sensors (binary_sensor, on = water): a leak is the first row of „Potřebuje tebe“ while it lasts. */
   leaks: Named[];
-  /**
-   * Sensors whose attribute `ukoly` lists tasks for „Potřebuje tebe“ (e.g. payments to tick off on the dashboard Finance;
-   * uživatel 23. 11. 2026: „Odskrtnutí musí být součástí toho co mam udělat … má vypadat jako na kartě řízení“).
-   * A task: {klic, nazev, detail?, uroven?: "alert" | "warn", akce?: {sluzba: "domain.service", data?}}; with `akce`
-   * the row has „Hotovo“ (the checkmark) that calls the service.
-   */
-  tasks: string[];
-  /**
-   * Limit orders (dashboard Finance; uživatel 23. 11. 2026: „Nejdulezitejsi jsou ale ty limit ordery … aby bylo videt
-   * aktualni cena, nejblizsi SELL a BUY … rychly proklik na detaily … stavajici limit ordery a nove a tlacitkem je
-   * aktualizovat“, „Q39 ano“): the sensor with the attribute `instrumenty` ([{symbol, cena, pozice, jednotka, hodnota,
-   * cil, odchylka, upravit, ordery: [{side, mnozstvi, ted, nove}]}], its state ok | upravit | probiha | chyba, `cas`,
-   * `dry_run`, `chyba`), the button that updates the orders and the one that checks them again.
-   */
-  orders?: { entity: string; update?: string; check?: string };
   maintenance: Maintenance[];
   running: Named[];
   covers: {

@@ -1,6 +1,0 @@
-# Karta jen s frontou „Potřebuje tebe“ z úkolů senzorů (např. dashboard Finance): žádné žaluzie, topení ani Zdraví.
-# Úkol v atributu `ukoly` senzoru: {klic, nazev, detail, uroven: alert | warn, akce: {sluzba, data}}; s akcí má řádek „Hotovo“.
-type: custom:ha-dum-dashboard
-language: cs
-tasks:
-  - sensor.ukoly

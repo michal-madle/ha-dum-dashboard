@@ -410,37 +410,6 @@ export const styles = [
     background: var(--dd-alert-bg);
     color: var(--dd-alert);
   }
-  /* Price between the nearest BUY and SELL, as the range bar of Apple Weather and Stocks: a soft capsule from the BUY (left) to the SELL (right),
-     filled up to a round marker where the price is. Neutral colours (the accent is for controls); the numbers are in the line above, this only
-     shows where the price is. */
-  .scale {
-    position: relative;
-    display: block;
-    height: 6px;
-    margin: 10px 0 2px;
-    border-radius: 3px;
-    background: var(--dd-button);
-  }
-  .scale b {
-    position: absolute;
-    inset: 0 auto 0 0;
-    border-radius: 3px;
-    background: var(--dd-text);
-    opacity: 0.24;
-  }
-  .scale i {
-    position: absolute;
-    top: 50%;
-    width: 12px;
-    height: 12px;
-    margin: -6px 0 0 -6px;
-    border-radius: 50%;
-    background: var(--dd-text);
-    box-shadow: 0 0 0 2.5px var(--dd-card), 0 1px 4px rgb(0 0 0 / 35%);
-  }
-  .scale.out i {
-    background: var(--dd-warning);
-  }
   .row small.alert {
     color: var(--dd-alert);
   }
@@ -505,24 +474,6 @@ export const styles = [
     line-height: 20px;
   }
   /* An icon button (Zkusit znovu): a 44 px circle. */
-  /* Limitní ordery: the update under the list and in the detail, the whole width. */
-  .orders-update {
-    width: 100%;
-    margin-top: 12px;
-  }
-  .health-row .main small {
-    display: block;
-    color: var(--dd-secondary);
-    font-size: 13px;
-    line-height: 18px;
-  }
-  .orders-head {
-    color: var(--dd-secondary);
-    font-size: 13px;
-  }
-  .detail-actions {
-    padding-top: 4px;
-  }
   .button.icon {
     display: inline-flex;
     align-items: center;
